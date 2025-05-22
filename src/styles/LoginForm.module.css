@@ -1,0 +1,161 @@
+/* src/components/LoginForm.module.css */
+.loginForm {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem; /* 表單組之間的間距 */
+  margin-top: 1rem; /* 表單與標題的間距 (如果標題在組件外部，這可以調整或移除) */
+}
+
+.formGroup {
+  text-align: left;
+  margin-bottom: 0; /* 由 .loginForm 的 gap 控制 */
+}
+
+.formGroup label {
+  display: block;
+  margin-bottom: 0.6rem; /* 標籤與輸入框的間距 */
+  color: #4a5568; /* 深灰色文字 */
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+
+.formGroup input[type="email"],
+.formGroup input[type="password"] {
+  width: 100%;
+  padding: 0.8rem 1rem; /* 增加內邊距 */
+  border: 1px solid #cbd5e0; /* 淺灰色邊框 */
+  border-radius: 6px; /* 更圓潤的邊角 */
+  box-sizing: border-box;
+  font-size: 1rem;
+  color: #2d3748; /* 輸入文字顏色 */
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.formGroup input[type="email"]::placeholder,
+.formGroup input[type="password"]::placeholder {
+  color: #a0aec0; /* 提示文字顏色 */
+}
+
+.formGroup input[type="email"]:focus,
+.formGroup input[type="password"]:focus {
+  border-color: #3182ce; /* 藍色獲取焦點邊框 */
+  box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.5); /* 獲取焦點光暈 */
+  outline: none;
+}
+
+.srOnly { /* 輔助類：視覺上隱藏元素，但對螢幕閱讀器保持可見 */
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+.roleSelector {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 0.3rem;
+}
+
+.roleOption {
+  flex: 1;
+  padding: 0.75rem 0.5rem;
+  border: 1px solid #cbd5e0;
+  border-radius: 6px;
+  text-align: center;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 0.9rem;
+  color: #4a5568;
+  background-color: #fff;
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, box-shadow 0.1s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.roleOption:hover {
+  background-color: #f7fafc; /* 非常淺的灰色背景 */
+  border-color: #a0aec0;
+}
+
+.roleOption.selected { /* '.selected' class 用於標識選中狀態 */
+  background-color: #ebf8ff; /* 淺藍色背景 */
+  border-color: #3182ce; /* 強調邊框顏色 */
+  color: #2c5282; /* 深藍色文字 */
+  font-weight: 600;
+  box-shadow: 0 0 0 1px #3182ce;
+}
+
+.btnSubmit {
+  width: 100%;
+  padding: 0.85rem 1rem;
+  background-color: #3182ce; /* 主題藍色 */
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 1.05rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease, box-shadow 0.2s ease, transform 0.1s ease;
+  margin-top: 0.5rem; /* 與上方元素的間距 */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem; /* 圖示與文字間距 */
+}
+
+.btnSubmit:hover:not(:disabled) {
+  background-color: #2b6cb0; /* 深一點的藍色 */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.btnSubmit:active:not(:disabled) {
+  transform: translateY(1px);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.btnSubmit:disabled {
+  background-color: #a0aec0; /* 禁用時的灰色 */
+  cursor: not-allowed;
+  opacity: 0.8;
+}
+
+.spinner {
+  width: 1.1em; /* 相對按鈕文字大小 */
+  height: 1.1em;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  border-radius: 50%;
+  border-top-color: #fff; /* Spinner 主色 */
+  animation: spin 0.8s linear infinite; /* @keyframes spin 需要定義 */
+  display: inline-block;
+}
+
+/* @keyframes 也會被 CSS Modules 局部化 */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.errorMessage {
+  background-color: #fff5f5; /* 非常淺的紅色背景 */
+  color: #c53030; /* 紅色文字 */
+  border: 1px solid #f56565; /* 紅色邊框 */
+  padding: 0.8rem 1rem;
+  border-radius: 6px;
+  /* margin-top 和 margin-bottom 由 .loginForm 的 gap 控制 */
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem; /* 圖示與文字間距 */
+}
+
+.errorIcon {
+  stroke: #c53030; /* SVG 圖示顏色 */
+  flex-shrink: 0; /* 防止圖示被壓縮 */
+}
