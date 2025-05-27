@@ -1,0 +1,148 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Navbar from '../components/Navbar.solid.jsx';
+---
+
+<Layout title="WorkNow - 企業註冊">
+  <Navbar client:load />
+  <main class="register-page">
+    <div class="register-container">
+      <h1>註冊商家 / 企業帳戶</h1>
+      <form id="registerForm">
+        <div class="form-group">
+          <label for="name">公司/商家名稱</label>
+          <input type="text" id="name" name="name" required />
+        </div>
+        <div class="form-group">
+          <label for="email">電子郵件</label>
+          <input type="email" id="email" name="email" required />
+        </div>
+        <div class="form-group">
+          <label for="password">密碼</label>
+          <input type="password" id="password" name="password" required minlength="8" />
+        </div>
+        <div class="form-group">
+          <label for="confirm-password">確認密碼</label>
+          <input type="password" id="confirm-password" name="confirm-password" required minlength="8" />
+        </div>
+        <input type="hidden" id="role" name="role" value="business" />
+        <button type="submit" class="btn-submit">註冊</button>
+      </form>
+      <p class="login-link">
+        已經有帳號了？ <a href="/login">立即登入</a>
+      </p>
+    </div>
+  </main>
+</Layout>
+
+<style>
+  .register-page {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: calc(100vh - var(--navbar-height) - 70px); /* Adjust based on footer height */
+    padding: 2rem var(--padding-inline);
+    background-color: #f8f9fa; /* Slightly different background for distinction */
+  }
+  .register-container {
+    background-color: #fff;
+    padding: 2.5rem;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    width: 100%;
+    max-width: 480px; /* Slightly wider for more fields */
+    text-align: center;
+  }
+  .register-container h1 {
+    margin-bottom: 1.5rem;
+    color: #333;
+    font-size: 1.8rem;
+  }
+  .form-group {
+    margin-bottom: 1.25rem;
+    text-align: left;
+  }
+  .form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: #555;
+    font-weight: 500;
+  }
+  .form-group input[type="text"],
+  .form-group input[type="email"],
+  .form-group input[type="password"] {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+    font-size: 1rem;
+  }
+  .form-group input:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
+  }
+
+  .btn-submit {
+    width: 100%;
+    padding: 0.85rem;
+    background-color: #28a745; /* Green for registration */
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    margin-top: 1rem; /* Added margin top */
+  }
+  .btn-submit:hover {
+    background-color: #218838;
+  }
+  .login-link {
+    margin-top: 1.5rem;
+    font-size: 0.9rem;
+    color: #555;
+  }
+  .login-link a {
+    color: #007bff;
+    text-decoration: none;
+  }
+  .login-link a:hover {
+    text-decoration: underline;
+  }
+</style>
+
+<script>
+  const registerForm = document.getElementById('registerForm');
+  if (registerForm) {
+    registerForm.addEventListener('submit', function(event) {
+      event.preventDefault();
+      
+      const name = (document.getElementById('name') as HTMLInputElement).value;
+      const email = (document.getElementById('email') as HTMLInputElement).value;
+      const password = (document.getElementById('password') as HTMLInputElement).value;
+      const confirmPassword = (document.getElementById('confirm-password') as HTMLInputElement).value;
+      const selectedRole = (document.getElementById('role') as HTMLInputElement).value; // Get value from hidden input
+
+      if (password !== confirmPassword) {
+        alert('密碼與確認密碼不相符！');
+        return;
+      }
+
+      if (password.length < 8) {
+        alert('密碼長度至少需要8個字元！');
+        return;
+      }
+
+      // TODO: Implement actual registration logic here
+      // For example, send a request to your backend API to create a new user
+      console.log('Registration attempt:', { name, email, password, role: selectedRole });
+      alert(`註冊商家/企業帳戶嘗試：\n公司/商家名稱: ${name}\n電子郵件: ${email}\n身份: ${selectedRole}\n(此為前端演示，實際註冊邏輯需後端實現)`);
+      
+      // Example: Redirect after successful registration (replace with actual logic)
+      // if (registrationSuccessful) {
+      //   window.location.href = '/login'; // Redirect to login page
+      // }
+    });
+  }
+</script> 
