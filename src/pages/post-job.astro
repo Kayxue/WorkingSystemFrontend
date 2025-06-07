@@ -1,0 +1,40 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Navbar from '../components/Navbar.solid.jsx';
+import PostJobForm from '../components/PostJobForm.solid.tsx';
+---
+
+<Layout title="WorkNow - 發布職缺">
+  <Navbar client:load />
+  <main class="post-job-page">
+    <div class="post-job-container">
+      <h1>New Job</h1>
+      <PostJobForm client:load />
+    </div>
+  </main>
+</Layout>
+
+<style>
+  .post-job-page {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    min-height: calc(100vh - var(--navbar-height));
+    padding: 2rem var(--padding-inline);
+  }
+
+  .post-job-container {
+    background-color: #fff;
+    padding: 2.5rem;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    width: 100%;
+    max-width: 800px;
+  }
+
+  .post-job-container h1 {
+    margin-bottom: 1.5rem;
+    color: #333;
+    font-size: 1.8rem;
+  }
+</style>

@@ -1,0 +1,64 @@
+.postjobContainer {
+  display: flex;
+  justify-content: center;
+  padding: 2rem;
+}
+
+.postjobFormWrapper {
+  background-color: #fff;
+  padding: 2rem;
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  max-width: 600px;
+  width: 100%;
+}
+
+.postjobHeading {
+  margin-bottom: 1.5rem;
+  font-size: 1.8rem;
+  color: #333;
+}
+
+.postjobLabel {
+  display: block;
+  margin-bottom: 1rem;
+}
+
+.postjobInput,
+.postjobSelect,
+.postjobTextarea {
+  width: 100%;
+  padding: 0.5rem;
+  margin-top: 0.25rem;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  box-sizing: border-box;
+  font-size: 1rem;
+}
+
+.postjobRow {
+  display: flex;
+  gap: 2rem;
+}
+
+.postjobRowLabel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 1rem;
+}
+
+.postjobBtn {
+  background-color: #007bff;
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 5px;
+  font-size: 1rem;
+  cursor: pointer;
+  margin-top: 1rem;
+}
+
+.postjobBtn:hover {
+  background-color: #0056b3;
+}
