@@ -79,20 +79,6 @@ onMount(async () => {
 
       if (response.ok) {
         setSuccess(true);
-        setTitle("");
-        setDateStart("");
-        setDateEnd("");
-        setTimeStart("");
-        setTimeEnd("");
-        setHourlyRate(0);
-        setCity("");
-        setDistrict("");
-        setAddress("");
-        setDescription("");
-        setRequirements("");
-        setContactPerson("");
-        setContactPhone("");
-        setContactEmail("");
 
         alert("Job posted successfully");
         window.location.href = "/dashboard";

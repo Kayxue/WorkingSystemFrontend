@@ -8,6 +8,15 @@ type JobOffer = {
   dateEnd: string;
   timeStart: string;
   timeEnd: string;
+  hourlyRate: string;
+  city: string;
+  district: string;
+  address: string;
+  description: string;
+  requirements: string;
+  contactPerson: string;
+  contactPhone: string;
+  contactEmail: string;
   publishedAt: string;
   isActive: boolean;
 };
@@ -33,6 +42,26 @@ async function fetchJobOffers():Promise<JobOffer[]> {
   return data.gigs;
 }
 
+async function fetchGigDetails(gigId: string): Promise<JobOffer> {
+  const response = await fetch(`http://localhost:3000/gig/${gigId}`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      "platform": "web-employer",
+    },
+    credentials: "include",
+  });
+
+  if (!response.ok) {
+    const text = await response.text();
+    console.error("Failed to fetch gig details:", text);
+    throw new Error("Failed to fetch gig details");
+  }
+
+  const data = await response.json();
+  return data;
+}
+
 function formatDateToDDMMYYYY(dateStr: string): string {
   const date = new Date(dateStr);
   const dd = String(date.getDate()).padStart(2, "0");
@@ -45,9 +74,28 @@ export default function DashboardPage() {
   const [triggerFetch,setTriggerFetch] = createSignal(false);
   const [jobOffers, { refetch }] = createResource(triggerFetch, fetchJobOffers);
   
+  const [selectedJob, setSelectedJob] = createSignal<JobOffer | null>(null);
+  const [showModal, setShowModal] = createSignal(false);
+
   onMount( ()=> {
     setTriggerFetch(true);
   })
+
+  async function openModal(job: JobOffer) {
+    try {
+      const fullDetails = await fetchGigDetails(job.gigId);
+      setSelectedJob(fullDetails);
+      setShowModal(true);
+    } catch (error) {
+      alert("Failed to load full job details");
+      console.error(error);
+    }
+  }
+
+  function closeModal() {
+    setShowModal(false);
+    setSelectedJob(null);
+  }
 
   async function handleDelete(gigId: string) {
     const confirmed = confirm("Are you sure you want to delete this job?");
@@ -104,9 +152,16 @@ export default function DashboardPage() {
     }
   }
 
+  function stripQuotes(str: string) {
+    if (!str) return "";
+    if (str.startsWith('"') && str.endsWith('"')) {
+        return str.slice(1, -1);
+    }
+    return str;
+  }
+
   return (
     <div class={styles.dashboardContainer}>
-
       <Show when={jobOffers.loading}>
         <p class={styles.dashboardLoading}>Loading job postings...</p>
       </Show>
@@ -126,8 +181,15 @@ export default function DashboardPage() {
         <div class={styles.jobList}>
           <For each={jobOffers()}>
             {(job) => (
-              <div class={styles.jobCard}>
-                <div class={styles.cardIcons}>
+              <div
+                class={styles.jobCard}
+                onClick={() => openModal(job)}
+                style={{ cursor: "pointer" }}
+              >
+                <div
+                  class={styles.cardIcons}
+                  onClick={(e) => e.stopPropagation()}
+                >
                   <button
                     class={styles.iconButton}
                     onClick={() => handleToggleStatus(job.gigId)}
@@ -168,7 +230,7 @@ export default function DashboardPage() {
 
                 <h2 class={styles.jobTitle}>{job.title}</h2>
                 <p class={styles.jobRate}>
-                  Dates: {formatDateToDDMMYYYY(job.dateStart)} to {formatDateToDDMMYYYY(job.dateEnd)}
+                  Date: {formatDateToDDMMYYYY(job.dateStart)} to {formatDateToDDMMYYYY(job.dateEnd)}
                 </p>
                 <p class={styles.jobTime}>
                   Time: {job.timeStart} - {job.timeEnd}
@@ -179,6 +241,65 @@ export default function DashboardPage() {
               </div>
             )}
           </For>
+        </div>
+      </Show>
+
+      <Show when={showModal()}>
+        <div class={styles.modalOverlay} onClick={closeModal}>
+          <div
+            class={styles.modalContent}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button class={styles.modalCloseBtn} onClick={closeModal}>
+              &times;
+            </button>
+            <h2>{selectedJob()?.title}</h2>
+            <p>
+              <strong>Date:</strong>{" "}
+              {formatDateToDDMMYYYY(selectedJob()?.dateStart || "")} to{" "}
+              {formatDateToDDMMYYYY(selectedJob()?.dateEnd || "")}
+            </p>
+            <p>
+              <strong>Time:</strong> {selectedJob()?.timeStart} -{" "}
+              {selectedJob()?.timeEnd}
+            </p>
+            <p>
+              <strong>Hourly Rate:</strong>{" "}
+              {selectedJob()?.hourlyRate}NTD
+            </p>
+            <p>
+              <strong>Address:</strong>{" "}
+              {selectedJob()?.address},{" "}{selectedJob()?.district},{" "}{selectedJob()?.city}.
+            </p>
+            <p>
+              <strong>Job Description:</strong>{" "}
+              {stripQuotes(selectedJob()?.description||"")}
+            </p>
+            <p>
+              <strong>Job Requirement:</strong>{" "}
+              {stripQuotes(selectedJob()?.requirements||"")}
+            </p>
+            <p>
+              <strong>Contact Person:</strong>{" "}
+              {selectedJob()?.contactPerson}
+            </p>
+            <p>
+              <strong>Contact Phone:</strong>{" "}
+              {selectedJob()?.contactPhone}
+            </p>
+            <p>
+              <strong>Contact Email:</strong>{" "}
+              {selectedJob()?.contactEmail}
+            </p>
+            <p>
+              <strong>Posted on:</strong>{" "}
+              {formatDateToDDMMYYYY(selectedJob()?.publishedAt || "")}
+            </p>
+            <p>
+              <strong>Status:</strong>{" "}
+              {selectedJob()?.isActive ? "Active" : "Inactive"}
+            </p>
+          </div>
         </div>
       </Show>
     </div>

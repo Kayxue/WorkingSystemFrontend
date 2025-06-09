@@ -9,13 +9,8 @@ import DashboardPage from '../components/DashboardPage.solid.tsx';
   <main class="dashboard-page">
     <div class="dashboard-container">
       <h1>My Job Listings</h1>
-      <div class="switch-buttons">
-        <button class="switch-button active" type="button" aria-pressed="true">All listings</button>
-        <a href="/preview" class="switch-button" role="button" aria-pressed="false">Preview</a>
-      </div>
       <DashboardPage client:load />
     </div>
-
     <a href="/post-job" class="floating-button" title="Post a new job" aria-label="Post a new job">＋</a>
   </main>
 </Layout>
@@ -68,47 +63,5 @@ import DashboardPage from '../components/DashboardPage.solid.tsx';
   .floating-button:hover {
     background-color: #0056b3;
   }
-
-  .switch-buttons {
-  display: flex;
-  margin-bottom: 1.5rem;
-  width: 100%;
-  border: 2px solid #007bff;
-  border-radius: 6px;
-  overflow: hidden;
-}
-
-.switch-button {
-  flex: 1;
-  text-align: center;
-  background-color: white;
-  padding: 0.75rem 1rem;
-  font-size: 1rem;
-  font-weight: bold;
-  color: #007bff;
-  cursor: pointer;
-  text-decoration: none;
-  border: none;
-  transition: background-color 0.3s ease, color 0.3s ease;
-}
-
-.switch-button:not(:last-child) {
-  border-right: 2px solid #007bff;
-}
-
-.switch-button:hover {
-  background-color: #e6f0ff;
-}
-
-.switch-button.active,
-.switch-button[aria-pressed="true"] {
-  background-color: #007bff;
-  color: white;
-  cursor: default;
-}
-
-.switch-button:visited {
-  text-decoration: none;
-}
 
 </style>

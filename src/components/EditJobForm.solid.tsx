@@ -53,7 +53,6 @@ export default function EditJobForm() {
       }
 
       const data = await res.json();
-      console.log(data);
 
       setTitle(data.title || "");
       setDateStart(data.dateStart ? data.dateStart.slice(0, 10) : "");
