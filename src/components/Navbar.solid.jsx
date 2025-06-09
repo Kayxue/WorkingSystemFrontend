@@ -1,4 +1,4 @@
-import { createSignal } from 'solid-js';
+import { createSignal, onMount, Show } from 'solid-js';
 
 function Navbar() {
   const styles = `
@@ -34,7 +34,52 @@ function Navbar() {
     .auth-buttons button:hover {
       opacity: 0.9;
     }
+    .dropdown {
+      position: absolute;
+      top: 100%;
+      right: 0;
+      background: white;
+      border: 1px solid #ccc;
+      padding: 0.5rem;
+      z-index: 10;
+    }
   `;
+
+  const [user, setUser] = createSignal(null);
+  const [dropdownOpen, setDropdownOpen] = createSignal(false);
+
+  onMount(async () => {
+    try {
+      const res = await fetch("http://localhost:3000/user/profile", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          "platform": "web-employer",
+        },
+        credentials: "include",
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setUser(data);
+      }
+    } catch {
+      setUser(null);
+    }
+  });
+
+  const handleLogout = async () => {
+    await fetch("http://localhost:3000/user/logout", {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        "platform": "web-employer",
+      },
+      credentials: "include",
+    });
+    setUser(null);
+    window.location.href = "/";
+  };
 
   return (
     <>
@@ -43,13 +88,26 @@ function Navbar() {
         <div class="brand">
           <a href="/">WorkNow</a>
         </div>
-        <div class="auth-buttons">
-          <button class="register" onClick={() => window.location.href = '/register'}>註冊</button>
-          <button onClick={() => window.location.href = '/login'}>登入</button>
-        </div>
+        <Show when={user()} fallback={
+          <div class="auth-buttons">
+            <button class="register" onClick={() => window.location.href = '/register'}>註冊</button>
+            <button onClick={() => window.location.href = '/login'}>登入</button>
+          </div>
+        }>
+          <div class="auth-buttons" style="position: relative;">
+            <button onClick={() => setDropdownOpen(!dropdownOpen())}>
+              {user()?.branchName} ▼
+            </button>
+            <Show when={dropdownOpen()}>
+              <div class="dropdown">
+                <button onClick={handleLogout}>Logout</button>
+              </div>
+            </Show>
+          </div>
+        </Show>
       </nav>
     </>
   );
 }
 
-export default Navbar; 
+export default Navbar;

@@ -9,6 +9,7 @@ type JobOffer = {
   timeStart: string;
   timeEnd: string;
   publishedAt: string;
+  isActive: boolean;
 };
 
 async function fetchJobOffers():Promise<JobOffer[]> {
@@ -22,11 +23,11 @@ async function fetchJobOffers():Promise<JobOffer[]> {
   });
 
   if (!response.ok) {
-  const text = await response.text();
-  console.error("Error status:", response.status);
-  console.error("Error body:", text);
-  throw new Error("Failed to fetch job offers");
-}
+    const text = await response.text();
+    console.error("Error status:", response.status);
+    console.error("Error body:", text);
+    throw new Error("Failed to fetch job offers");
+  }
 
   const data = await response.json();
   return data.gigs;
@@ -35,17 +36,74 @@ async function fetchJobOffers():Promise<JobOffer[]> {
 function formatDateToDDMMYYYY(dateStr: string): string {
   const date = new Date(dateStr);
   const dd = String(date.getDate()).padStart(2, "0");
-  const mm = String(date.getMonth() + 1).padStart(2, "0"); // Month is 0-indexed
+  const mm = String(date.getMonth() + 1).padStart(2, "0");
   const yyyy = date.getFullYear();
   return `${dd}-${mm}-${yyyy}`;
 }
 
 export default function DashboardPage() {
   const [triggerFetch,setTriggerFetch] = createSignal(false);
-  const [jobOffers] = createResource<JobOffer[]>(triggerFetch,fetchJobOffers);
+  const [jobOffers, { refetch }] = createResource(triggerFetch, fetchJobOffers);
+  
   onMount( ()=> {
     setTriggerFetch(true);
   })
+
+  async function handleDelete(gigId: string) {
+    const confirmed = confirm("Are you sure you want to delete this job?");
+    if (!confirmed) return;
+
+    try {
+      const res = await fetch(`http://localhost:3000/gig/${gigId}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          "platform": "web-employer",
+        },
+        credentials: "include",
+      });
+
+      if (!res.ok) {
+        const errorText = await res.text();
+        alert("Failed to delete: " + errorText);
+      } else {
+        alert("Job deleted successfully");
+        await refetch();
+      }
+    } catch (error) {
+      console.error("Delete failed:", error);
+      alert("An error occurred while deleting.");
+    }
+  }
+
+  function handleEdit(gigId: string) {
+    window.location.href = `/edit-job?gigId=${gigId}`;
+  }
+
+  async function handleToggleStatus(gigId: string) {
+    try {
+      const res = await fetch(`http://localhost:3000/gig/${gigId}/toggle-status`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          "platform": "web-employer",
+        },
+        credentials: "include",
+      });
+
+      const result = await res.json();
+
+      if (!res.ok) {
+        alert("Failed to toggle job status: " + (result?.message || res.statusText));
+      } else {
+        await refetch();
+      }
+    } catch (err) {
+      console.error("Toggle failed:", err);
+      alert("An error occurred while toggling job status.");
+    }
+  }
+
   return (
     <div class={styles.dashboardContainer}>
 
@@ -69,6 +127,45 @@ export default function DashboardPage() {
           <For each={jobOffers()}>
             {(job) => (
               <div class={styles.jobCard}>
+                <div class={styles.cardIcons}>
+                  <button
+                    class={styles.iconButton}
+                    onClick={() => handleToggleStatus(job.gigId)}
+                    title={job.isActive ? "Deactivate" : "Activate"}
+                  >
+                    {job.isActive ? (
+                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                        <circle cx="12" cy="12" r="3" />
+                      </svg>
+                    ) : (
+                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                        <path d="M17.94 17.94A10.94 10.94 0 0 1 12 20c-7 0-11-8-11-8a21.42 21.42 0 0 1 5.17-6.18" />
+                        <path d="M1 1l22 22" />
+                        <path d="M9.53 9.53a3.5 3.5 0 0 0 4.95 4.95" />
+                        <path d="M14.47 14.47a3.5 3.5 0 0 1-4.95-4.95" />
+                        <path d="M12 12v0" />
+                      </svg>
+                    )}
+                  </button>
+                  <button class={styles.iconButton} onClick={() => handleEdit(job.gigId)} title="Edit">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                      <path d="M12 20h9" />
+                      <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" />
+                    </svg>
+                  </button>
+                  <button class={styles.iconButton} onClick={() => handleDelete(job.gigId)} title="Delete">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                      <polyline points="3 6 5 6 21 6" />
+                      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                      <line x1="10" y1="11" x2="10" y2="17" />
+                      <line x1="14" y1="11" x2="14" y2="17" />
+                    </svg>
+                  </button>
+                </div>
+
                 <h2 class={styles.jobTitle}>{job.title}</h2>
                 <p class={styles.jobRate}>
                   Dates: {formatDateToDDMMYYYY(job.dateStart)} to {formatDateToDDMMYYYY(job.dateEnd)}

@@ -1,7 +1,7 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import Navbar from '../components/Navbar.solid.jsx';
-import DashboardPage from '../components/DashboardPage.solid.tsx';
+import PreviewPage from '../components/PreviewPage.solid.tsx';
 ---
 
 <Layout title="WorkNow - 我的職缺列表">
@@ -10,13 +10,12 @@ import DashboardPage from '../components/DashboardPage.solid.tsx';
     <div class="dashboard-container">
       <h1>My Job Listings</h1>
       <div class="switch-buttons">
-        <button class="switch-button active" type="button" aria-pressed="true">All listings</button>
-        <a href="/preview" class="switch-button" role="button" aria-pressed="false">Preview</a>
+        <a href="/dashboard" class="switch-button" role="button" aria-pressed="false">All Listings</a>
+        <button class="switch-button active" type="button" aria-pressed="true">Preview</button>
       </div>
-      <DashboardPage client:load />
+      <PreviewPage client:load />
     </div>
 
-    <a href="/post-job" class="floating-button" title="Post a new job" aria-label="Post a new job">＋</a>
   </main>
 </Layout>
 

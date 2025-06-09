@@ -1,0 +1,43 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Navbar from '../components/Navbar.solid.jsx';
+import EditJobForm from '../components/EditJobForm.solid.tsx';
+const url = new URL(Astro.request.url);
+const gigId = url.searchParams.get("gigId");
+---
+
+<Layout title="WorkNow - 編輯職缺">
+  <Navbar client:load />
+  <main class="editjob-page">
+    <div class="editjob-container">
+      <h1>Edit Job</h1>
+      <EditJobForm client:load/>
+    </div>
+  </main>
+</Layout>
+
+<style>
+  .editjob-page {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    min-height: calc(100vh - var(--navbar-height));
+    padding: 2rem var(--padding-inline);
+    position: relative;
+  }
+
+  .editjob-container {
+    background-color: #fff;
+    padding: 2.5rem;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    width: 100%;
+    max-width: 1000px;
+  }
+
+  .editjob-container h1 {
+    margin-bottom: 1.5rem;
+    color: #333;
+    font-size: 1.8rem;
+  }
+</style>

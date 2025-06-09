@@ -1,7 +1,9 @@
 import { createSignal, Show, onMount } from "solid-js";
 import styles from '../styles/PostJobForm.module.css';
 
-export default function PostJobForm() {
+const [gigId, setGigId] = createSignal<string | null>(null);
+
+export default function EditJobForm() {
   const [title, setTitle] = createSignal("");
   const [dateStart, setDateStart] = createSignal("");
   const [dateEnd, setDateEnd] = createSignal("");
@@ -20,33 +22,72 @@ export default function PostJobForm() {
   const [error, setError] = createSignal("");
   const [success, setSuccess] = createSignal(false);
   const [isLoading, setIsLoading] = createSignal(false);
+  const [isFetching, setIsFetching] = createSignal(true);
 
-onMount(async () => {
-  try {
-    const res = await fetch("http://localhost:3000/user/profile", {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        "platform": "web-employer",
-      },
-      credentials: "include",
-    });
-
-    if (!res.ok) {
-      window.location.href = "/login";
+  onMount(async () => {
+    const searchParams = new URLSearchParams(window.location.search);
+    const id = searchParams.get("gigId");
+    setGigId(id);
+    if (!gigId()) {
+      setError("無效的職缺ID");
+      setIsFetching(false);
+      return;
     }
-  } catch (err) {
-    console.error("Auth check failed", err);
-    window.location.href = "/login";
-  }
-});
+    setIsFetching(true);
+    setError("");
+    try {
+      const res = await fetch(`http://localhost:3000/gig/${gigId()}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          "platform": "web-employer",
+        },
+        credentials: "include",
+      });
 
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setError(data.message || "取得職缺資料失敗");
+        setIsFetching(false);
+        return;
+      }
+
+      const data = await res.json();
+      console.log(data);
+
+      setTitle(data.title || "");
+      setDateStart(data.dateStart ? data.dateStart.slice(0, 10) : "");
+      setDateEnd(data.dateEnd ? data.dateEnd.slice(0, 10) : "");
+      setTimeStart(data.timeStart || "");
+      setTimeEnd(data.timeEnd || "");
+      setHourlyRate(data.hourlyRate || 0);
+      setCity(data.city || "");
+      setDistrict(data.district || "");
+      setAddress(data.address || "");
+      setDescription(stripQuotes(data.description || ""));
+      setRequirements(stripQuotes(data.requirements || ""));
+      setContactPerson(data.contactPerson || "");
+      setContactPhone(data.contactPhone || "");
+      setContactEmail(data.contactEmail || "");
+
+    } catch (e) {
+      setError("取得資料時發生錯誤，請稍後再試");
+    } finally {
+      setIsFetching(false);
+    }
+  });
 
   const handleSubmit = async (e: Event) => {
     e.preventDefault();
     setError("");
     setSuccess(false);
     setIsLoading(true);
+
+    if (!gigId) {
+      setError("無效的職缺ID，無法更新");
+      setIsLoading(false);
+      return;
+    }
 
     try {
       const payload = {
@@ -67,8 +108,8 @@ onMount(async () => {
         publishedAt: new Date().toISOString(),
       };
 
-      const response = await fetch("http://localhost:3000/gig/create", {
-        method: "POST",
+      const response = await fetch(`http://localhost:3000/gig/${gigId()}`, {
+        method: "PUT",
         headers: {
           "Content-Type": "application/json",
           "platform": "web-employer",
@@ -79,26 +120,11 @@ onMount(async () => {
 
       if (response.ok) {
         setSuccess(true);
-        setTitle("");
-        setDateStart("");
-        setDateEnd("");
-        setTimeStart("");
-        setTimeEnd("");
-        setHourlyRate(0);
-        setCity("");
-        setDistrict("");
-        setAddress("");
-        setDescription("");
-        setRequirements("");
-        setContactPerson("");
-        setContactPhone("");
-        setContactEmail("");
-
-        alert("Job posted successfully");
+        alert("Changes saved successfully!");
         window.location.href = "/dashboard";
       } else {
         const result = await response.json().catch(() => ({}));
-        setError(result.message || "發佈失敗，請稍後再試。");
+        setError(result.message || "更新失敗，請稍後再試。");
       }
     } catch (err) {
       setError("發生錯誤，請檢查網路或稍後再試。");
@@ -106,6 +132,14 @@ onMount(async () => {
       setIsLoading(false);
     }
   };
+
+  function stripQuotes(str: string) {
+    if (!str) return "";
+    if (str.startsWith('"') && str.endsWith('"')) {
+        return str.slice(1, -1);
+    }
+    return str;
+  }
 
   return (
     <div class={styles.postjobContainer}>
@@ -284,11 +318,11 @@ onMount(async () => {
           <div class="error">{error()}</div>
         </Show>
         <Show when={success()}>
-          <div class="success">發布成功！</div>
+          <div class="success">更新成功！</div>
         </Show>
 
         <button class={styles.postjobBtn} type="submit" disabled={isLoading()}>
-          {isLoading() ? "發布中..." : "Post"}
+          {isLoading() ? "更新中..." : "Save"}
         </button>
       </form>
     </div>
