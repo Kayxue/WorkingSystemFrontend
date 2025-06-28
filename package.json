@@ -9,10 +9,10 @@
     "astro": "bunx --bun astro"
   },
   "dependencies": {
-    "@astrojs/solid-js": "^5.0.10",
-    "astro": "^5.7.10",
+    "@astrojs/solid-js": "5.1.0",
+    "astro": "5.10.1",
     "solid-app-router": "^0.4.2",
-    "solid-js": "^1.9.6",
+    "solid-js": "^1.9.7",
     "workingsystemfrontend": "file:"
   }
 }
