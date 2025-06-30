@@ -1,0 +1,60 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Navbar from '../components/Navbar.solid.jsx';
+import CalendarPage from '../components/CalendarPage.solid.tsx';
+---
+
+<Layout title="WorkNow - Calendar">
+  <Navbar client:load />
+  <main class="calendar-page">
+    <div class="calendar-container">
+      <h1>My Calendar</h1>
+      <CalendarPage client:load />
+    </div>
+    <a href="/post-job" class="floating-button" title="Add new job" aria-label="Add new job">＋</a>
+  </main>
+</Layout>
+
+<style>
+  .calendar-page {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    min-height: calc(100vh - var(--navbar-height));
+    padding: 2rem var(--padding-inline);
+    position: relative;
+  }
+
+  .calendar-container {
+    background-color: #fff;
+    padding: 2.5rem;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 800px;
+  }
+
+  .floating-button {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    width: 56px;
+    height: 56px;
+    background-color: #007bff;
+    color: white;
+    font-size: 2rem;
+    font-weight: bold;
+    text-align: center;
+    line-height: 56px;
+    border-radius: 50%;
+    text-decoration: none;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    transition: background-color 0.3s ease;
+    z-index: 999;
+    cursor: pointer;
+  }
+
+  .floating-button:hover {
+    background-color: #0056b3;
+  }
+</style>
