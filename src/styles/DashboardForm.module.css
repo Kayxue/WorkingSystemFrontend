@@ -129,3 +129,37 @@
   border: none;
   cursor: pointer;
 }
+
+.viewToggle {
+  display: flex;
+  width: 100%;
+  margin-bottom: 12px;
+  gap: 0;
+  user-select: none;
+}
+
+.viewButton {
+  flex: 1;
+  text-align: center;
+  padding: 10px 0;
+  font-weight: bold;
+  cursor: pointer;
+  border: none;
+  border-radius: 0;
+  background-color: #ddd;
+  transition: background-color 0.2s ease;
+  user-select: none;
+}
+
+.viewButton:hover {
+  background-color: #bbb;
+}
+
+.viewButton.active {
+  background-color: #0078d4;
+  color: white;
+}
+
+.viewButton:first-child {
+  border-right: 1px solid white;
+}

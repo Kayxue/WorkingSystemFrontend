@@ -162,6 +162,18 @@ export default function DashboardPage() {
 
   return (
     <div class={styles.dashboardContainer}>
+      <div class={styles.viewToggle}>
+        <button class={styles.viewButton}>Listings</button>
+        <button
+          class={styles.viewButton}
+          onClick={() => {
+            window.location.href = "/calendar";
+          }}
+        >
+          Calendar
+        </button>
+      </div>
+
       <Show when={jobOffers.loading}>
         <p class={styles.dashboardLoading}>Loading job postings...</p>
       </Show>
