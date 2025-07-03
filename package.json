@@ -6,11 +6,12 @@
     "dev": "bunx --bun astro dev",
     "build": "bunx --bun astro build",
     "preview": "bunx --bun astro preview",
-    "astro": "bunx --bun astro"
+    "astro": "bunx --bun astro",
+    "start": "bun run --bun ./dist/server/entry.mjs"
   },
   "dependencies": {
-    "@astrojs/node": "^9.2.2",
     "@astrojs/solid-js": "5.1.0",
+    "@nurodev/astro-bun": "^2.0.5",
     "astro": "5.10.1",
     "solid-app-router": "^0.4.2",
     "solid-js": "^1.9.7",
