@@ -1,0 +1,86 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title="WorkNow - 重新導向登入" showNavbar={false}>
+  <main class="redirect-login-page">
+    <div class="container">
+        <h1>需要登入才能繼續</h1>
+        <p>您好！為了提供您更安全的體驗和訪問特定內容，請登入您的帳戶。</p>
+        <div class="loading-spinner"></div>
+        <p>如果頁面沒有自動跳轉，請點擊下方的按鈕：</p>
+        <a href="/login" class="button" id="loginButton">前往登入頁面</a>
+        <p class="footer-note">您將在幾秒內被重新導向。</p>
+    </div>
+  </main>
+    <style>
+      .redirect-login-page {
+        font-family: 'Helvetica Neue', Arial, sans-serif;
+        background-color: #f0f2f5;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        margin: 0;
+        color: #333;     
+      }
+      .container {
+        background-color: #ffffff;
+        padding: 40px;
+        border-radius: 8px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        text-align: center;
+        max-width: 500px;
+        width: 90%;
+      }
+      h1 {
+        color: #2c3e50;
+        margin-bottom: 20px;
+        font-size: 2em;
+      }
+      p {
+        font-size: 1.1em;
+        line-height: 1.6;
+        margin-bottom: 25px;
+      }
+      .loading-spinner {
+        border: 4px solid rgba(0, 0, 0, 0.1);
+        border-top: 4px solid #007bff;
+        border-radius: 50%;
+        width: 30px;
+        height: 30px;
+        animation: spin 1s linear infinite;
+        margin: 20px auto;
+      }
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+      .button {
+        background-color: #007bff;
+        color: white;
+        padding: 12px 25px;
+        border: none;
+        border-radius: 5px;
+        font-size: 1em;
+        cursor: pointer;
+        text-decoration: none;
+        transition: background-color 0.3s ease;
+        display: inline-block;
+      }
+      .button:hover {
+        background-color: #0056b3;
+      }
+      .footer-note {
+        margin-top: 30px;
+        font-size: 0.9em;
+        color: #777;
+      }
+    </style>
+</Layout>
+
+<script>
+  setTimeout(() => {
+    window.location.href = '/login';
+  }, 3000); 
+</script>

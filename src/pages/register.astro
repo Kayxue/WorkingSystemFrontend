@@ -1,22 +1,32 @@
 ---
 // src/pages/register.astro
 import Layout from '../layouts/Layout.astro';
-import Navbar from '../components/Navbar.solid.jsx';
 import RegisterForm from '../components/RegisterForm.solid.tsx'; // 組件名稱不變，但內部已修改
+
+const user = Astro.locals.authData?.user;
+const isLoggedIn = Astro.locals?.authData?.loggedIn || false;
 ---
 
 <Layout title="WorkNow - 商家帳號註冊">
-  <Navbar client:load />
-  <main class="register-page">
-    <div class="register-container">
-      <h1>註冊成為 WorkNow 合作商家</h1>
-      <p class="sub-heading">填寫以下資料，即可開始發布職缺、管理您的招募流程。</p>
-      <RegisterForm client:load />
-      <p class="login-link">
-        已經是合作夥伴了？ <a href="/login">由此登入</a>
-      </p>
-    </div>
-  </main>
+  {isLoggedIn? (
+    <main class ="register-page">
+      <div class="register-container">
+        <h1>歡迎回來，{user.employerName}！</h1>
+        <p class="sub-heading">您已經是 WorkNow 的合作夥伴了。</p>
+      </div>
+    </main>
+  ) : (
+    <main class="register-page">
+      <div class="register-container">
+        <h1>註冊成為 WorkNow 合作商家</h1>
+        <p class="sub-heading">填寫以下資料，即可開始發布職缺、管理您的招募流程。</p>
+        <RegisterForm client:load />
+        <p class="login-link">
+          已經是合作夥伴了？ <a href="/login">由此登入</a>
+        </p>
+      </div>
+    </main>
+  )}
 </Layout>
 
 <style>

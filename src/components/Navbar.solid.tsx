@@ -1,6 +1,11 @@
-import { createSignal, onMount, Show } from 'solid-js';
+import { createResource, createSignal, Match, onMount, Show, Switch } from 'solid-js';
 
-function Navbar() {
+interface navBarProps {
+  loggedIn: boolean;
+  username: string | null;
+}
+
+function Navbar(props: navBarProps) {
   const styles = `
     nav {
       background-color: #fff;
@@ -44,32 +49,11 @@ function Navbar() {
       z-index: 10;
     }
   `;
-
-  const [user, setUser] = createSignal(null);
   const [dropdownOpen, setDropdownOpen] = createSignal(false);
-
-  onMount(async () => {
-    try {
-      const res = await fetch("http://localhost:3000/user/profile", {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          "platform": "web-employer",
-        },
-        credentials: "include",
-      });
-
-      if (res.ok) {
-        const data = await res.json();
-        setUser(data);
-      }
-    } catch {
-      setUser(null);
-    }
-  });
+  const { loggedIn, username } = props;
 
   const handleLogout = async () => {
-    await fetch("http://localhost:3000/user/logout", {
+    await fetch("/api/user/logout", {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
@@ -77,7 +61,6 @@ function Navbar() {
       },
       credentials: "include",
     });
-    setUser(null);
     window.location.href = "/";
   };
 
@@ -88,7 +71,7 @@ function Navbar() {
         <div class="brand">
           <a href="/">WorkNow</a>
         </div>
-        <Show when={user()} fallback={
+        <Show when={loggedIn} fallback={
           <div class="auth-buttons">
             <button class="register" onClick={() => window.location.href = '/register'}>註冊</button>
             <button onClick={() => window.location.href = '/login'}>登入</button>
@@ -96,7 +79,7 @@ function Navbar() {
         }>
           <div class="auth-buttons" style="position: relative;">
             <button onClick={() => setDropdownOpen(!dropdownOpen())}>
-              {user()?.branchName} ▼
+              {username} ▼
             </button>
             <Show when={dropdownOpen()}>
               <div class="dropdown">

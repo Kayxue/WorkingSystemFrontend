@@ -2,19 +2,30 @@
 import Layout from '../layouts/Layout.astro';
 import Navbar from '../components/Navbar.solid.jsx';
 import LoginForm from '../components/LoginForm.solid.tsx';
+
+const user = Astro.locals.authData?.user;
+const isLoggedIn = Astro.locals?.authData?.loggedIn;
 ---
 
 <Layout title="WorkNow - 登入">
-  <Navbar client:load />
-  <main class="login-page">
-    <div class="login-container">
-      <h1>登入 WorkNow</h1>
-      <LoginForm client:load />
-      <p class="register-link">
-        還沒有帳號嗎？ <a href="/register">立即註冊</a>
-      </p>
-    </div>
-  </main>
+  {isLoggedIn ? (
+    <main class="login-page">
+      <div class="login-container">
+        <h1>歡迎回來，{user.employerName}！</h1>
+        <p>您已經登入了。</p>
+      </div>
+    </main>
+  ) : (
+    <main class="login-page">
+      <div class="login-container">
+        <h1>登入 WorkNow</h1>
+        <LoginForm client:load />
+        <p class="register-link">
+          還沒有帳號嗎？ <a href="/register">立即註冊</a>
+        </p>
+      </div>
+    </main> 
+  )}
 </Layout>
 
 

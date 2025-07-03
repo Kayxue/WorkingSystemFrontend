@@ -1,9 +1,15 @@
 ---
+import Navbar from '../components/Navbar.solid.jsx';
 export interface Props {
 	title: string;
+	showNavbar?: boolean;
 }
 
-const { title } = Astro.props;
+// Default showNavbar to true if not provided
+const { title , showNavbar = true } = Astro.props;
+
+const user = Astro.locals.authData?.user;
+const isLoggedIn = Astro.locals?.authData?.loggedIn || false;
 ---
 
 <!doctype html>
@@ -36,6 +42,24 @@ const { title } = Astro.props;
 		</style>
 	</head>
 	<body>
-		<slot />
+		{isLoggedIn ? (
+			<div>
+				{showNavbar ? (
+					<Navbar loggedIn={isLoggedIn} username={user?.employerName} client:load />
+				) : (
+					null
+				)}
+			</div>
+			<slot/>
+		) : (
+			<div>
+				{showNavbar ? (
+					<Navbar loggedIn={isLoggedIn} username={user?.employerName} client:load />
+				) : (
+					null
+				)}
+			</div>
+			<slot/>
+		)}
 	</body>
 </html>

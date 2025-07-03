@@ -1,38 +1,95 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import Navbar from '../components/Navbar.solid.jsx';
 import IndexForm from '../components/IndexForm.solid.tsx';
+
+const isLoggedIn = Astro.locals?.authData?.loggedIn;
 ---
 
 <Layout title="WorkNow - 企業彈性人力解決方案">
-  <Navbar client:load />
-  <IndexForm client:load />
+	<main>
+		<section class="hero">
+			<div class="container">
+				<h1>WorkNow - 您的即時企業人力夥伴</h1>
+				<p>專為商家與企業設計，快速媒合彈性工讀生與兼職人員。</p>
+				<p>輕鬆發布短期職缺，高效管理人力需求，解決您的即時人力缺口。</p>
+				{isLoggedIn ? (
+					<div class="cta-buttons">
+						<a href="/dashboard" class="btn btn-primary">職缺列表</a>
+						<a href="/post-job" class="btn btn-secondary">發表職缺</a>
+					</div>
+				) : (
+					<div class="cta-buttons">
+						<a href="/register" class="btn btn-primary">企業註冊</a>
+						<a href="/login" class="btn btn-secondary">企業登入</a>
+					</div>
+				)}
+			</div>
+		</section>
 
-  <main>
-    <section class="introduction">
-      <div class="container">
-        <h2>為您的企業注入彈性動力</h2>
-        <p>
-          在快速變遷的市場中，企業對彈性人力的需求日益增加。WorkNow 致力於提供一個高效、可靠的平台，
-          讓商家與企業能夠迅速找到符合需求的短期或兼職人才。無論是應對季節性高峰、臨時專案，
-          還是填補短期人力空缺，WorkNow 都能助您一臂之力。我們簡化招聘流程，讓您專注於核心業務發展。
-        </p>
-      </div>
-    </section>
-  </main>
-
-  <footer>
-    <div class="container">
-      <p>&copy; {new Date().getFullYear()} WorkNow. 保留所有權利。</p>
-    </div>
-  </footer>
+		<section class="introduction">
+			<div class="container">
+				<h2>為您的企業注入彈性動力</h2>
+				<p>
+					在快速變遷的市場中，企業對彈性人力的需求日益增加。WorkNow 致力於提供一個高效、可靠的平台，
+					讓商家與企業能夠迅速找到符合需求的短期或兼職人才。無論是應對季節性高峰、臨時專案，
+					還是填補短期人力空缺，WorkNow 都能助您一臂之力。我們簡化招聘流程，讓您專注於核心業務發展。
+				</p>
+			</div>
+		</section>
+	</main>
+	<footer>
+		<div class="container">
+			<p>&copy; {new Date().getFullYear()} WorkNow. 保留所有權利。</p>
+		</div>
+	</footer>
 </Layout>
 
 <style>
 	main {
 		padding-top: 2rem; /* Adjusted for navbar height if navbar is fixed, otherwise can be less or removed */
 	}
-	
+	.hero {
+		background-color: #e9ecef;
+		padding: 4rem var(--padding-inline);
+		text-align: center;
+		margin-bottom: 2rem;
+	}
+	.hero h1 {
+		font-size: 2.8rem;
+		margin-bottom: 0.5rem;
+		color: #333;
+	}
+	.hero p {
+		font-size: 1.2rem;
+		color: #555;
+		margin-bottom: 1.5rem;
+	}
+
+	.cta-buttons .btn {
+		padding: 0.75rem 1.5rem;
+		text-decoration: none;
+		border-radius: 5px;
+		font-size: 1rem;
+		margin: 0 0.5rem;
+		transition: background-color 0.3s ease;
+	}
+	.btn-primary {
+		background-color: #007bff;
+		color: white;
+		border: 1px solid #007bff;
+	}
+	.btn-primary:hover {
+		background-color: #0056b3;
+	}
+	.btn-secondary {
+		background-color: #6c757d;
+		color: white;
+		border: 1px solid #6c757d;
+	}
+	.btn-secondary:hover {
+		background-color: #545b62;
+	}
+
 	.introduction {
 		padding: 2rem var(--padding-inline);
 		background-color: #ffffff;
