@@ -21,13 +21,12 @@ export default function LoginForm() {
     }
 
     try {
-      const response = await fetch("http://localhost:3000/user/login", {
+      const response = await fetch("/api/user/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "platform": "web-employer",
+          "platform": "web-employer"
         },
-        credentials: "include",
         body: JSON.stringify({
           email: email(),
           password: password(),

@@ -92,7 +92,7 @@ export default function RegisterForm() {
 
     try {
       // 根據您的後端調整 API 端點
-      const response = await fetch("http://localhost:3000/user/register/business", {
+      const response = await fetch("/api/user/register/business", {
         method: "POST",
         headers: {
           // "Content-Type": "multipart/form-data" 會由瀏覽器自動設定

@@ -24,11 +24,9 @@ type JobOffer = {
 };
 
 async function fetchJobOffers(year: number, month: number): Promise<JobOffer[]> {
-  const url = new URL("http://localhost:3000/gig/employer/calendar");
-  url.searchParams.set("year", year.toString());
-  url.searchParams.set("month", (month + 1).toString());
+  const url = "/api/gig/my-gigs?year=" + year + "&month=" + (month + 1);
 
-  const response = await fetch(url.toString(), {
+  const response = await fetch(url, {
     method: "GET",
     headers: {
       "Content-Type": "application/json",

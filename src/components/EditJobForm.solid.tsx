@@ -36,7 +36,7 @@ export default function EditJobForm() {
     setIsFetching(true);
     setError("");
     try {
-      const res = await fetch(`http://localhost:3000/gig/${gigId()}`, {
+      const res = await fetch(`/api/gig/${gigId()}`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",

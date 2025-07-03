@@ -23,7 +23,7 @@ export default function PostJobForm() {
 
 onMount(async () => {
   try {
-    const res = await fetch("http://localhost:3000/user/profile", {
+    const res = await fetch("api/user/profile", {
       method: "GET",
       headers: {
         "Content-Type": "application/json",

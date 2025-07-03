@@ -22,7 +22,7 @@ type JobOffer = {
 };
 
 async function fetchJobOffers():Promise<JobOffer[]> {
-  const response = await fetch("http://localhost:3000/gig/my-gigs", {
+  const response = await fetch("/api/gig/my-gigs", {
     method: "GET",
     headers: {
       "Content-Type": "application/json",
