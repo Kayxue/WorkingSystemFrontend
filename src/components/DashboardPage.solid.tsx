@@ -43,7 +43,7 @@ async function fetchJobOffers():Promise<JobOffer[]> {
 }
 
 async function fetchGigDetails(gigId: string): Promise<JobOffer> {
-  const response = await fetch(`http://localhost:3000/gig/${gigId}`, {
+  const response = await fetch(`/api/gig/${gigId}`, {
     method: "GET",
     headers: {
       "Content-Type": "application/json",
