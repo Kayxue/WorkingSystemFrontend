@@ -102,7 +102,7 @@ export default function DashboardPage() {
     if (!confirmed) return;
 
     try {
-      const res = await fetch(`http://localhost:3000/gig/${gigId}`, {
+      const res = await fetch(`/api/gig/${gigId}`, {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
@@ -130,7 +130,7 @@ export default function DashboardPage() {
 
   async function handleToggleStatus(gigId: string) {
     try {
-      const res = await fetch(`http://localhost:3000/gig/${gigId}/toggle-status`, {
+      const res = await fetch(`/api/gig/${gigId}/toggle-status`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",

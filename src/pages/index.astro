@@ -1,114 +1,160 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import IndexForm from '../components/IndexForm.solid.tsx';
 
 const isLoggedIn = Astro.locals?.authData?.loggedIn;
+const currentYear = new Date().getFullYear();
 ---
 
 <Layout title="WorkNow - 企業彈性人力解決方案">
-	<main>
-		<section class="hero">
+	<div class="main-container">
+		<main>
+			<section class="hero-section">
+				<div class="container">
+					<h1>WorkNow - 您的即時企業人力夥伴</h1>
+					<p>專為商家與企業設計，快速媒合彈性工讀生與兼職人員。</p>
+					<p>輕鬆發布短期職缺，高效管理人力需求，解決您的即時人力缺口。</p>
+					{isLoggedIn ? (
+						<div class="cta-buttons">
+							<a href="/dashboard" class="btn btn-primary">職缺列表</a>
+							<a href="/post-job" class="btn btn-secondary">發表職缺</a>
+						</div>
+					) : (
+						<div class="cta-buttons">
+							<a href="/register" class="btn btn-primary">企業註冊</a>
+							<a href="/login" class="btn btn-secondary">企業登入</a>
+						</div>
+					)}
+				</div>
+			</section>
+		</main>
+		<footer class="main-footer">
 			<div class="container">
-				<h1>WorkNow - 您的即時企業人力夥伴</h1>
-				<p>專為商家與企業設計，快速媒合彈性工讀生與兼職人員。</p>
-				<p>輕鬆發布短期職缺，高效管理人力需求，解決您的即時人力缺口。</p>
-				{isLoggedIn ? (
-					<div class="cta-buttons">
-						<a href="/dashboard" class="btn btn-primary">職缺列表</a>
-						<a href="/post-job" class="btn btn-secondary">發表職缺</a>
-					</div>
-				) : (
-					<div class="cta-buttons">
-						<a href="/register" class="btn btn-primary">企業註冊</a>
-						<a href="/login" class="btn btn-secondary">企業登入</a>
-					</div>
-				)}
+				<p>&copy; {currentYear} WorkNow. 保留所有權利。</p>
 			</div>
-		</section>
-
-		<section class="introduction">
-			<div class="container">
-				<h2>為您的企業注入彈性動力</h2>
-				<p>
-					在快速變遷的市場中，企業對彈性人力的需求日益增加。WorkNow 致力於提供一個高效、可靠的平台，
-					讓商家與企業能夠迅速找到符合需求的短期或兼職人才。無論是應對季節性高峰、臨時專案，
-					還是填補短期人力空缺，WorkNow 都能助您一臂之力。我們簡化招聘流程，讓您專注於核心業務發展。
-				</p>
-			</div>
-		</section>
-	</main>
-	<footer>
-		<div class="container">
-			<p>&copy; {new Date().getFullYear()} WorkNow. 保留所有權利。</p>
-		</div>
-	</footer>
+		</footer>
+	</div>
 </Layout>
 
 <style>
+	.main-container {
+		display: flex;
+		flex-direction: column;
+		min-height: 100vh; /* Ensures the main container takes full height */
+	}
+	
 	main {
-		padding-top: 2rem; /* Adjusted for navbar height if navbar is fixed, otherwise can be less or removed */
+		padding-top: var(--spacing-lg); /* Space for potential fixed header, adjust if needed */
+		padding-bottom: var(--spacing-lg); /* Space for footer */
+		flex:1;
 	}
-	.hero {
-		background-color: #e9ecef;
-		padding: 4rem var(--padding-inline);
+
+	/* --- Hero Section --- */
+	.hero-section {
+		/* background-color: var(--color-background-light); */
+		padding: var(--spacing-xl) var(--spacing-md);
 		text-align: center;
-		margin-bottom: 2rem;
+		margin-bottom: var(--spacing-lg);
+		border-radius: 8px; /* Slightly rounded corners */
 	}
-	.hero h1 {
-		font-size: 2.8rem;
-		margin-bottom: 0.5rem;
-		color: #333;
+
+	.hero-section h1 {
+		font-size: var(--font-size-h1);
+		margin-bottom: var(--spacing-sm);
+		color: var(--color-text-dark);
+		line-height: 1.2;
 	}
-	.hero p {
-		font-size: 1.2rem;
-		color: #555;
-		margin-bottom: 1.5rem;
+
+	.hero-section p {
+		font-size: var(--font-size-p);
+		color: var(--color-text-medium);
+		margin-bottom: var(--spacing-md);
+	}
+
+	/* --- CTA Buttons --- */
+	.cta-buttons {
+		display: flex;
+		justify-content: center;
+		gap: var(--spacing-md); /* Space between buttons */
+		flex-wrap: wrap; /* Allows buttons to wrap to a new line if absolutely necessary, but maintains row direction */
+		/* Important: Remove or comment out flex-direction: column from here if it was present */
 	}
 
 	.cta-buttons .btn {
-		padding: 0.75rem 1.5rem;
+		display: inline-block;
+		padding: 0.75rem 1.75rem;
 		text-decoration: none;
-		border-radius: 5px;
-		font-size: 1rem;
-		margin: 0 0.5rem;
-		transition: background-color 0.3s ease;
+		border-radius: 25px;
+		font-size: var(--font-size-base);
+		font-weight: bold;
+		transition: all 0.3s ease;
+		white-space: nowrap; /* Prevents button text from wrapping */
+		/* Important: Remove or comment out width: 100% from here if it was present */
 	}
+
 	.btn-primary {
-		background-color: #007bff;
+		background-color: var(--color-primary);
 		color: white;
-		border: 1px solid #007bff;
+		border: 1px solid var(--color-primary);
 	}
+
 	.btn-primary:hover {
-		background-color: #0056b3;
+		background-color: var(--color-primary-dark);
+		border-color: var(--color-primary-dark);
+		transform: translateY(-2px); /* Subtle lift effect */
+		box-shadow: 0 4px 8px rgba(0, 123, 255, 0.2); /* Soft shadow on hover */
 	}
+
 	.btn-secondary {
-		background-color: #6c757d;
+		background-color: var(--color-secondary);
 		color: white;
-		border: 1px solid #6c757d;
+		border: 1px solid var(--color-secondary);
 	}
+
 	.btn-secondary:hover {
-		background-color: #545b62;
+		background-color: var(--color-secondary-dark);
+		border-color: var(--color-secondary-dark);
+		transform: translateY(-2px);
+		box-shadow: 0 4px 8px rgba(108, 117, 125, 0.2);
 	}
 
-	.introduction {
-		padding: 2rem var(--padding-inline);
-		background-color: #ffffff;
-		text-align: left;
-		line-height: 1.6;
-	}
-
-	.introduction h2 {
-		font-size: 2rem;
-		color: #007bff;
-		margin-bottom: 1rem;
-		text-align: center;
-	}
-
-	footer {
-		background-color: #343a40;
+	/* --- Footer --- */
+	.main-footer {
+		background-color: var(--color-footer-bg);
 		color: white;
 		text-align: center;
-		padding: 1.5rem var(--padding-inline);
-		margin-top: 2rem;
+		padding: var(--spacing-lg) var(--spacing-lg);
+	}
+
+	.main-footer p {
+		margin: 0; /* Remove default paragraph margin */
+		font-size: 0.9rem;
+	}
+
+	/* --- Responsive Adjustments --- */
+	@media (max-width: 768px) {
+		:root {
+			--font-size-h1: 2.2rem;
+			--font-size-h2: 1.8rem;
+			--font-size-p: 1rem;
+		}
+
+		.hero-section {
+			padding: var(--spacing-lg) var(--spacing-md);
+		}
+
+		.cta-buttons {
+			gap: var(--spacing-sm);
+		}
+
+		.cta-buttons .btn {
+			min-width: 120px;
+		}
+	}
+
+	@media (max-width: 480px) {
+		:root {
+			--font-size-h1: 1.8rem;
+			--font-size-h2: 1.6rem;
+		}
 	}
 </style>

@@ -23,21 +23,40 @@ const isLoggedIn = Astro.locals?.authData?.loggedIn || false;
 		<title>{title}</title>
 		<style>
 			:root {
-				--font-sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
-				--navbar-height: 60px;
+				--color-primary: #007bff;
+				--color-primary-dark: #0056b3;
+				--color-secondary: #6c757d;
+				--color-secondary-dark: #545b62;
+				--color-text-dark: #333;
+				--color-text-medium: #555;
+				--color-background-light: #e9ecef;
+				--color-background-white: #ffffff;
+				--color-footer-bg: #343a40;
+
+				--spacing-sm: 0.5rem;
+				--spacing-md: 1.5rem;
+				--spacing-lg: 2rem;
+				--spacing-xl: 4rem;
+
+				--font-size-h1: 2.8rem;
+				--font-size-h2: 2rem;
+				--font-size-p: 1.2rem;
+				--font-size-base: 1rem;
+
+				--navbar-height: 70px;
 				--padding-inline: 1rem;
 			}
 			body {
-				font-family: var(--font-sans);
+				font-family: 'Helvetica Neue', Arial, sans-serif; /* A more modern sans-serif font */
+				line-height: 1.6;
+				color: var(--color-text-dark);
 				margin: 0;
 				padding: 0;
-				background-color: #f4f4f4;
-				color: #333;
 			}
 			.container {
-				max-width: 1200px;
-				margin-inline: auto;
-				padding-inline: var(--padding-inline);
+				max-width: 1200px; /* Max width for content */
+				margin: 0 auto; /* Center the container */
+				padding: 0 var(--spacing-md); /* Consistent horizontal padding */
 			}
 		</style>
 	</head>
@@ -45,7 +64,7 @@ const isLoggedIn = Astro.locals?.authData?.loggedIn || false;
 		{isLoggedIn ? (
 			<div>
 				{showNavbar ? (
-					<Navbar loggedIn={isLoggedIn} username={user?.employerName} client:load />
+					<Navbar loggedIn={isLoggedIn} username={user?.employerName} employerPhotoUrl={user?.employerPhoto.url} client:load />
 				) : (
 					null
 				)}
@@ -54,7 +73,7 @@ const isLoggedIn = Astro.locals?.authData?.loggedIn || false;
 		) : (
 			<div>
 				{showNavbar ? (
-					<Navbar loggedIn={isLoggedIn} username={user?.employerName} client:load />
+					<Navbar loggedIn={isLoggedIn} username={user?.employerName} employerPhotoUrl={user?.employerPhoto.url} client:load />
 				) : (
 					null
 				)}
