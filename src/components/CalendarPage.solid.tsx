@@ -23,29 +23,6 @@ type JobOffer = {
   isActive?: boolean;
 };
 
-async function fetchJobOffers(year: number, month: number): Promise<JobOffer[]> {
-  const url = "/api/gig/my-gigs?year=" + year + "&month=" + (month + 1);
-
-  const response = await fetch(url, {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-      platform: "web-employer",
-    },
-    credentials: "include",
-  });
-
-  if (!response.ok) {
-    const text = await response.text();
-    console.error("Error status:", response.status);
-    console.error("Error body:", text);
-    throw new Error("Failed to fetch job offers");
-  }
-
-  const data = await response.json();
-  return data.gigs;
-}
-
 function generateDates(year: number, month: number) {
   const date = new Date(year, month, 1);
   const dates = [];
@@ -75,12 +52,34 @@ export default function CalendarPage() {
   const [month, setMonth] = createSignal(today.getMonth());
   const [gigMap, setGigMap] = createSignal<Record<number, JobOffer[]>>({});
   const [selectedDay, setSelectedDay] = createSignal<number | null>(null);
+  const [gigCount, setGigCount] = createSignal<number | null>(null);
 
   async function loadAndGroupGigs(y: number, m: number) {
     try {
       setGigMap({});
+      setGigCount(null);
 
-      const allGigs = await fetchJobOffers(y, m);
+      const url = "/api/gig/my-gigs?year=" + y + "&month=" + (m + 1);
+      const response = await fetch(url, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          platform: "web-employer",
+        },
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        const text = await response.text();
+        console.error("Error status:", response.status);
+        console.error("Error body:", text);
+        throw new Error("Failed to fetch job offers");
+      }
+
+      const data = await response.json();
+
+      const allGigs: JobOffer[] = data.gigs;
+      const count: number = data.count ?? 0;
       const grouped: Record<number, JobOffer[]> = {};
 
       for (const gig of allGigs) {
@@ -100,8 +99,8 @@ export default function CalendarPage() {
           current.setDate(current.getDate() + 1);
         }
       }
-
       setGigMap(grouped);
+      setGigCount(count);
     } catch (err) {
       console.error("Failed to load gigs:", err);
     }
@@ -111,6 +110,12 @@ export default function CalendarPage() {
     const y = year();
     const m = month();
     loadAndGroupGigs(y, m);
+    const now = new Date();
+    if (y === now.getFullYear() && m === now.getMonth()) {
+      setSelectedDay(now.getDate());
+    } else {
+      setSelectedDay(null);
+    }
   });
 
   const dates = createMemo(() => generateDates(year(), month()));
@@ -131,7 +136,9 @@ export default function CalendarPage() {
         >
           Listings
         </button>
-        <button class={styles.viewButton}>Calendar</button>
+        <button class={`${styles.viewButton} ${styles.active}`}>
+          Calendar
+        </button>
       </div>
 
       <div class={styles.header}>
@@ -158,7 +165,7 @@ export default function CalendarPage() {
               const now = new Date();
               setYear(now.getFullYear());
               setMonth(now.getMonth());
-              setSelectedDay(null);
+              setSelectedDay(now.getDate());
             }}
           >
             Today
@@ -219,44 +226,61 @@ export default function CalendarPage() {
         </button>
       </div>
 
-      <Show when={Object.keys(gigMap()).length}>
-        <div class={styles.grid}>
-          <For each={days}>{(day) => <div class={styles.dayHeader}>{day}</div>}</For>
-          <For each={dates()}>
-            {(day) => {
-              const y = year();
-              const m = month();
-              const gigsToday = typeof day === "number" ? gigMap()[day]?.length ?? 0 : 0;
+      <Show when={gigCount()!==null}>
+        <div class={styles.gridWrapper}>
+          <div class={styles.grid}>
+            <For each={days}>{(day) => <div class={styles.dayHeader}>{day}</div>}</For>
+            <For each={dates()}>
+              {(day) => {
+                const y = year();
+                const m = month();
+                const gigsToday = typeof day === "number" ? gigMap()[day]?.length ?? 0 : 0;
 
-              return (
-                <div
-                  class={`${styles.day} ${day === null ? styles.emptyDay : ""} ${
-                    selectedDay() === day ? styles.selectedDay : ""
-                  }`}
-                  onClick={() => day !== null && setSelectedDay(day)}
-                  style={{ cursor: day !== null ? "pointer" : "default" }}
-                >
-                  {day !== null ? (
-                    <>
-                      <span class={isToday(y, m, day) ? styles.today : ""}>{day}</span>
-                      <div class={styles.gigCount}>{gigsToday} work(s)</div>
-                    </>
-                  ) : (
-                    ""
-                  )}
-                </div>
-              );
-            }}
-          </For>
+                return (
+                  <div
+                    classList={{
+                      [styles.day]: true,
+                      [styles.emptyDay]: day === null,
+                      [styles.selectedDay]: day !== null && selectedDay() === day
+                    }}
+                    onClick={() => day !== null && setSelectedDay(day)}
+                    style={{ cursor: day !== null ? "pointer" : "default" }}
+                  >
+                    {day !== null ? (
+                      <>
+                        <span
+                          classList={{
+                            [styles.today]: isToday(y, m, day),
+                            [styles.selectedDayRing]: selectedDay() === day,
+                          }}
+                        >
+                          {day}
+                        </span>
+                        <div class={styles.gigCount}>
+                          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="#55b6f2" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                            <rect x="2" y="7" width="20" height="14" rx="2" ry="2" />
+                            <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2" />
+                            <path d="M2 13h20" />
+                          </svg> {gigsToday}
+                        </div>
+                      </>
+                    ) : (
+                      ""
+                    )}
+                  </div>
+                );
+              }}
+            </For>
+          </div>
         </div>
       </Show>
-    
+
       <Show when={selectedDay() !== null}>
         <div class={styles.selectedGigs}>
           <h3>
-            Jobs on {year()}-{(month() + 1).toString().padStart(2, "0")}-{
-              selectedDay()!.toString().padStart(2, "0")
-            }<br />
+            Jobs on {year()}-{(month() + 1).toString().padStart(2, "0")}-
+            {selectedDay()!.toString().padStart(2, "0")}<br />
             {selectedGigs().length} work(s)
           </h3>
           <ul>
