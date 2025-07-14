@@ -1,10 +1,20 @@
-export async function ALL({ request, params }) {
-  const { path } = params;
-  const body = request.body ? await request.text() : undefined;
-  const target = `http://localhost:3000/${path}`;
-  console.log(`Proxying request to: ${target}`);
+export async function ALL({ request, params}) {
+  const originalUrl = new URL(request.url);
+  const path = params.path;
 
-  const backendRes = await fetch(target, {
+  // 保留完整 path 部分
+  const pathStr = Array.isArray(path) ? path.join('/') : path;
+
+  // 組合完整目標 URL（保留 search query）
+  const targetUrl = new URL(`http://localhost:3000/${pathStr}`);
+  targetUrl.search = originalUrl.search;
+
+  // 取得 request body
+  const body = request.body ? await request.text() : undefined;
+
+  console.log(`Proxying to: ${targetUrl.href}`);
+
+  const backendRes = await fetch(targetUrl.href, {
     method: request.method,
     headers: {
       ...Object.fromEntries(request.headers.entries()),
