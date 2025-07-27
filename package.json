@@ -12,10 +12,12 @@
   "dependencies": {
     "@astrojs/solid-js": "5.1.0",
     "@nurodev/astro-bun": "^2.0.5",
+    "@tailwindcss/vite": "^4.1.11",
     "astro": "5.10.1",
     "kleur": "^4.1.5",
     "solid-app-router": "^0.4.2",
     "solid-js": "^1.9.7",
+    "tailwindcss": "^4.1.11",
     "workingsystemfrontend": "file:"
   }
 }

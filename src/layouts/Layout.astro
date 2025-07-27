@@ -1,5 +1,6 @@
 ---
 import Navbar from '../components/Navbar.solid.jsx';
+import "../styles/global.css";
 export interface Props {
 	title: string;
 	showNavbar?: boolean;
@@ -52,11 +53,6 @@ const isLoggedIn = Astro.locals?.authData?.loggedIn || false;
 				color: var(--color-text-dark);
 				margin: 0;
 				padding: 0;
-			}
-			.container {
-				max-width: 1200px; /* Max width for content */
-				margin: 0 auto; /* Center the container */
-				padding: 0 var(--spacing-md); /* Consistent horizontal padding */
 			}
 		</style>
 	</head>
