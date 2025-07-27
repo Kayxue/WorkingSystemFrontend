@@ -9,7 +9,7 @@ export interface Props {
 // Default showNavbar to true if not provided
 const { title , showNavbar = true } = Astro.props;
 
-const user = Astro.locals.authData?.user;
+const user = Astro.locals?.authData?.user;
 const isLoggedIn = Astro.locals?.authData?.loggedIn || false;
 ---
 
@@ -18,63 +18,30 @@ const isLoggedIn = Astro.locals?.authData?.loggedIn || false;
 	<head>
 		<meta charset="UTF-8" />
 		<meta name="description" content="WorkNow - 彈性打工即時媒合平台" />
-		<meta name="viewport" content="width=device-width" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 		<meta name="generator" content={Astro.generator} />
 		<title>{title}</title>
-		<style>
-			:root {
-				--color-primary: #007bff;
-				--color-primary-dark: #0056b3;
-				--color-secondary: #6c757d;
-				--color-secondary-dark: #545b62;
-				--color-text-dark: #333;
-				--color-text-medium: #555;
-				--color-background-light: #e9ecef;
-				--color-background-white: #ffffff;
-				--color-footer-bg: #343a40;
-
-				--spacing-sm: 0.5rem;
-				--spacing-md: 1.5rem;
-				--spacing-lg: 2rem;
-				--spacing-xl: 4rem;
-
-				--font-size-h1: 2.8rem;
-				--font-size-h2: 2rem;
-				--font-size-p: 1.2rem;
-				--font-size-base: 1rem;
-
-				--navbar-height: 70px;
-				--padding-inline: 1rem;
-			}
-			body {
-				font-family: 'Helvetica Neue', Arial, sans-serif; /* A more modern sans-serif font */
-				line-height: 1.6;
-				color: var(--color-text-dark);
-				margin: 0;
-				padding: 0;
-			}
-		</style>
 	</head>
-	<body>
+	<body class="font-sans text-gray-800 bg-white m-0 p-0 min-h-screen text-base md:text-lg">
 		{isLoggedIn ? (
-			<div>
+			<div class="w-full">
 				{showNavbar ? (
-					<Navbar loggedIn={isLoggedIn} username={user?.employerName} employerPhotoUrl={user?.employerPhoto.url} client:load />
+					<Navbar loggedIn={isLoggedIn} username={user?.employerName} employerPhotoUrl={user?.employerPhoto?.url} client:load />
 				) : (
 					null
 				)}
 			</div>
-			<slot/>
+			<slot />
 		) : (
-			<div>
+			<div class="w-full">
 				{showNavbar ? (
-					<Navbar loggedIn={isLoggedIn} username={user?.employerName} employerPhotoUrl={user?.employerPhoto.url} client:load />
+					<Navbar loggedIn={isLoggedIn} username={user?.employerName} employerPhotoUrl={user?.employerPhoto?.url} client:load />
 				) : (
 					null
 				)}
 			</div>
-			<slot/>
+			<slot />
 		)}
 	</body>
 </html>
