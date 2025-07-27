@@ -49,7 +49,7 @@ function Navbar(props: navBarProps) {
               --padding-inline: 1.5rem; /* Horizontal padding for container */
           }
 
-          nav {
+          .top-navbar {
             background-color: var(--color-background-white);
             padding: 0 var(--padding-inline);
             height: var(--navbar-height);
@@ -210,7 +210,7 @@ function Navbar(props: navBarProps) {
           }
         `}
       </style>
-      <nav>
+      <nav class="top-navbar">
         <div class="brand">
           <a href="/">WorkNow</a>
         </div>
@@ -229,6 +229,7 @@ function Navbar(props: navBarProps) {
               {username} <span style="font-size: 0.7em;">▼</span>
             </button>
             <div classList={{ 'dropdown-menu': true, 'open': dropdownOpen() }}>
+              <button onClick={() => window.location.href = '/account-settings'}>個人資料</button>
               <button onClick={handleLogout}>登出</button>
             </div>
           </div>

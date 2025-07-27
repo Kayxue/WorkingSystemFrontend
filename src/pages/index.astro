@@ -9,7 +9,7 @@ const currentYear = new Date().getFullYear();
 	<div class="main-container">
 		<main>
 			<section class="hero-section">
-				<div class="container">
+				<div>
 					<h1>WorkNow - 您的即時企業人力夥伴</h1>
 					<p>專為商家與企業設計，快速媒合彈性工讀生與兼職人員。</p>
 					<p>輕鬆發布短期職缺，高效管理人力需求，解決您的即時人力缺口。</p>
@@ -28,7 +28,7 @@ const currentYear = new Date().getFullYear();
 			</section>
 		</main>
 		<footer class="main-footer">
-			<div class="container">
+			<div>
 				<p>&copy; {currentYear} WorkNow. 保留所有權利。</p>
 			</div>
 		</footer>
@@ -40,6 +40,8 @@ const currentYear = new Date().getFullYear();
 		display: flex;
 		flex-direction: column;
 		min-height: 100vh; /* Ensures the main container takes full height */
+		justify-content: center;
+		align-items: center;
 	}
 	
 	main {
@@ -123,6 +125,7 @@ const currentYear = new Date().getFullYear();
 		color: white;
 		text-align: center;
 		padding: var(--spacing-lg) var(--spacing-lg);
+		width: 99vw;
 	}
 
 	.main-footer p {
