@@ -1,33 +1,31 @@
-export async function ALL({ request, params}) {
+export async function ALL({ request, params }) {
   const originalUrl = new URL(request.url);
   const path = params.path;
 
-  // 保留完整 path 部分
   const pathStr = Array.isArray(path) ? path.join('/') : path;
 
-  // 組合完整目標 URL（保留 search query）
   const targetUrl = new URL(`http://localhost:3000/${pathStr}`);
   targetUrl.search = originalUrl.search;
 
-  // 取得 request body
-  const body = request.body ? await request.text() : undefined;
-
   console.log(`Proxying to: ${targetUrl.href}`);
 
-  const backendRes = await fetch(targetUrl.href, {
-    method: request.method,
-    headers: {
-      ...Object.fromEntries(request.headers.entries()),
-    },
-    body: ['GET', 'HEAD'].includes(request.method!) ? undefined : body,
-    credentials: 'include',
-  });
+  const requestHeaders = new Headers(request.headers);
 
-  const result = await backendRes.text();
-  return new Response(result, {
+  const requestOptions = {
+    method: request.method,
+    headers: requestHeaders,
+    credentials: 'include',
+  };
+
+  if (!['GET', 'HEAD'].includes(request.method!)) {
+    requestOptions.body = request.body;
+  }
+
+  const backendRes = await fetch(targetUrl.href, requestOptions);
+
+  return new Response(backendRes.body, {
     status: backendRes.status,
-    headers: {
-      ...Object.fromEntries(backendRes.headers.entries()),
-    },
+    headers: backendRes.headers,
+    statusText: backendRes.statusText,
   });
 }
