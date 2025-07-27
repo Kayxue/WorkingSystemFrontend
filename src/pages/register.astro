@@ -5,77 +5,32 @@ import RegisterForm from '../components/RegisterForm.solid.tsx'; // 組件名稱
 
 const user = Astro.locals.authData?.user;
 const isLoggedIn = Astro.locals?.authData?.loggedIn || false;
+const currentYear = new Date().getFullYear();
 ---
 
 <Layout title="WorkNow - 商家帳號註冊">
   {isLoggedIn? (
-    <main class ="register-page">
-      <div class="register-container">
-        <h1>歡迎回來，{user.employerName}！</h1>
-        <p class="sub-heading">您已經是 WorkNow 的合作夥伴了。</p>
+    <main class="flex justify-center items-start min-h-[calc(100vh-4.5rem-4.5rem)] py-8 px-2 sm:px-4 bg-gray-50">
+      <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-2xl text-center mb-12">
+        <h1 class="mb-4 text-gray-800 text-2xl font-bold">歡迎回來，{user.employerName}！</h1>
+        <p class="text-gray-600 text-base">您已經是 WorkNow 的合作夥伴了。</p>
       </div>
     </main>
   ) : (
-    <main class="register-page">
-      <div class="register-container">
-        <h1>註冊成為 WorkNow 合作商家</h1>
-        <p class="sub-heading">填寫以下資料，即可開始發布職缺、管理您的招募流程。</p>
+    <main class="flex justify-center items-start min-h-[calc(100vh-4.5rem-4.5rem)] py-8 px-2 sm:px-4 bg-gray-50">
+      <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-2xl text-center mb-12">
+        <h1 class="mb-3 text-gray-800 text-2xl font-bold">註冊成為 WorkNow 合作商家</h1>
+        <p class="mb-8 text-gray-600 text-base leading-relaxed">填寫以下資料，即可開始發布職缺、管理您的招募流程。</p>
         <RegisterForm client:load />
-        <p class="login-link">
-          已經是合作夥伴了？ <a href="/login">由此登入</a>
+        <p class="mt-8 text-sm text-gray-600">
+          已經是合作夥伴了？ <a href="/login" class="text-blue-700 hover:underline font-medium">由此登入</a>
         </p>
       </div>
     </main>
   )}
+  <footer class="bg-gray-800 text-white text-center py-6 w-full sm:py-8 text-xs sm:text-sm">
+    <div>
+      <p class="m-0">&copy; {currentYear} WorkNow. 保留所有權利。</p>
+    </div>
+  </footer>
 </Layout>
-
-<style>
-  .register-page {
-    display: flex;
-    justify-content: center;
-    align-items: flex-start; /* 改為 flex-start 讓表單較長時從頂部對齊 */
-    min-height: calc(100vh - var(--navbar-height, 60px)); /* 移除底部空間，讓頁面可以滾動 */
-    padding: 3rem var(--padding-inline, 1rem); /* 增加上下 padding */
-    background-color: #f8f9fa; /* 淺灰色背景 */
-  }
-
-  .register-container {
-    background-color: #fff;
-    padding: 2.5rem 3rem; /* 調整 padding */
-    border-radius: 10px; /* 更圓潤的邊角 */
-    box-shadow: 0 8px 16px rgba(0,0,0,0.08); /* 陰影調整 */
-    width: 100%;
-    max-width: 720px; /* 商家註冊表單可以更寬以容納更多欄位 */
-    text-align: center;
-    margin-bottom: 3rem; /* 底部留白 */
-  }
-
-  .register-container h1 {
-    margin-bottom: 1rem; 
-    color: #2d3748;
-    font-size: 2rem; /* 標題稍大 */
-  }
-
-  .sub-heading {
-    margin-bottom: 2.5rem; /* 副標題與表單間距 */
-    font-size: 1.05rem;
-    color: #5a677d;
-    line-height: 1.6;
-  }
-
-  .login-link {
-    margin-top: 2.5rem;
-    font-size: 0.95rem;
-    color: #495057;
-  }
-
-  .login-link a {
-    color: #0056b3; /* 主要行動色 */
-    text-decoration: none;
-    font-weight: 500;
-  }
-
-  .login-link a:hover {
-    text-decoration: underline;
-  }
-</style>

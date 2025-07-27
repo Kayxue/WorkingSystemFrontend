@@ -1,6 +1,5 @@
 // src/components/RegisterForm.solid.tsx
 import { createSignal, Show } from "solid-js";
-import styles from '../styles/RegisterForm.module.css';
 
 // 假設的產業類別選項
 const industryTypes = [
@@ -118,81 +117,81 @@ export default function RegisterForm() {
   };
 
   return (
-    <form class={styles.registerForm} onSubmit={handleSubmit} novalidate>
-      <div class={styles.formGroup}>
-        <label for="employerName">公司/店家全名 *</label>
-        <input type="text" id="employerName" value={employerName()} onInput={(e) => setEmployerName(e.currentTarget.value)} placeholder="例如：美味有限公司" required />
+    <form class="flex flex-col gap-6 mt-4" onSubmit={handleSubmit} novalidate>
+      <div class="text-left">
+        <label for="employerName" class="block mb-2 text-gray-700 font-medium text-sm">公司/店家全名 <span class="text-red-500">*</span></label>
+        <input type="text" id="employerName" value={employerName()} onInput={(e) => setEmployerName(e.currentTarget.value)} placeholder="例如：美味有限公司" required class="w-full px-4 py-3 border border-gray-300 rounded-md text-base text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 placeholder-gray-400 transition" />
       </div>
 
-      <div class={styles.formRow}>
-        <div class={styles.formGroup}>
-          <label for="identificationNumber">統一編號 *</label>
-          <input type="text" id="identificationNumber" value={identificationNumber()} onInput={(e) => setIdentificationNumber(e.currentTarget.value)} placeholder="8位數字" required maxLength={8}/>
+      <div class="flex flex-col md:flex-row gap-4">
+        <div class="flex-1 text-left">
+          <label for="identificationNumber" class="block mb-2 text-gray-700 font-medium text-sm">統一編號 <span class="text-red-500">*</span></label>
+          <input type="text" id="identificationNumber" value={identificationNumber()} onInput={(e) => setIdentificationNumber(e.currentTarget.value)} placeholder="8位數字" required maxLength={8} class="w-full px-4 py-3 border border-gray-300 rounded-md text-base text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 placeholder-gray-400 transition" />
         </div>
-        <div class={styles.formGroup}>
-          <label for="phoneNumber">公司/店家電話 *</label>
-          <input type="tel" id="phoneNumber" value={phoneNumber()} onInput={(e) => setPhoneNumber(e.currentTarget.value)} placeholder="例如：0212345678" required />
+        <div class="flex-1 text-left">
+          <label for="phoneNumber" class="block mb-2 text-gray-700 font-medium text-sm">公司/店家電話 <span class="text-red-500">*</span></label>
+          <input type="tel" id="phoneNumber" value={phoneNumber()} onInput={(e) => setPhoneNumber(e.currentTarget.value)} placeholder="例如：0212345678" required class="w-full px-4 py-3 border border-gray-300 rounded-md text-base text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 placeholder-gray-400 transition" />
         </div>
       </div>
       
-      <div class={styles.formGroup}>
-        <label for="industryType">產業類別 *</label>
-        <select id="industryType" value={industryType()} onChange={(e) => setIndustryType(e.currentTarget.value)} required>
+      <div class="text-left">
+        <label for="industryType" class="block mb-2 text-gray-700 font-medium text-sm">產業類別 <span class="text-red-500">*</span></label>
+        <select id="industryType" value={industryType()} onChange={(e) => setIndustryType(e.currentTarget.value)} required class="w-full px-4 py-3 border border-gray-300 rounded-md text-base text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition">
           {industryTypes.map(type => <option value={type.value} disabled={type.value === ""}>{type.label}</option>)}
         </select>
       </div>
 
-      <div class={styles.formGroup}>
-        <label for="address">主要營業地址 *</label>
-        <input type="text" id="address" value={address()} onInput={(e) => setAddress(e.currentTarget.value)} placeholder="請填寫完整地址" required />
+      <div class="text-left">
+        <label for="address" class="block mb-2 text-gray-700 font-medium text-sm">主要營業地址 <span class="text-red-500">*</span></label>
+        <input type="text" id="address" value={address()} onInput={(e) => setAddress(e.currentTarget.value)} placeholder="請填寫完整地址" required class="w-full px-4 py-3 border border-gray-300 rounded-md text-base text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 placeholder-gray-400 transition" />
       </div>
 
-      <div class={styles.formGroup}>
-        <label for="branchName">分店名稱 <span class={styles.optionalText}>(若無可免填)</span></label>
-        <input type="text" id="branchName" value={branchName()} onInput={(e) => setBranchName(e.currentTarget.value)} placeholder="例如：信義分店" />
+      <div class="text-left">
+        <label for="branchName" class="block mb-2 text-gray-700 font-medium text-sm">分店名稱 <span class="text-gray-400 text-xs">(若無可免填)</span></label>
+        <input type="text" id="branchName" value={branchName()} onInput={(e) => setBranchName(e.currentTarget.value)} placeholder="例如：信義分店" class="w-full px-4 py-3 border border-gray-300 rounded-md text-base text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 placeholder-gray-400 transition" />
       </div>
       
-      <hr class={styles.hrStyles} />
+      <hr class="my-2 border-gray-200" />
 
-      <div class={styles.formGroup}>
-        <label for="email">管理者電子郵件 * <span class={styles.optionalText}>(用於登入及接收通知)</span></label>
-        <input type="email" id="email" value={email()} onInput={(e) => setEmail(e.currentTarget.value)} placeholder="you@example.com" required />
+      <div class="text-left">
+        <label for="email" class="block mb-2 text-gray-700 font-medium text-sm">管理者電子郵件 <span class="text-red-500">*</span> <span class="text-gray-400 text-xs">(用於登入及接收通知)</span></label>
+        <input type="email" id="email" value={email()} onInput={(e) => setEmail(e.currentTarget.value)} placeholder="you@example.com" required class="w-full px-4 py-3 border border-gray-300 rounded-md text-base text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 placeholder-gray-400 transition" />
       </div>
 
-      <div class={styles.formRow}>
-        <div class={styles.formGroup}>
-          <label for="password">管理者密碼 *</label>
-          <input type="password" id="password" value={password()} onInput={(e) => setPassword(e.currentTarget.value)} placeholder="至少8位，包含字母和數字" required />
+      <div class="flex flex-col md:flex-row gap-4">
+        <div class="flex-1 text-left">
+          <label for="password" class="block mb-2 text-gray-700 font-medium text-sm">管理者密碼 <span class="text-red-500">*</span></label>
+          <input type="password" id="password" value={password()} onInput={(e) => setPassword(e.currentTarget.value)} placeholder="至少8位，包含字母和數字" required class="w-full px-4 py-3 border border-gray-300 rounded-md text-base text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 placeholder-gray-400 transition" />
         </div>
-        <div class={styles.formGroup}>
-          <label for="confirmPassword">確認密碼 *</label>
-          <input type="password" id="confirmPassword" value={confirmPassword()} onInput={(e) => setConfirmPassword(e.currentTarget.value)} placeholder="再次輸入密碼" required />
+        <div class="flex-1 text-left">
+          <label for="confirmPassword" class="block mb-2 text-gray-700 font-medium text-sm">確認密碼 <span class="text-red-500">*</span></label>
+          <input type="password" id="confirmPassword" value={confirmPassword()} onInput={(e) => setConfirmPassword(e.currentTarget.value)} placeholder="再次輸入密碼" required class="w-full px-4 py-3 border border-gray-300 rounded-md text-base text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 placeholder-gray-400 transition" />
         </div>
       </div>
 
-      <hr class={styles.hrStyles} />
+      <hr class="my-2 border-gray-200" />
 
-      <div class={styles.formGroup}>
-        <label for="verificationDocument">商業登記驗證文件 * <span class={styles.optionalText}>(例如：營業登記核准函)</span></label>
-        <input type="file" id="verificationDocument" onChange={handleFileChange} accept=".pdf,.png,.jpg,.jpeg" required />
+      <div class="text-left">
+        <label for="verificationDocument" class="block mb-2 text-gray-700 font-medium text-sm">商業登記驗證文件 <span class="text-red-500">*</span> <span class="text-gray-400 text-xs">(例如：營業登記核准函)</span></label>
+        <input type="file" id="verificationDocument" onChange={handleFileChange} accept=".pdf,.png,.jpg,.jpeg" required class="block w-full text-sm text-gray-700 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" />
         <Show when={verificationDocument()}>
-          <div class={styles.fileNameDisplay}>已選擇檔案：{verificationDocument()!.name}</div>
+          <div class="mt-2 text-sm text-blue-700">已選擇檔案：{verificationDocument()!.name}</div>
         </Show>
       </div>
 
 
       <Show when={error()}>
-        <div id="register-error-message" class={styles.errorMessage} role="alert">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class={styles.errorIcon} aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+        <div id="register-error-message" class="flex items-center gap-2 bg-red-50 border border-red-300 text-red-700 px-4 py-3 rounded-md text-sm" role="alert">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
           <span>{error()}</span>
         </div>
       </Show>
 
-      <button type="submit" class={styles.btnSubmit} disabled={isLoading()}>
+      <button type="submit" class="w-full flex items-center justify-center gap-2 px-4 py-3 bg-blue-600 text-white rounded-md font-semibold text-base transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 disabled:bg-gray-400 disabled:cursor-not-allowed mt-2" disabled={isLoading()}>
         {isLoading() ? (
           <>
-            <span class={styles.spinner} aria-hidden="true"></span>
-            <span class={styles.srOnly}>註冊中...</span>
+            <span class="inline-block w-5 h-5 border-2 border-white border-t-blue-500 rounded-full animate-spin"></span>
+            <span class="sr-only">註冊中...</span>
             <span>送出註冊資料</span>
           </>
         ) : (

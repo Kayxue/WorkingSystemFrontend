@@ -5,236 +5,31 @@ import LoginForm from '../components/LoginForm.solid.tsx';
 
 const user = Astro.locals.authData?.user;
 const isLoggedIn = Astro.locals?.authData?.loggedIn;
+const currentYear = new Date().getFullYear();
 ---
 
 <Layout title="WorkNow - 登入">
   {isLoggedIn ? (
-    <main class="login-page">
-      <div class="login-container">
-        <h1>歡迎回來，{user.employerName}！</h1>
-        <p>您已經登入了。</p>
+    <main class="flex justify-center items-center min-h-[calc(100vh-4.5rem-4.5rem)] py-8 px-2 sm:px-4 bg-gray-50">
+      <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-md text-center">
+        <h1 class="mb-6 text-gray-800 text-2xl font-bold">歡迎回來，{user.employerName}！</h1>
+        <p class="text-gray-600">您已經登入了。</p>
       </div>
     </main>
   ) : (
-    <main class="login-page">
-      <div class="login-container">
-        <h1>登入 WorkNow</h1>
+    <main class="flex justify-center items-center min-h-[calc(100vh-4.5rem-4.5rem)] py-8 px-2 sm:px-4 bg-gray-50">
+      <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-md text-center">
+        <h1 class="mb-6 text-gray-800 text-2xl font-bold">登入 WorkNow</h1>
         <LoginForm client:load />
-        <p class="register-link">
-          還沒有帳號嗎？ <a href="/register">立即註冊</a>
+        <p class="mt-6 text-sm text-gray-600">
+          還沒有帳號嗎？ <a href="/register" class="text-blue-600 hover:underline">立即註冊</a>
         </p>
       </div>
     </main> 
   )}
+  <footer class="bg-gray-800 text-white text-center py-6 w-full sm:py-8 text-xs sm:text-sm">
+    <div>
+      <p class="m-0">&copy; {currentYear} WorkNow. 保留所有權利。</p>
+    </div>
+  </footer>
 </Layout>
-
-
-<style>
-  .login-page {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: calc(100vh - var(--navbar-height) - 70px); /* Adjust 70px based on footer height if any */
-    padding: 2rem var(--padding-inline);
-  }
-  .login-container {
-    background-color: #fff;
-    padding: 2.5rem;
-    border-radius: 8px;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-    width: 100%;
-    max-width: 420px;
-    text-align: center;
-  }
-  .login-container h1 {
-    margin-bottom: 1.5rem;
-    color: #333;
-    font-size: 1.8rem;
-  }
-  .register-link {
-    margin-top: 1.5rem;
-    font-size: 0.9rem;
-    color: #555;
-  }
-  .register-link a {
-    color: #007bff;
-    text-decoration: none;
-  }
-  .register-link a:hover {
-    text-decoration: underline;
-  }
-
-  .login-form {
-    display: flex;
-    flex-direction: column;
-    gap: 1.5rem; /* 表單組之間的間距 */
-    margin-top: 1rem; /* 表單與標題的間距 */
-  }
-
-  .form-group {
-    text-align: left;
-    margin-bottom: 0; /* 由 .login-form 的 gap 控制 */
-  }
-
-  .form-group label {
-    display: block;
-    margin-bottom: 0.6rem; /* 標籤與輸入框的間距 */
-    color: #4a5568; /* 深灰色文字 */
-    font-weight: 500;
-    font-size: 0.9rem;
-  }
-
-  .form-group input[type="email"],
-  .form-group input[type="password"] {
-    width: 100%;
-    padding: 0.8rem 1rem; /* 增加內邊距 */
-    border: 1px solid #cbd5e0; /* 淺灰色邊框 */
-    border-radius: 6px; /* 更圓潤的邊角 */
-    box-sizing: border-box;
-    font-size: 1rem;
-    color: #2d3748; /* 輸入文字顏色 */
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
-  }
-
-  .form-group input[type="email"]::placeholder,
-  .form-group input[type="password"]::placeholder {
-    color: #a0aec0; /* 提示文字顏色 */
-  }
-
-  .form-group input[type="email"]:focus,
-  .form-group input[type="password"]:focus {
-    border-color: #3182ce; /* 藍色獲取焦點邊框 */
-    box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.5); /* 獲取焦點光暈 */
-    outline: none;
-  }
-
-  /* 輔助類：視覺上隱藏元素，但對螢幕閱讀器保持可見 */
-  .sr-only {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    padding: 0;
-    margin: -1px;
-    overflow: hidden;
-    clip: rect(0, 0, 0, 0);
-    white-space: nowrap;
-    border-width: 0;
-  }
-
-  /* 角色選擇器樣式 */
-  .role-selector {
-    display: flex;
-    gap: 0.75rem;
-    margin-top: 0.3rem;
-  }
-
-  .role-option {
-    flex: 1;
-    padding: 0.75rem 0.5rem;
-    border: 1px solid #cbd5e0;
-    border-radius: 6px;
-    text-align: center;
-    cursor: pointer;
-    font-weight: 500;
-    font-size: 0.9rem;
-    color: #4a5568;
-    background-color: #fff;
-    transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, box-shadow 0.1s ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .role-option:hover {
-    background-color: #f7fafc; /* 非常淺的灰色背景 */
-    border-color: #a0aec0;
-  }
-
-  .role-option.selected {
-    background-color: #ebf8ff; /* 淺藍色背景 */
-    border-color: #3182ce; /* 強調邊框顏色 */
-    color: #2c5282; /* 深藍色文字 */
-    font-weight: 600;
-    box-shadow: 0 0 0 1px #3182ce;
-  }
-
-  /* 提交按鈕樣式 */
-  .btn-submit {
-    width: 100%;
-    padding: 0.85rem 1rem;
-    background-color: #3182ce; /* 主題藍色 */
-    color: white;
-    border: none;
-    border-radius: 6px;
-    font-size: 1.05rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background-color 0.2s ease, box-shadow 0.2s ease, transform 0.1s ease;
-    margin-top: 0.5rem; /* 與上方元素的間距 */
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.6rem; /* 圖示與文字間距 */
-  }
-
-  .btn-submit:hover:not(:disabled) {
-    background-color: #2b6cb0; /* 深一點的藍色 */
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  }
-
-  .btn-submit:active:not(:disabled) {
-    transform: translateY(1px);
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
-  }
-
-  .btn-submit:disabled {
-    background-color: #a0aec0; /* 禁用時的灰色 */
-    cursor: not-allowed;
-    opacity: 0.8;
-  }
-
-  /* 按鈕載入動畫 (Spinner) */
-  .spinner {
-    width: 1.1em; /* 相對按鈕文字大小 */
-    height: 1.1em;
-    border: 2px solid rgba(255, 255, 255, 0.4);
-    border-radius: 50%;
-    border-top-color: #fff; /* Spinner 主色 */
-    animation: spin 0.8s linear infinite;
-    display: inline-block;
-  }
-
-  @keyframes spin {
-    to {
-      transform: rotate(360deg);
-    }
-  }
-
-  /* 錯誤訊息樣式 */
-  .error-message {
-    background-color: #fff5f5; /* 非常淺的紅色背景 */
-    color: #c53030; /* 紅色文字 */
-    border: 1px solid #f56565; /* 紅色邊框 */
-    padding: 0.8rem 1rem;
-    border-radius: 6px;
-    margin-top: 0; /* 由 .login-form 的 gap 控制 */
-    margin-bottom: 0; /* 由 .login-form 的 gap 控制 */
-    font-size: 0.9rem;
-    display: flex;
-    align-items: center;
-    gap: 0.6rem; /* 圖示與文字間距 */
-  }
-
-  .error-icon {
-    stroke: #c53030; /* SVG 圖示顏色 */
-    flex-shrink: 0; /* 防止圖示被壓縮 */
-  }
-
-  /* 調整 Astro 頁面中 .login-container 的樣式（如果需要） */
-  /* 例如，確保 text-align: center; 主要影響標題和註冊連結，而不是表單本身 */
-  /* .login-container {
-    ... 您現有的樣式 ...
-    text-align: center;
-  } */
-  /* login.astro 中原有的 .login-container h1 和 .register-link 樣式可以保留 */ 
-</style>

@@ -1,17 +1,16 @@
 // src/components/LoginForm.solid.tsx
 import { createSignal, Show } from "solid-js";
-import styles from '../styles/LoginForm.module.css'; // 導入 CSS Module
 
 export default function LoginForm() {
   const [email, setEmail] = createSignal("");
   const [password, setPassword] = createSignal("");
-  const [role, setRole] = createSignal("business"); // 預設角色
+  const [role, setRole] = createSignal("business");
   const [error, setError] = createSignal("");
   const [isLoading, setIsLoading] = createSignal(false);
 
   const handleSubmit = async (e: Event) => {
     e.preventDefault();
-    setError(""); // 清除先前的錯誤
+    setError("");
     setIsLoading(true);
 
     if (!email() || !password()) {
@@ -49,9 +48,9 @@ export default function LoginForm() {
   };
 
   return (
-    <form class={styles.loginForm} onSubmit={handleSubmit} novalidate>
-      <div class={styles.formGroup}>
-        <label for="email">電子郵件</label>
+    <form class="flex flex-col gap-6 mt-4" onSubmit={handleSubmit} novalidate>
+      <div class="text-left">
+        <label for="email" class="block mb-2 text-gray-700 font-medium text-sm">電子郵件</label>
         <input
           type="email"
           id="email"
@@ -63,11 +62,12 @@ export default function LoginForm() {
           aria-invalid={!!error() && (error().includes("郵件") || error().includes("憑證"))}
           aria-describedby={error() ? "login-error-message" : undefined}
           required
+          class="w-full px-4 py-3 border border-gray-300 rounded-md text-base text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 placeholder-gray-400 transition"
         />
       </div>
 
-      <div class={styles.formGroup}>
-        <label for="password">密碼</label>
+      <div class="text-left">
+        <label for="password" class="block mb-2 text-gray-700 font-medium text-sm">密碼</label>
         <input
           type="password"
           id="password"
@@ -79,31 +79,38 @@ export default function LoginForm() {
           aria-invalid={!!error() && (error().includes("密碼") || error().includes("憑證"))}
           aria-describedby={error() ? "login-error-message" : undefined}
           required
+          class="w-full px-4 py-3 border border-gray-300 rounded-md text-base text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 placeholder-gray-400 transition"
         />
       </div>
 
-      <div class={styles.formGroup}>
-        <label>登入身份</label>
-        <div class={styles.roleSelector}>
-          <label class={`${styles.roleOption} ${role() === "business" ? styles.selected : ""}`}>
+      <div class="text-left">
+        <label class="block mb-2 text-gray-700 font-medium text-sm">登入身份</label>
+        <div class="flex gap-3 mt-1">
+          <label class={`flex-1 px-3 py-2 border rounded-md text-center cursor-pointer text-sm font-medium transition select-none
+            ${role() === "business" ? "bg-blue-50 border-blue-400 text-blue-700 font-semibold shadow-sm" : "bg-white border-gray-300 text-gray-700"}
+            hover:bg-blue-100`}
+          >
             <input
               type="radio"
               name="role"
               value="business"
               checked={role() === "business"}
               onChange={() => setRole("business")}
-              class={styles.srOnly} // 使用 CSS Module 中的 srOnly
+              class="sr-only"
             />
             商家
           </label>
-          <label class={`${styles.roleOption} ${role() === "admin" ? styles.selected : ""}`}>
+          <label class={`flex-1 px-3 py-2 border rounded-md text-center cursor-pointer text-sm font-medium transition select-none
+            ${role() === "admin" ? "bg-blue-50 border-blue-400 text-blue-700 font-semibold shadow-sm" : "bg-white border-gray-300 text-gray-700"}
+            hover:bg-blue-100`}
+          >
             <input
               type="radio"
               name="role"
               value="admin"
               checked={role() === "admin"}
               onChange={() => setRole("admin")}
-              class={styles.srOnly} // 使用 CSS Module 中的 srOnly
+              class="sr-only"
             />
             管理員
           </label>
@@ -111,17 +118,17 @@ export default function LoginForm() {
       </div>
 
       <Show when={error()}>
-        <div id="login-error-message" class={styles.errorMessage} role="alert">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class={styles.errorIcon} aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+        <div id="login-error-message" class="flex items-center gap-2 bg-red-50 border border-red-300 text-red-700 px-4 py-3 rounded-md text-sm" role="alert">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
           <span>{error()}</span>
         </div>
       </Show>
 
-      <button type="submit" class={styles.btnSubmit} disabled={isLoading()}>
+      <button type="submit" class="w-full flex items-center justify-center gap-2 px-4 py-3 bg-blue-600 text-white rounded-md font-semibold text-base transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 disabled:bg-gray-400 disabled:cursor-not-allowed mt-2" disabled={isLoading()}>
         {isLoading() ? (
           <>
-            <span class={styles.spinner} aria-hidden="true"></span>
-            <span class={styles.srOnly}>登入中...</span>
+            <span class="inline-block w-5 h-5 border-2 border-white border-t-blue-500 rounded-full animate-spin"></span>
+            <span class="sr-only">登入中...</span>
             <span>處理中</span>
           </>
         ) : (
