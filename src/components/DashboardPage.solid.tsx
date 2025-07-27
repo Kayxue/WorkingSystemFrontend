@@ -19,6 +19,7 @@ type JobOffer = {
   contactEmail: string;
   publishedAt: string;
   isActive: boolean;
+  environmentPhotos?: string[]; // Add this line
 };
 
 async function fetchJobOffers():Promise<JobOffer[]> {
@@ -95,6 +96,21 @@ export default function DashboardPage() {
   function closeModal() {
     setShowModal(false);
     setSelectedJob(null);
+  }
+
+  // FIXED: Create a proper navigation function that safely accesses gigId
+  function navigateToJob(job: JobOffer) {
+    console.log('Navigating to job:', { gigId: job.gigId, jobTitle: job.title }); // Debug log
+    
+    // Ensure we have a valid gigId
+    if (!job.gigId || typeof job.gigId !== 'string') {
+      console.error('Invalid gigId for navigation:', job);
+      alert('Invalid job ID. Cannot navigate to job details.');
+      return;
+    }
+    
+    // Navigate using the gigId string
+    window.location.href = `/job/${job.gigId}`;
   }
 
   async function handleDelete(gigId: string) {
@@ -195,7 +211,7 @@ export default function DashboardPage() {
             {(job) => (
               <div
                 class={styles.jobCard}
-                onClick={() => openModal(job)}
+                onClick={() => navigateToJob(job)} // FIXED: Use the safe navigation function
                 style={{ cursor: "pointer" }}
               >
                 <div
@@ -233,7 +249,7 @@ export default function DashboardPage() {
                   <button class={styles.iconButton} onClick={() => handleDelete(job.gigId)} title="Delete">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
                       <polyline points="3 6 5 6 21 6" />
-                      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2 2h4a2 2 0 0 1 2 2v2" />
                       <line x1="10" y1="11" x2="10" y2="17" />
                       <line x1="14" y1="11" x2="14" y2="17" />
                     </svg>
