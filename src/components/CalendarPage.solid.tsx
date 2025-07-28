@@ -50,38 +50,49 @@ export default function CalendarPage() {
   const [isLoading, setIsLoading] = createSignal(true);
   const [selectedPage, setSelectedPage] = createSignal(1);
   const [startPage, setStartPage] = createSignal(1);
-  const [hasMorePages, setHasMorePages] = createSignal(false);
   const pageWindowSize = 10;
   let selectedGigsref: HTMLDivElement | undefined;
 
-  async function loadAndGroupGigs(y: number, m: number, page: number) {
-    try {
-      setIsLoading(true);
-      setGigMap({});
-      setGigCount(null);
-
-      const offset = (page - 1)* pageWindowSize;
-      const url = "/api/gig/my-gigs?offset=" + offset + "&year=" + y + "&month=" + (m + 1);
-      const response = await fetch(url, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          platform: "web-employer",
-        },
-        credentials: "include",
-      });
-
-      if (!response.ok) {
-        const text = await response.text();
-        console.error("Error status:", response.status);
-        console.error("Error body:", text);
-        throw new Error("Failed to fetch job offers");
+  async function loadAndGroupGigs(y: number, m: number) {
+    let page = 1;
+    let hasMore = true;
+    let allGigs: JobOffer[] = [];
+    let totalCount = 0;
+    setIsLoading(true);
+    setGigMap({});
+    setGigCount(null);
+    while (hasMore){
+      try {
+        const offset = (page - 1)* pageWindowSize;
+        const url = "/api/gig/my-gigs?offset=" + offset + "&year=" + y + "&month=" + (m + 1);
+        const response = await fetch(url, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            platform: "web-employer",
+          },
+          credentials: "include",
+        });
+  
+        if (!response.ok) {
+          const text = await response.text();
+          console.error("Error status:", response.status);
+          console.error("Error body:", text);
+          throw new Error("Failed to fetch job offers");
+        }
+  
+        const data = await response.json();
+        if (Array.isArray(data.gigs)) {
+          allGigs = allGigs.concat(data.gigs);
+        }
+        totalCount = data.count ?? totalCount;
+        hasMore = data.pagination?.hasMore || false;
+        page++;
+      } catch (err) {
+        console.error("Failed to load gigs:", err);
+        hasMore = false;
       }
-
-      const data = await response.json();
-
-      const allGigs: JobOffer[] = data.gigs;
-      const count: number = data.count ?? 0;
+    }
       const grouped: Record<number, JobOffer[]> = {};
 
       for (const gig of allGigs) {
@@ -102,19 +113,14 @@ export default function CalendarPage() {
         }
       }
       setGigMap(grouped);
-      setGigCount(count);
-      setHasMorePages(data.pagination?.hasMore || false);
-    } catch (err) {
-      console.error("Failed to load gigs:", err);
-    } finally {
+      setGigCount(totalCount);
       setIsLoading(false);
-    }
   }
 
   createEffect(() => {
     const y = year();
     const m = month();
-    loadAndGroupGigs(y, m, 1);
+    loadAndGroupGigs(y, m);
   });
 
   const dates = createMemo(() => generateDates(year(), month()));
