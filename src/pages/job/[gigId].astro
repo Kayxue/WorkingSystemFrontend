@@ -1,31 +1,41 @@
 ---
-// src/pages/job/[gigId].astro
-
-// Debug: Log the raw params and URL
-console.log('Raw Astro.params:', Astro.params);
-console.log('Current URL:', Astro.url.href);
-console.log('Request headers:', Object.fromEntries(Astro.request.headers.entries()));
-
+import Layout from '../../layouts/Layout.astro';
+import JobDetailsPage from '../../components/JobDetailsPage.solid.tsx';
 const { gigId } = Astro.params;
 
-// Debug: Log the extracted gigId
-console.log('Extracted gigId:', gigId, 'Type:', typeof gigId);
 
-// Check if gigId exists and is valid
-if (!gigId || gigId === '[object Object]' || typeof gigId !== 'string') {
-  console.error('Invalid gigId detected:', {
-    gigId,
-    type: typeof gigId,
-    url: Astro.url.href,
-    referer: Astro.request.headers.get('referer')
-  });
-  
+function validateGigId(id: string | undefined): string | null {
+  if (!id || id === '[object Object]' || typeof id !== 'string') {
+    console.error('Invalid gigId detected:', {
+      gigId: id,
+      type: typeof id,
+      url: Astro.url.href,
+      referer: Astro.request.headers.get('referer')
+    });
+    return null;
+  }
+
+  const idPattern = /^[a-zA-Z0-9_-]+$/;
+  if (!idPattern.test(id)) {
+    console.error('gigId format invalid:', id);
+    return null;
+  }
+
+  return id;
+}
+
+const validatedGigId = validateGigId(gigId);
+
+// Early return for invalid IDs
+if (!validatedGigId) {
+  const errorMessage = gigId ? `Invalid job ID format: "${gigId}"` : 'Invalid job ID';
+
   return new Response(`
     <html>
       <head><title>Invalid Job ID</title></head>
       <body style="font-family: system-ui, sans-serif; padding: 2rem; text-align: center;">
         <h1>Invalid Job ID</h1>
-        <p>The job ID "${gigId}" is not valid.</p>
+        <p>${errorMessage}</p>
         <p><strong>Debug Info:</strong></p>
         <p>URL: ${Astro.url.href}</p>
         <p>Referer: ${Astro.request.headers.get('referer') || 'None'}</p>
@@ -35,488 +45,38 @@ if (!gigId || gigId === '[object Object]' || typeof gigId !== 'string') {
     </html>
   `, {
     status: 400,
-    headers: {
-      'Content-Type': 'text/html'
-    }
+    headers: { 'Content-Type': 'text/html' }
   });
 }
 
-// Additional validation: Check if gigId looks like a valid ID format
-// Adjust this regex based on your actual ID format (letters, numbers, hyphens, underscores)
-const idPattern = /^[a-zA-Z0-9_-]+$/;
-if (!idPattern.test(gigId)) {
-  console.error('gigId format invalid:', gigId);
-  return new Response(`
-    <html>
-      <head><title>Invalid Job ID Format</title></head>
-      <body style="font-family: system-ui, sans-serif; padding: 2rem; text-align: center;">
-        <h1>Invalid Job ID Format</h1>
-        <p>The job ID contains invalid characters: "${gigId}"</p>
-        <button onclick="history.back()" style="background: #007acc; color: white; border: none; padding: 1rem 2rem; border-radius: 4px; cursor: pointer; font-size: 1rem;">← Back to dashboard</button>
-      </body>
-    </html>
-  `, {
-    status: 400,
-    headers: {
-      'Content-Type': 'text/html'
-    }
-  });
-}
-
-let job: any = null;
-let error: string | null = null;
-
-try {
-  // Use relative URL instead of hardcoded localhost
-  // This will use the same origin as your current request
-  const apiUrl = new URL(`/api/gig/${encodeURIComponent(gigId)}`, Astro.url.origin);
-  
-  console.log('Fetching from:', apiUrl.toString()); // Debug log
-  
-  // Build headers object properly
-  const headers: Record<string, string> = {
-    "Content-Type": "application/json",
-    "platform": "web-employer",
-  };
-  
-  // Add cookie if it exists
-  const cookieHeader = Astro.request.headers.get('cookie');
-  if (cookieHeader) {
-    headers['Cookie'] = cookieHeader;
-  }
-  
-  const res = await fetch(apiUrl.toString(), {
-    method: "GET",
-    headers,
-  });
-
-  console.log('Response status:', res.status); // Debug log
-
-  if (!res.ok) {
-    const errorText = await res.text();
-    console.error('API Error:', res.status, errorText);
-    error = `Failed to fetch job: ${res.status} ${errorText}`;
-  } else {
-    job = await res.json();
-    console.log('Job data loaded successfully:', !!job); // Debug log
-    console.log('Environment photos count:', job?.environmentPhotos?.length || 0); // Check this specifically
-  }
-} catch (fetchError: any) {
-  console.error('Fetch error:', fetchError);
-  error = `Network error: ${fetchError?.message || 'Unknown error'}`;
-}
-
-// If there's an error or no job data, show error page
-if (error || !job) {
-  return new Response(`
-    <html>
-      <head><title>Job Not Found</title></head>
-      <body style="font-family: system-ui, sans-serif; padding: 2rem; text-align: center;">
-        <h1>Job Not Found</h1>
-        <p>${error || 'Job data not available'}</p>
-        <p>Job ID: ${gigId}</p>
-        <button onclick="history.back()" style="background: #007acc; color: white; border: none; padding: 1rem 2rem; border-radius: 4px; cursor: pointer; font-size: 1rem;">← Back to dashboard</button>
-      </body>
-    </html>
-  `, {
-    status: 404,
-    headers: {
-      'Content-Type': 'text/html'
-    }
-  });
-}
-
-// Format date function
-function formatDateToDDMMYYYY(dateStr: string) {
-  if (!dateStr) return '';
-  const date = new Date(dateStr);
-  if (isNaN(date.getTime())) return dateStr; // Return original if invalid date
-  const dd = String(date.getDate()).padStart(2, "0");
-  const mm = String(date.getMonth() + 1).padStart(2, "0");
-  const yyyy = date.getFullYear();
-  return `${dd}-${mm}-${yyyy}`;
-}
-
-// Strip quotes function
-function stripQuotes(str: string) {
-  if (!str) return "";
-  if (typeof str !== 'string') return String(str);
-  if (str.startsWith('"') && str.endsWith('"')) {
-    return str.slice(1, -1);
-  }
-  return str;
-}
-
-// Safe get function for nested properties
-function safeGet(obj: any, path:any, defaultValue = '') {
-  return path.split('.').reduce((current: any, key: any) => current && current[key] !== undefined ? current[key] : defaultValue, obj);
-}
+const pageTitle = `Job Details | WorkNow`;
 ---
 
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>{job.title || 'Job Details'} | Job Details</title>
-    <style>
-      body { 
-        font-family: system-ui, sans-serif; 
-        margin: 0;
-        padding: 2rem;
-        background-color: #f5f5f5;
-        line-height: 1.6;
-      }
-      .container {
-        max-width: 800px;
-        margin: 0 auto;
-        background: white;
-        padding: 2rem;
-        border-radius: 8px;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-      }
-      h1 { 
-        margin-top: 0; 
-        color: #333;
-        border-bottom: 2px solid #007acc;
-        padding-bottom: 0.5rem;
-      }
-      h2 {
-        color: #555;
-        margin-top: 2rem;
-      }
-      .label { 
-        font-weight: 600; 
-        margin-right: 0.5rem;
-        color: #007acc;
-      }
-      .info-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-        gap: 1rem;
-        margin: 1.5rem 0;
-      }
-      .info-item {
-        background: #f8f9fa;
-        padding: 1rem;
-        border-radius: 4px;
-        border-left: 3px solid #007acc;
-      }
-      .status {
-        display: inline-block;
-        padding: 0.25rem 0.75rem;
-        border-radius: 20px;
-        font-size: 0.875rem;
-        font-weight: 600;
-      }
-      .status.active {
-        background: #d4edda;
-        color: #155724;
-      }
-      .status.inactive {
-        background: #f8d7da;
-        color: #721c24;
-      }
-      .back-button {
-        background: #007acc;
-        color: white;
-        border: none;
-        padding: 1rem 2rem;
-        border-radius: 4px;
-        cursor: pointer;
-        font-size: 1rem;
-        margin-top: 2rem;
-        transition: background-color 0.2s;
-      }
-      .back-button:hover {
-        background: #005c99;
-      }
-      .description-box, .requirements-box {
-        background: #f8f9fa;
-        padding: 1.5rem;
-        border-radius: 4px;
-        margin: 1rem 0;
-        border-left: 3px solid #007acc;
-        white-space: pre-wrap;
-        word-wrap: break-word;
-      }
-      .photo-gallery {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-        gap: 1rem;
-        margin: 1.5rem 0;
-      }
-      .photo-item {
-        position: relative;
-        border-radius: 8px;
-        overflow: hidden;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        transition: transform 0.2s ease;
-      }
-      .photo-item:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-      }
-      .photo-item img {
-        width: 100%;
-        height: 200px;
-        object-fit: cover;
-        cursor: pointer;
-        transition: opacity 0.2s ease;
-      }
-      .photo-item img:hover {
-        opacity: 0.9;
-      }
-      .photo-error {
-        width: 100%;
-        height: 200px;
-        background: #f8f9fa;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: #666;
-        border: 2px dashed #ddd;
-      }
-      /* Modal styles for photo viewing */
-      .photo-modal {
-        display: none;
-        position: fixed;
-        z-index: 1000;
-        left: 0;
-        top: 0;
-        width: 100%;
-        height: 100%;
-        background-color: rgba(0,0,0,0.9);
-        justify-content: center;
-        align-items: center;
-      }
-      .photo-modal.active {
-        display: flex;
-      }
-      .photo-modal img {
-        max-width: 90%;
-        max-height: 90%;
-        object-fit: contain;
-        border-radius: 4px;
-      }
-      .photo-modal-close {
-        position: absolute;
-        top: 20px;
-        right: 30px;
-        color: white;
-        font-size: 40px;
-        font-weight: bold;
-        cursor: pointer;
-        z-index: 1001;
-      }
-      .photo-modal-close:hover {
-        opacity: 0.7;
-      }
-      .no-photos {
-        text-align: center;
-        padding: 2rem;
-        color: #666;
-        background: #f8f9fa;
-        border-radius: 4px;
-        border: 2px dashed #ddd;
-      }
-    </style>
-  </head>
-  <body>
-    <div class="container">
-      <main>
-        <h1>{job.title || 'Untitled Job'}</h1>
-        
-        <div class="info-grid">
-          <div class="info-item">
-            <span class="label">Date:</span>
-            {formatDateToDDMMYYYY(job.dateStart)} – {formatDateToDDMMYYYY(job.dateEnd)}
-          </div>
-          <div class="info-item">
-            <span class="label">Time:</span>
-            {job.timeStart || 'Not specified'} – {job.timeEnd || 'Not specified'}
-          </div>
-          <div class="info-item">
-            <span class="label">Rate:</span>
-            {job.hourlyRate || 'Not specified'} NTD/hour
-          </div>
-          <div class="info-item">
-            <span class="label">Status:</span>
-            <span class={`status ${job.isActive ? 'active' : 'inactive'}`}>
-              {job.isActive ? "Active" : "Inactive"}
-            </span>
-          </div>
-        </div>
-
-        <div class="info-item" style="margin: 1.5rem 0;">
-          <span class="label">Location:</span>
-          {[job.address, job.district, job.city].filter(Boolean).join(', ') || 'Location not specified'}
-        </div>
-
-        <h2>Job Description</h2>
-        <div class="description-box">
-          {stripQuotes(job.description || 'No description provided')}
-        </div>
-
-        <h2>Requirements</h2>
-        <div class="requirements-box">
-          {stripQuotes(job.requirements || 'No specific requirements listed')}
-        </div>
-
-        {job.environmentPhotos && Array.isArray(job.environmentPhotos) && job.environmentPhotos.length > 0 ? (
-          <div>
-            <h2>Environment Photos ({job.environmentPhotos.length})</h2>
-            <div class="photo-gallery">
-              {job.environmentPhotos.map((photo: any, index: any) => {
-                // Debug: Log photo to check its structure
-                console.log(`Photo ${index + 1}:`, typeof photo, photo);
-                
-                // Handle both string URLs and photo objects
-                const photoUrl = typeof photo === 'string' ? photo : photo.url;
-                
-                if (!photoUrl) {
-                  console.warn(`Photo ${index + 1} has no URL:`, photo);
-                  return null;
-                }
-                
-                return (
-                  <div class="photo-item" >
-                    <img 
-                      src={photoUrl} 
-                      alt={`Environment photo ${index + 1}`}
-                      data-photo-url={photoUrl}
-                      data-photo-index={index}
-                      onclick="openPhotoModalSafe(this)"
-                      onerror="console.error('Failed to load image:', this.src); this.parentElement.innerHTML='<div class=&quot;photo-error&quot;>Failed to load image</div>'"
-                    />
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        ) : (
-          <div>
-            <h2>Environment Photos</h2>
-            <div class="no-photos">
-              No environment photos available for this job.
-            </div>
-          </div>
-        )}
-
-        <h2>Contact Information</h2>
-        <div class="info-grid">
-          <div class="info-item">
-            <span class="label">Contact Person:</span>
-            {job.contactPerson || 'Not specified'}
-          </div>
-          <div class="info-item">
-            <span class="label">Phone:</span>
-            {job.contactPhone ? (
-              <a href={`tel:${job.contactPhone}`}>{job.contactPhone}</a>
-            ) : 'Not provided'}
-          </div>
-          <div class="info-item">
-            <span class="label">Email:</span>
-            {job.contactEmail ? (
-              <a href={`mailto:${job.contactEmail}`}>{job.contactEmail}</a>
-            ) : 'Not provided'}
-          </div>
-          <div class="info-item">
-            <span class="label">Posted on:</span>
-            {formatDateToDDMMYYYY(job.publishedAt) || 'Date not available'}
-          </div>
-        </div>
-
-        <button class="back-button" onclick="history.back()">
-          ← Back to Dashboard
-        </button>
-      </main>
+<Layout title={pageTitle}>
+  <main class="job-details-page">
+    <div class="job-details-container">
+      <!-- ✅ Only load this Solid component on the client -->
+      <JobDetailsPage client:only="solid" gigId={validatedGigId} />
     </div>
+  </main>
+</Layout>
 
-    <!-- Photo Modal -->
-    <div id="photoModal" class="photo-modal" onclick="closePhotoModal()">
-      <span class="photo-modal-close" onclick="closePhotoModal()">&times;</span>
-      <img id="modalImage" src="" alt="Full size photo" onclick="event.stopPropagation()">
-    </div>
+<style>
+  .job-details-page {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    min-height: calc(100vh - var(--navbar-height));
+    padding: 2rem var(--padding-inline);
+    background-color: #f5f5f5;
+  }
 
-    <script define:vars={{ 
-      gigId, 
-      jobTitle: job.title || "No title", 
-      hasPhotos: !!(job.environmentPhotos && job.environmentPhotos.length > 0), 
-      photoCount: job.environmentPhotos ? job.environmentPhotos.length : 0 
-    }}>
-      // Debug: Log when script loads
-      console.log('Job page script loaded for gigId:', gigId);
-      
-      // Debug: Monitor all network requests to catch the problematic one
-      const originalFetch = window.fetch;
-      window.fetch = function(...args) {
-        const url = args[0];
-        if (typeof url === 'string' && (url.includes('[object') || url.includes('Object]'))) {
-          console.error('FOUND THE PROBLEM! Fetch called with object URL:', url);
-          console.trace('Stack trace for problematic fetch:');
-        }
-        return originalFetch.apply(this, args);
-      };
-
-      function openPhotoModalSafe(imgElement) {
-        const photoUrl = imgElement.getAttribute('data-photo-url');
-        const photoIndex = imgElement.getAttribute('data-photo-index');
-        const altText = `Environment photo ${parseInt(photoIndex) + 1}`;
-        
-        console.log('Opening photo modal:', { photoUrl, photoIndex, altText });
-        
-        const modal = document.getElementById('photoModal');
-        const modalImage = document.getElementById('modalImage');
-        
-        if (modal && modalImage && photoUrl) {
-          modal.classList.add('active');
-          modalImage.src = photoUrl;
-          modalImage.alt = altText;
-          document.body.style.overflow = 'hidden'; // Prevent scrolling
-        }
-      }
-
-      function openPhotoModal(photoUrl, altText = 'Full size photo') {
-        console.log('Opening photo modal (legacy):', { photoUrl, altText });
-        
-        const modal = document.getElementById('photoModal');
-        const modalImage = document.getElementById('modalImage');
-        
-        if (modal && modalImage && photoUrl) {
-          modal.classList.add('active');
-          modalImage.src = photoUrl;
-          modalImage.alt = altText;
-          document.body.style.overflow = 'hidden'; // Prevent scrolling
-        }
-      }
-
-      function closePhotoModal() {
-        const modal = document.getElementById('photoModal');
-        const modalImage = document.getElementById('modalImage');
-        
-        if (modal) {
-          modal.classList.remove('active');
-          document.body.style.overflow = 'auto'; // Re-enable scrolling
-          
-          // Clear the image source to stop loading
-          if (modalImage) {
-            modalImage.src = '';
-          }
-        }
-      }
-
-      // Close modal with Escape key
-      document.addEventListener('keydown', function(event) {
-        if (event.key === 'Escape') {
-          closePhotoModal();
-        }
-      });
-
-      // Debug: Log job data to console for debugging
-      console.log('Job data loaded in frontend for gigId:', gigId);
-      console.log('Job title:', jobTitle);
-      console.log('Has photos:', hasPhotos);
-      console.log('Photo count:', photoCount);
-    </script>
-  </body>
-</html>
+  .job-details-container {
+    background-color: #fff;
+    padding: 2.5rem;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    width: 100%;
+    max-width: 1000px;
+  }
+</style>
