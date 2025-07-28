@@ -1,5 +1,6 @@
 import { createSignal, For, Show, createMemo, createEffect } from "solid-js";
 import styles from "../styles/CalendarForm.module.css";
+import _gigId_ from "../pages/job/[gigId].astro";
 
 const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
@@ -10,17 +11,10 @@ type JobOffer = {
   dateEnd: string;
   timeStart: string;
   timeEnd: string;
-  hourlyRate?: string;
-  city?: string;
-  district?: string;
-  address?: string;
-  description?: string;
-  requirements?: string;
-  contactPerson?: string;
-  contactPhone?: string;
-  contactEmail?: string;
-  publishedAt?: string;
+  publishedAt: string;
+  unlistedAt: string;
   isActive?: boolean;
+  environmentPhotos: {url: string}[];
 };
 
 function generateDates(year: number, month: number) {
@@ -53,13 +47,21 @@ export default function CalendarPage() {
   const [gigMap, setGigMap] = createSignal<Record<number, JobOffer[]>>({});
   const [selectedDay, setSelectedDay] = createSignal<number | null>(null);
   const [gigCount, setGigCount] = createSignal<number | null>(null);
+  const [isLoading, setIsLoading] = createSignal(true);
+  const [selectedPage, setSelectedPage] = createSignal(1);
+  const [startPage, setStartPage] = createSignal(1);
+  const [hasMorePages, setHasMorePages] = createSignal(false);
+  const pageWindowSize = 10;
+  let selectedGigsref: HTMLDivElement | undefined;
 
-  async function loadAndGroupGigs(y: number, m: number) {
+  async function loadAndGroupGigs(y: number, m: number, page: number) {
     try {
+      setIsLoading(true);
       setGigMap({});
       setGigCount(null);
 
-      const url = "/api/gig/my-gigs?year=" + y + "&month=" + (m + 1);
+      const offset = (page - 1)* pageWindowSize;
+      const url = "/api/gig/my-gigs?offset=" + offset + "&year=" + y + "&month=" + (m + 1);
       const response = await fetch(url, {
         method: "GET",
         headers: {
@@ -101,21 +103,18 @@ export default function CalendarPage() {
       }
       setGigMap(grouped);
       setGigCount(count);
+      setHasMorePages(data.pagination?.hasMore || false);
     } catch (err) {
       console.error("Failed to load gigs:", err);
+    } finally {
+      setIsLoading(false);
     }
   }
 
   createEffect(() => {
     const y = year();
     const m = month();
-    loadAndGroupGigs(y, m);
-    const now = new Date();
-    if (y === now.getFullYear() && m === now.getMonth()) {
-      setSelectedDay(now.getDate());
-    } else {
-      setSelectedDay(null);
-    }
+    loadAndGroupGigs(y, m, 1);
   });
 
   const dates = createMemo(() => generateDates(year(), month()));
@@ -124,6 +123,47 @@ export default function CalendarPage() {
     if (selectedDay() === null) return [];
     return gigMap()[selectedDay()!] ?? [];
   };
+
+  const selectedPaginatedGig = createMemo(() => {
+    const gigs = selectedGigs();
+    const index = selectedPage() - 1;
+    return gigs.length > 0 ? gigs[index] : null;
+  });
+
+  const totalPages = createMemo(() => selectedGigs().length);
+
+  function generatePaginationPages() {
+    const total = totalPages();
+    const start = startPage();
+    const end = Math.min(start + pageWindowSize - 1, total);
+    const pages: (number | string)[] = [];
+
+    if (start > 1) pages.push("...");
+
+    for (let i = start; i <= end; i++) {
+      pages.push(i);
+    }
+
+    if (end < total) pages.push("..."); 
+    return pages;
+  }
+
+  function goToPage(page: number) {
+    setSelectedPage(page);
+    const windowStart = Math.floor((page - 1) / pageWindowSize) * pageWindowSize + 1;
+    setStartPage(windowStart);
+  }
+
+  function shiftPageWindow(direction: "prev" | "next") {
+    const total = totalPages();
+    const current = startPage();
+    const newStart = direction === "prev"
+      ? Math.max(1, current - pageWindowSize)
+      : Math.min(current + pageWindowSize, total - pageWindowSize + 1);
+
+    setStartPage(newStart);
+    setSelectedPage(newStart);
+  }
 
   return (
     <div class={styles.calendar}>
@@ -165,7 +205,6 @@ export default function CalendarPage() {
               const now = new Date();
               setYear(now.getFullYear());
               setMonth(now.getMonth());
-              setSelectedDay(now.getDate());
             }}
           >
             Today
@@ -226,6 +265,10 @@ export default function CalendarPage() {
         </button>
       </div>
 
+      <Show when={isLoading()}>
+          <div class={styles.spinner}></div>
+      </Show>
+
       <Show when={gigCount()!==null}>
         <div class={styles.gridWrapper}>
           <div class={styles.grid}>
@@ -243,7 +286,16 @@ export default function CalendarPage() {
                       [styles.emptyDay]: day === null,
                       [styles.selectedDay]: day !== null && selectedDay() === day
                     }}
-                    onClick={() => day !== null && setSelectedDay(day)}
+                    onClick={() => {
+                      if (day !== null) {
+                        setSelectedDay(day);
+                        setSelectedPage(1);
+                        setStartPage(1);
+                        queueMicrotask(() => {
+                          selectedGigsref?.scrollIntoView({ behavior: "smooth", block: "start" });
+                        });
+                      }
+                    }}
                     style={{ cursor: day !== null ? "pointer" : "default" }}
                   >
                     {day !== null ? (
@@ -277,24 +329,79 @@ export default function CalendarPage() {
       </Show>
 
       <Show when={selectedDay() !== null}>
-        <div class={styles.selectedGigs}>
-          <h3>
-            Jobs on {year()}-{(month() + 1).toString().padStart(2, "0")}-
-            {selectedDay()!.toString().padStart(2, "0")}<br />
-            {selectedGigs().length} work(s)
-          </h3>
-          <ul>
-            <For each={selectedGigs()}>
-              {(gig) => (
-                <li>
-                  <strong>{gig.title}</strong> ({gig.timeStart}–{gig.timeEnd})
-                </li>
-              )}
-            </For>
-            <Show when={selectedGigs().length === 0}>
-              <li>No jobs on this day.</li>
-            </Show>
-          </ul>
+        <div class={styles.selectedGigs} ref={el => (selectedGigsref =el)}>
+          <Show when={selectedGigs().length > 0} fallback={<p>No jobs on this day.</p>}>
+            <div class={styles.jobCard}>
+              <Show when={selectedPaginatedGig()}>
+                {(gig) => (
+                  <div
+                    class={styles.photoContainer}
+                    onClick={() => (window.location.href = `/job/${gig().gigId}`)}
+                  >
+                    <Show when={gig().environmentPhotos?.length > 0}
+                      fallback={
+                        <div class={styles.noPhoto}>No environment photos available for this job.</div>
+                      }>
+                      <img
+                        src={gig().environmentPhotos![0].url}
+                        alt="工作環境"
+                        class={styles.environmentPhoto}
+                      />
+                    </Show>
+                    <div class={styles.jobInfo}>
+                      <div>{gig().title} ({gig().timeStart} – {gig().timeEnd})</div>
+                    </div>
+                  </div>
+                )}
+              </Show>
+            </div>
+
+            <div class={styles.pagination}>
+              <button onClick={() => goToPage(1)} disabled={selectedPage() === 1}>{"<<"}</button>
+              <button onClick={() => goToPage(selectedPage() - 1)} disabled={selectedPage() === 1}>{"<"}</button>
+
+              <For each={generatePaginationPages()}>
+                {(item) => {
+                  const isNumber = typeof item === "number";
+                  return (
+                    <button
+                      classList={{ [styles.activePage]: item === selectedPage() }}
+                      onClick={() => {
+                        if(isNumber) return goToPage(item);
+
+                        switch (item) {
+                          case "<<":
+                            goToPage(1);
+                            break;
+                          case "<":
+                            shiftPageWindow("prev");
+                            break;
+                          case "...":
+                            if (startPage() > 1) {
+                              shiftPageWindow("prev");
+                            } else {
+                              shiftPageWindow("next");
+                            }
+                            break;
+                          case ">":
+                            shiftPageWindow("next")
+                            break;
+                          case "<":
+                            goToPage(totalPages());
+                            break;
+                        }
+                      }}
+                    >
+                      {item}
+                    </button>
+                  );
+                }}
+              </For>
+
+              <button onClick={() => goToPage(selectedPage() + 1)} disabled={selectedPage() === totalPages()}> {">"} </button>
+              <button onClick={() => goToPage(totalPages())} disabled={selectedPage() === totalPages()}> {">>"} </button>
+            </div>
+          </Show>
         </div>
       </Show>
     </div>

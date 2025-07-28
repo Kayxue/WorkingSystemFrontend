@@ -5,10 +5,7 @@ import DashboardPage from '../components/DashboardPage.solid.tsx';
 
 <Layout title="WorkNow - 我的職缺列表">
   <main class="dashboard-page">
-    <div class="dashboard-container">
-      <h1>My Job Listings</h1>
-      <DashboardPage client:load />
-    </div>
+    <DashboardPage client:load />
     <a href="/post-job" class="floating-button" title="Post a new job" aria-label="Post a new job">＋</a>
   </main>
 </Layout>
@@ -30,12 +27,6 @@ import DashboardPage from '../components/DashboardPage.solid.tsx';
     box-shadow: 0 4px 10px rgba(0,0,0,0.1);
     width: 100%;
     max-width: 1000px;
-  }
-
-  .dashboard-container h1 {
-    margin-bottom: 1.5rem;
-    color: #333;
-    font-size: 1.8rem;
   }
 
   .floating-button {

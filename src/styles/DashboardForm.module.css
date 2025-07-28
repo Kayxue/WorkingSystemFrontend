@@ -1,6 +1,6 @@
 .dashboardContainer {
-  padding: 2rem;
-  background-color: #f8f9fa;
+  margin-top: 1rem;
+  width: 70%;
 }
 
 .dashboardTitle {
@@ -133,8 +133,8 @@
 .viewToggle {
   display: flex;
   width: 100%;
-  margin-bottom: 12px;
-  gap: 0;
+  margin-bottom: 20px;
+  gap: 5px;
   user-select: none;
 }
 
@@ -143,12 +143,14 @@
   text-align: center;
   padding: 10px 0;
   font-weight: bold;
+  font-size: 1.2rem;
   cursor: pointer;
   border: none;
   border-radius: 0;
   background-color: #ddd;
   transition: background-color 0.2s ease;
   user-select: none;
+  height: 50px;
 }
 
 .viewButton:hover {
@@ -156,10 +158,97 @@
 }
 
 .viewButton.active {
-  background-color: #0078d4;
+  background-color: #007bff;
   color: white;
 }
 
 .viewButton:first-child {
   border-right: 1px solid white;
+}
+
+.filter {
+  display: flex;
+  align-items: center;
+  justify-content: right;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.btn {
+  border: 1px solid #3b82f6;
+  background-color: white;
+  color: #3b82f6;
+  border-radius: 10px;
+  padding: 6px 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn:hover {
+  background-color: #e0f0ff;
+}
+
+:global(.active) {
+  background-color: #3b82f6;
+  color: white;
+}
+
+:global(.active):hover {
+  background-color: #3b82f6;
+  color: white;
+}
+
+.paginationContainer {
+  display: flex;
+  justify-content: center;
+  margin: 1rem 0;
+  gap: 0.5rem;
+}
+
+.pageButton {
+  padding: 0.4rem 0.8rem;
+  background-color: white;
+  border: 1px solid #ddd;
+  color: #333;
+  cursor: pointer;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.pageButton:hover:not(:disabled) {
+  background-color: #f0f0f0;
+}
+
+.pageButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.activePage {
+  background-color: #3b82f6;
+  color: white;
+  border-color: #3b82f6;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #ccc;
+  border-top: 4px solid #3b82f6;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 2rem auto;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 900px) {
+  .dashboardContainer {
+    width: 100%;
+  }
 }

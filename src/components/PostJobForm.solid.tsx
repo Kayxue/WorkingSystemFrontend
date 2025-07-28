@@ -67,7 +67,7 @@ onMount(async () => {
         publishedAt: new Date().toISOString(),
       };
 
-      const response = await fetch("http://localhost:3000/gig/create", {
+      const response = await fetch("/api/gig/create", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
