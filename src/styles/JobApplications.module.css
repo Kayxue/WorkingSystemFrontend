@@ -1,0 +1,404 @@
+/* JobApplications.module.css */
+
+.applicationsContainer {
+  width: 100%;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.pageTitle {
+  margin: 0;
+  color: #333;
+  font-size: 1.8rem;
+  border-bottom: 2px solid #007acc;
+  padding-bottom: 0.5rem;
+}
+
+.filterContainer {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.filterContainer label {
+  font-weight: 600;
+  color: #555;
+}
+
+.statusFilter {
+  padding: 0.5rem 1rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background: white;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.statusFilter:focus {
+  outline: none;
+  border-color: #007acc;
+  box-shadow: 0 0 0 2px rgba(0, 122, 204, 0.2);
+}
+
+.loading {
+  text-align: center;
+  padding: 2rem;
+  font-size: 1.1rem;
+  color: #666;
+}
+
+.errorContainer {
+  text-align: center;
+  padding: 2rem;
+}
+
+.error {
+  color: #dc3545;
+  margin: 1rem 0;
+}
+
+.applicationsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 1.5rem;
+  margin-top: 1rem;
+}
+
+.applicationCard {
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.applicationCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.cardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+  gap: 1rem;
+}
+
+.applicantName {
+  margin: 0;
+  color: #333;
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.status {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+.statusPending {
+  background: #fff3cd;
+  color: #856404;
+  border: 1px solid #ffeaa7;
+}
+
+.statusAccepted {
+  background: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+
+.statusRejected {
+  background: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+}
+
+.cardContent {
+  margin-bottom: 1rem;
+}
+
+.applicantInfo {
+  margin: 0.5rem 0;
+  color: #555;
+  font-size: 0.9rem;
+}
+
+.message {
+  margin: 0.75rem 0;
+  color: #666;
+  font-size: 0.9rem;
+  font-style: italic;
+}
+
+.cardActions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.actionButtons {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.viewButton {
+  background: #007acc;
+  color: white;
+  border: none;
+  padding: 0.75rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: background-color 0.2s ease;
+  width: 100%;
+}
+
+.viewButton:hover {
+  background: #005a94;
+}
+
+.acceptButton {
+  background: #28a745;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: background-color 0.2s ease;
+  flex: 1;
+}
+
+.acceptButton:hover {
+  background: #218838;
+}
+
+.rejectButton {
+  background: #dc3545;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: background-color 0.2s ease;
+  flex: 1;
+}
+
+.rejectButton:hover {
+  background: #c82333;
+}
+
+.noApplications {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 3rem;
+  color: #666;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 2px dashed #ddd;
+  font-size: 1.1rem;
+}
+
+/* Modal Styles */
+.applicationModal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.modalContent {
+  background: white;
+  border-radius: 8px;
+  max-width: 600px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.modalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+  border-bottom: 1px solid #e0e0e0;
+  background: #f8f9fa;
+  border-radius: 8px 8px 0 0;
+}
+
+.modalHeader h2 {
+  margin: 0;
+  color: #333;
+  font-size: 1.4rem;
+}
+
+.modalClose {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0.5rem;
+  color: #666;
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
+}
+
+.modalClose:hover {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.modalBody {
+  padding: 1.5rem;
+}
+
+.applicantDetails {
+  margin-bottom: 1.5rem;
+}
+
+.applicantDetails h3 {
+  margin: 0 0 1rem 0;
+  color: #333;
+  font-size: 1.3rem;
+}
+
+.applicantDetails p {
+  margin: 0.5rem 0;
+  color: #555;
+}
+
+.applicantDetails a {
+  color: #007acc;
+  text-decoration: none;
+}
+
+.applicantDetails a:hover {
+  text-decoration: underline;
+}
+
+.messageSection, .resumeSection {
+  margin: 1.5rem 0;
+  padding-top: 1.5rem;
+  border-top: 1px solid #e0e0e0;
+}
+
+.messageSection h4, .resumeSection h4 {
+  margin: 0 0 1rem 0;
+  color: #333;
+  font-size: 1.1rem;
+}
+
+.fullMessage {
+  background: #f8f9fa;
+  padding: 1rem;
+  border-radius: 4px;
+  border-left: 3px solid #007acc;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  line-height: 1.6;
+  color: #555;
+}
+
+.resumeLink {
+  display: inline-block;
+  background: #007acc;
+  color: white;
+  padding: 0.75rem 1.5rem;
+  text-decoration: none;
+  border-radius: 4px;
+  font-weight: 500;
+  transition: background-color 0.2s ease;
+}
+
+.resumeLink:hover {
+  background: #005a94;
+}
+
+.modalActions {
+  padding: 1.5rem;
+  border-top: 1px solid #e0e0e0;
+  background: #f8f9fa;
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+  border-radius: 0 0 8px 8px;
+}
+
+.modalActions .acceptButton,
+.modalActions .rejectButton {
+  flex: none;
+  min-width: 120px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .header {
+    flex-direction: column;
+    align-items: stretch;
+    text-align: center;
+  }
+  
+  .applicationsGrid {
+    grid-template-columns: 1fr;
+  }
+  
+  .cardHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  
+  .actionButtons {
+    flex-direction: column;
+  }
+  
+  .modalContent {
+    margin: 1rem;
+    max-height: calc(100vh - 2rem);
+  }
+  
+  .modalActions {
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 480px) {
+  .applicationsGrid {
+    gap: 1rem;
+  }
+  
+  .applicationCard {
+    padding: 1rem;
+  }
+  
+  .modalHeader, .modalBody, .modalActions {
+    padding: 1rem;
+  }
+}

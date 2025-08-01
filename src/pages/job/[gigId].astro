@@ -1,8 +1,7 @@
 ---
 import Layout from '../../layouts/Layout.astro';
-import JobDetailsPage from '../../components/JobDetailsPage.solid.tsx';
+import JobLayout from '../../components/JobLayout.solid.tsx';
 const { gigId } = Astro.params;
-
 
 function validateGigId(id: string | undefined): string | null {
   if (!id || id === '[object Object]' || typeof id !== 'string') {
@@ -49,34 +48,25 @@ if (!validatedGigId) {
   });
 }
 
-const pageTitle = `Job Details | WorkNow`;
+const pageTitle = `Job Management | WorkNow`;
 ---
 
 <Layout title={pageTitle}>
-  <main class="job-details-page">
-    <div class="job-details-container">
-      <!-- ✅ Only load this Solid component on the client -->
-      <JobDetailsPage client:only="solid" gigId={validatedGigId} />
-    </div>
+  <main class="job-management-page">
+    <!-- ✅ Load the new JobLayout component with sidebar navigation -->
+    <JobLayout client:only="solid" gigId={validatedGigId} />
   </main>
 </Layout>
 
 <style>
-  .job-details-page {
-    display: flex;
-    justify-content: center;
-    align-items: flex-start;
-    min-height: calc(100vh - var(--navbar-height));
-    padding: 2rem var(--padding-inline);
-    background-color: #f5f5f5;
+  .job-management-page {
+    height: 100vh;
+    overflow: hidden;
   }
 
-  .job-details-container {
-    background-color: #fff;
-    padding: 2.5rem;
-    border-radius: 8px;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-    width: 100%;
-    max-width: 1000px;
+  /* Remove default padding/margins from the layout when using full-height sidebar */
+  :global(body) {
+    margin: 0;
+    padding: 0;
   }
 </style>
