@@ -2,13 +2,25 @@ import { createSignal, Show } from 'solid-js';
 
 interface navBarProps {
   loggedIn: boolean;
-  username: string | null;
+  username: string;
   employerPhotoUrl: string | null;
 }
+
 
 function Navbar(props: navBarProps) {
   const [dropdownOpen, setDropdownOpen] = createSignal(false);
   const { loggedIn, username, employerPhotoUrl } = props;
+
+  const getInitialsName = (name: string): string => {
+    if (!name) return '?';
+    const parts = name.split(' ');
+    if (parts.length > 1) {
+      return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    }
+    return parts[0][0].toUpperCase();
+  };
+  
+  const initialsName = getInitialsName(username);
 
   const handleLogout = async () => {
     await fetch("/api/user/logout", {
@@ -34,7 +46,11 @@ function Navbar(props: navBarProps) {
         </div>
       }>
         <div class="relative flex items-center gap-2 sm:gap-3">
-          <Show when={employerPhotoUrl}>
+          <Show when={employerPhotoUrl} fallback={
+            <div class="bg-gray-300 w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center rounded-full border-2 border-blue-600 shadow-sm">
+              <span>{initialsName}</span>
+            </div>
+          }>
             <img src={employerPhotoUrl!} alt="使用者頭像" class="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover border-2 border-blue-600 shadow-sm" />
           </Show>
           <button class="flex items-center gap-1 bg-gray-100 text-gray-800 border border-gray-200 px-3 sm:px-4 py-2 rounded-full font-semibold hover:bg-gray-200 transition-colors text-sm sm:text-base" onClick={() => setDropdownOpen(!dropdownOpen())}>
