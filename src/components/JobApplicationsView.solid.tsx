@@ -2,14 +2,16 @@ import { createResource, createSignal, For, Show } from "solid-js";
 import styles from "../styles/JobApplications.module.css";
 
 type Application = {
-  id: string;
-  applicantName: string;
-  applicantEmail: string;
-  applicantPhone?: string;
+  applicationId: string;
+  workerId: string;
+  workerName: string;
+  workerEmail: string;
+  workerPhone?: string;
+  workerEducation?: string;
+  workerSchool?: string;
+  workerMajor?: string;
+  status: 'pending' | 'approved' | 'rejected' | 'cancelled';
   appliedAt: string;
-  status: 'pending' | 'accepted' | 'rejected';
-  message?: string;
-  resume?: string;
 };
 
 interface JobApplicationsViewProps {
@@ -18,7 +20,7 @@ interface JobApplicationsViewProps {
 
 async function fetchApplications(gigId: string): Promise<Application[]> {
   try {
-    const response = await fetch(`/api/gig/${encodeURIComponent(gigId)}/applications`, {
+    const response = await fetch(`/api/application/gig/${encodeURIComponent(gigId)}`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
@@ -33,10 +35,10 @@ async function fetchApplications(gigId: string): Promise<Application[]> {
       throw new Error(`Failed to fetch applications: ${response.status} ${errorText}`);
     }
 
-    const applications = await response.json();
-    console.log('Applications loaded successfully:', applications.length);
+    const result = await response.json();
+    console.log('Applications loaded successfully:', result.data.applications.length);
     
-    return applications;
+    return result.data.applications;
   } catch (fetchError: any) {
     console.error('Fetch error:', fetchError);
     throw new Error(`Network error: ${fetchError?.message || 'Unknown error'}`);
@@ -57,7 +59,7 @@ function formatDateToDDMMYYYY(dateStr: string | null): string {
 export default function JobApplicationsView(props: JobApplicationsViewProps) {
   const [applications, { refetch }] = createResource(() => props.gigId, fetchApplications);
   const [selectedApplication, setSelectedApplication] = createSignal<Application | null>(null);
-  const [statusFilter, setStatusFilter] = createSignal<'all' | 'pending' | 'accepted' | 'rejected'>('all');
+  const [statusFilter, setStatusFilter] = createSignal<'all' | 'pending' | 'approved' | 'rejected' | 'cancelled'>('all');
 
   const filteredApplications = () => {
     const apps = applications();
@@ -70,16 +72,17 @@ export default function JobApplicationsView(props: JobApplicationsViewProps) {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'pending': return styles.statusPending;
-      case 'accepted': return styles.statusAccepted;
+      case 'approved': return styles.statusAccepted;
       case 'rejected': return styles.statusRejected;
+      case 'cancelled': return styles.statusRejected;
       default: return '';
     }
   };
 
-  const updateApplicationStatus = async (applicationId: string, newStatus: 'accepted' | 'rejected') => {
+  const updateApplicationStatus = async (applicationId: string, newStatus: 'approved' | 'rejected') => {
     try {
-      const response = await fetch(`/api/applications/${applicationId}/status`, {
-        method: 'PATCH',
+      const response = await fetch(`/api/application/${applicationId}/review`, {
+        method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
           'platform': 'web-employer',
@@ -89,7 +92,8 @@ export default function JobApplicationsView(props: JobApplicationsViewProps) {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to update application status');
+        const errorText = await response.text();
+        throw new Error(`Failed to update application status: ${errorText}`);
       }
 
       // Refresh the applications list
@@ -130,8 +134,9 @@ export default function JobApplicationsView(props: JobApplicationsViewProps) {
           >
             <option value="all">All Applications</option>
             <option value="pending">Pending</option>
-            <option value="accepted">Accepted</option>
+            <option value="approved">Approved</option>
             <option value="rejected">Rejected</option>
+            <option value="cancelled">Cancelled</option>
           </select>
         </div>
       </div>
@@ -165,7 +170,7 @@ export default function JobApplicationsView(props: JobApplicationsViewProps) {
               {(application) => (
                 <div class={styles.applicationCard}>
                   <div class={styles.cardHeader}>
-                    <h3 class={styles.applicantName}>{application.applicantName}</h3>
+                    <h3 class={styles.applicantName}>{application.workerName}</h3>
                     <span class={`${styles.status} ${getStatusColor(application.status)}`}>
                       {application.status.charAt(0).toUpperCase() + application.status.slice(1)}
                     </span>
@@ -173,22 +178,31 @@ export default function JobApplicationsView(props: JobApplicationsViewProps) {
                   
                   <div class={styles.cardContent}>
                     <p class={styles.applicantInfo}>
-                      <strong>Email:</strong> {application.applicantEmail}
+                      <strong>Email:</strong> {application.workerEmail}
                     </p>
-                    <Show when={application.applicantPhone}>
+                    <Show when={application.workerPhone}>
                       <p class={styles.applicantInfo}>
-                        <strong>Phone:</strong> {application.applicantPhone}
+                        <strong>Phone:</strong> {application.workerPhone}
+                      </p>
+                    </Show>
+                    <Show when={application.workerEducation}>
+                      <p class={styles.applicantInfo}>
+                        <strong>Education:</strong> {application.workerEducation}
+                      </p>
+                    </Show>
+                    <Show when={application.workerSchool}>
+                      <p class={styles.applicantInfo}>
+                        <strong>School:</strong> {application.workerSchool}
+                      </p>
+                    </Show>
+                    <Show when={application.workerMajor}>
+                      <p class={styles.applicantInfo}>
+                        <strong>Major:</strong> {application.workerMajor}
                       </p>
                     </Show>
                     <p class={styles.applicantInfo}>
                       <strong>Applied:</strong> {formatDateToDDMMYYYY(application.appliedAt)}
                     </p>
-                    <Show when={application.message}>
-                      <p class={styles.message}>
-                        <strong>Message:</strong> {application.message?.substring(0, 100)}
-                        {application.message && application.message.length > 100 ? '...' : ''}
-                      </p>
-                    </Show>
                   </div>
 
                   <div class={styles.cardActions}>
@@ -203,13 +217,13 @@ export default function JobApplicationsView(props: JobApplicationsViewProps) {
                       <div class={styles.actionButtons}>
                         <button 
                           class={styles.acceptButton}
-                          onClick={() => updateApplicationStatus(application.id, 'accepted')}
+                          onClick={() => updateApplicationStatus(application.applicationId, 'approved')}
                         >
                           Accept
                         </button>
                         <button 
                           class={styles.rejectButton}
-                          onClick={() => updateApplicationStatus(application.id, 'rejected')}
+                          onClick={() => updateApplicationStatus(application.applicationId, 'rejected')}
                         >
                           Reject
                         </button>
@@ -236,10 +250,19 @@ export default function JobApplicationsView(props: JobApplicationsViewProps) {
             
             <div class={styles.modalBody}>
               <div class={styles.applicantDetails}>
-                <h3>{selectedApplication()!.applicantName}</h3>
-                <p><strong>Email:</strong> <a href={`mailto:${selectedApplication()!.applicantEmail}`}>{selectedApplication()!.applicantEmail}</a></p>
-                <Show when={selectedApplication()!.applicantPhone}>
-                  <p><strong>Phone:</strong> <a href={`tel:${selectedApplication()!.applicantPhone}`}>{selectedApplication()!.applicantPhone}</a></p>
+                <h3>{selectedApplication()!.workerName}</h3>
+                <p><strong>Email:</strong> <a href={`mailto:${selectedApplication()!.workerEmail}`}>{selectedApplication()!.workerEmail}</a></p>
+                <Show when={selectedApplication()!.workerPhone}>
+                  <p><strong>Phone:</strong> <a href={`tel:${selectedApplication()!.workerPhone}`}>{selectedApplication()!.workerPhone}</a></p>
+                </Show>
+                <Show when={selectedApplication()!.workerEducation}>
+                  <p><strong>Education:</strong> {selectedApplication()!.workerEducation}</p>
+                </Show>
+                <Show when={selectedApplication()!.workerSchool}>
+                  <p><strong>School:</strong> {selectedApplication()!.workerSchool}</p>
+                </Show>
+                <Show when={selectedApplication()!.workerMajor}>
+                  <p><strong>Major:</strong> {selectedApplication()!.workerMajor}</p>
                 </Show>
                 <p><strong>Applied on:</strong> {formatDateToDDMMYYYY(selectedApplication()!.appliedAt)}</p>
                 <p><strong>Status:</strong> 
@@ -248,29 +271,6 @@ export default function JobApplicationsView(props: JobApplicationsViewProps) {
                   </span>
                 </p>
               </div>
-
-              <Show when={selectedApplication()!.message}>
-                <div class={styles.messageSection}>
-                  <h4>Application Message</h4>
-                  <div class={styles.fullMessage}>
-                    {selectedApplication()!.message}
-                  </div>
-                </div>
-              </Show>
-
-              <Show when={selectedApplication()!.resume}>
-                <div class={styles.resumeSection}>
-                  <h4>Resume</h4>
-                  <a 
-                    href={selectedApplication()!.resume} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    class={styles.resumeLink}
-                  >
-                    Download Resume
-                  </a>
-                </div>
-              </Show>
             </div>
 
             <Show when={selectedApplication()!.status === 'pending'}>
@@ -278,7 +278,7 @@ export default function JobApplicationsView(props: JobApplicationsViewProps) {
                 <button 
                   class={styles.acceptButton}
                   onClick={() => {
-                    updateApplicationStatus(selectedApplication()!.id, 'accepted');
+                    updateApplicationStatus(selectedApplication()!.applicationId, 'approved');
                     closeApplicationModal();
                   }}
                 >
@@ -287,7 +287,7 @@ export default function JobApplicationsView(props: JobApplicationsViewProps) {
                 <button 
                   class={styles.rejectButton}
                   onClick={() => {
-                    updateApplicationStatus(selectedApplication()!.id, 'rejected');
+                    updateApplicationStatus(selectedApplication()!.applicationId, 'rejected');
                     closeApplicationModal();
                   }}
                 >

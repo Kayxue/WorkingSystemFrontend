@@ -129,6 +129,12 @@
   border: 1px solid #f5c6cb;
 }
 
+.statusCancelled {
+  background: #e2e3e5;
+  color: #383d41;
+  border: 1px solid #d6d8db;
+}
+
 .cardContent {
   margin-bottom: 1rem;
 }
