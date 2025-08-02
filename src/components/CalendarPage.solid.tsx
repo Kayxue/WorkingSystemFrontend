@@ -54,47 +54,44 @@ export default function CalendarPage() {
   let selectedGigsref: HTMLDivElement | undefined;
 
   async function loadAndGroupGigs(y: number, m: number) {
-    let page = 1;
-    let hasMore = true;
-    let allGigs: JobOffer[] = [];
-    let totalCount = 0;
     setIsLoading(true);
     setGigMap({});
     setGigCount(null);
-    while (hasMore){
-      try {
-        const offset = (page - 1)* pageWindowSize;
-        const url = "/api/gig/my-gigs?offset=" + offset + "&year=" + y + "&month=" + (m + 1);
+    let allGigs: JobOffer[] = [];
+    let hasMore = true;
+    let offset = 0;
+    const limit = 100; // As seen from the API response
+
+    try {
+      while (hasMore) {
+        const url = `/api/gig/employer/calendar?year=${y}&month=${m + 1}&offset=${offset}&limit=${limit}`;
         const response = await fetch(url, {
           method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            platform: "web-employer",
-          },
+          headers: { "Content-Type": "application/json", platform: "web-employer" },
           credentials: "include",
         });
-  
+
         if (!response.ok) {
           const text = await response.text();
           console.error("Error status:", response.status);
           console.error("Error body:", text);
-          throw new Error("Failed to fetch job offers");
+          throw new Error("Failed to fetch calendar data");
         }
-  
+
         const data = await response.json();
         if (Array.isArray(data.gigs)) {
           allGigs = allGigs.concat(data.gigs);
         }
-        totalCount = data.count ?? totalCount;
+        
         hasMore = data.pagination?.hasMore || false;
-        page++;
-      } catch (err) {
-        console.error("Failed to load gigs:", err);
-        hasMore = false;
+        if (hasMore) {
+          offset += limit;
+        }
       }
-    }
-      const grouped: Record<number, JobOffer[]> = {};
 
+      setGigCount(allGigs.length);
+
+      const grouped: Record<number, JobOffer[]> = {};
       for (const gig of allGigs) {
         const start = new Date(gig.dateStart);
         const end = new Date(gig.dateEnd);
@@ -103,18 +100,18 @@ export default function CalendarPage() {
         end.setHours(0, 0, 0, 0);
 
         while (current <= end) {
-          const isSameMonth = current.getFullYear() === y && current.getMonth() === m;
-          if (isSameMonth) {
-            const day = current.getDate();
-            if (!grouped[day]) grouped[day] = [];
-            grouped[day].push(gig);
-          }
+          const day = current.getDate();
+          if (!grouped[day]) grouped[day] = [];
+          grouped[day].push(gig);
           current.setDate(current.getDate() + 1);
         }
       }
       setGigMap(grouped);
-      setGigCount(totalCount);
+    } catch (err) {
+      console.error("Failed to load gigs:", err);
+    } finally {
       setIsLoading(false);
+    }
   }
 
   createEffect(() => {
@@ -283,7 +280,7 @@ export default function CalendarPage() {
               {(day) => {
                 const y = year();
                 const m = month();
-                const gigsToday = typeof day === "number" ? gigMap()[day]?.length ?? 0 : 0;
+                const gigsToday = () => (typeof day === "number" ? gigMap()[day]?.length ?? 0 : 0);
 
                 return (
                   <div
@@ -320,7 +317,7 @@ export default function CalendarPage() {
                             <rect x="2" y="7" width="20" height="14" rx="2" ry="2" />
                             <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2" />
                             <path d="M2 13h20" />
-                          </svg> {gigsToday}
+                          </svg> {gigsToday()}
                         </div>
                       </>
                     ) : (
