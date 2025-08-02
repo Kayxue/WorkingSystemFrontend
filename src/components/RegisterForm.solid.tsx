@@ -1,5 +1,4 @@
-// src/components/RegisterForm.solid.tsx
-import { createSignal, Show } from "solid-js";
+import { createSignal, Show, onCleanup, For } from "solid-js";
 
 // 假設的產業類別選項
 const industryTypes = [
@@ -12,6 +11,10 @@ const industryTypes = [
   { value: "其他", label: "其他" },
 ];
 
+interface FilePreview {
+  file: File;
+  url: string;
+}
 
 export default function RegisterForm() {
   const [email, setEmail] = createSignal("");
@@ -23,19 +26,61 @@ export default function RegisterForm() {
   const [address, setAddress] = createSignal(""); // 營業地址
   const [phoneNumber, setPhoneNumber] = createSignal(""); // 公司電話
   const [identificationNumber, setIdentificationNumber] = createSignal(""); // 統一編號
-  const [verificationDocument, setVerificationDocument] = createSignal<File | null>(null); // 驗證文件
+  const [files, setFiles] = createSignal<FilePreview[]>([]); // 驗證文件
   
   const [error, setError] = createSignal("");
   const [isLoading, setIsLoading] = createSignal(false);
 
+  const MAX_FILES = 2;
+  const MAX_SIZE_MB = 2;
+  const MAX_SIZE_BYTES = MAX_SIZE_MB * 1024 * 1024;
+  const ALLOWED_TYPES = ["image/jpeg", "image/png", "application/pdf"];
+  const ALLOWED_EXTENSIONS = [".pdf", ".jpg", ".jpeg", ".png"];
+
   const handleFileChange = (e: Event) => {
-    const target = e.target as HTMLInputElement;
-    if (target.files && target.files.length > 0) {
-      setVerificationDocument(target.files[0]);
-    } else {
-      setVerificationDocument(null);
+    const input = e.target as HTMLInputElement;
+    if (!input.files) return;
+
+    setError('');
+    const newFiles = Array.from(input.files);
+
+    if (files().length + newFiles.length > MAX_FILES) {
+      setError(`最多只能上傳 ${MAX_FILES} 個文件。`);
+      return;
     }
+
+    const validFiles = newFiles.filter(file => {
+      if (!ALLOWED_TYPES.includes(file.type)) {
+        setError(`文件格式無效: ${file.name}. 只接受 JPG, PNG, PDF.`);
+        return false;
+      }
+      if (file.size > MAX_SIZE_BYTES) {
+        setError(`文件 ${file.name} 過大，請上傳小於 ${MAX_SIZE_MB}MB 的文件。`);
+        return false;
+      }
+      return true;
+    });
+
+    if (error()) return;
+
+    const filePreviews = validFiles.map(file => ({
+      file,
+      url: URL.createObjectURL(file)
+    }));
+
+    setFiles(current => [...current, ...filePreviews]);
   };
+
+  const handleFileDelete = (index: number) => {
+    const fileToDelete = files()[index];
+    URL.revokeObjectURL(fileToDelete.url); // Clean up memory
+    setFiles(current => current.filter((_, i) => i !== index));
+  };
+  
+  onCleanup(() => {
+    files().forEach(file => URL.revokeObjectURL(file.url));
+  });
+
 
   const handleSubmit = async (e: Event) => {
     e.preventDefault();
@@ -47,7 +92,7 @@ export default function RegisterForm() {
       setIsLoading(false);
       return;
     }
-    if (!verificationDocument()) {
+    if (files().length === 0) {
       setError("請上傳商業登記驗證文件。");
       setIsLoading(false);
       return;
@@ -82,9 +127,11 @@ export default function RegisterForm() {
     formData.append('phoneNumber', phoneNumber());
     formData.append('identificationNumber', identificationNumber());
     formData.append('identificationType', 'unifiedBusinessNo'); // 固定為統一編號類型
-    if (verificationDocument()) {
-      formData.append('verificationDocument', verificationDocument() as File);
-    }
+    
+    files().forEach(filePreview => {
+      formData.append('verificationDocuments', filePreview.file);
+    });
+
     // 由於我們是商家註冊，可以固定傳遞 role
     formData.append('role', 'business');
 
@@ -172,11 +219,38 @@ export default function RegisterForm() {
       <hr class="my-2 border-gray-200" />
 
       <div class="text-left">
-        <label for="verificationDocument" class="block mb-2 text-gray-700 font-medium text-sm">商業登記驗證文件 <span class="text-red-500">*</span> <span class="text-gray-400 text-xs">(例如：營業登記核准函)</span></label>
-        <input type="file" id="verificationDocument" onChange={handleFileChange} accept=".pdf,.png,.jpg,.jpeg" required class="block w-full text-sm text-gray-700 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" />
-        <Show when={verificationDocument()}>
-          <div class="mt-2 text-sm text-blue-700">已選擇檔案：{verificationDocument()!.name}</div>
-        </Show>
+        <label class="block mb-2 text-gray-700 font-medium text-sm">商業登記驗證文件 <span class="text-red-500">*</span> <span class="text-gray-400 text-xs">(最多 {MAX_FILES} 個，每個檔案不超過 {MAX_SIZE_MB}MB)</span></label>
+        {files().length < MAX_FILES && (
+          <div class="relative flex items-center justify-center w-full">
+            <label for="file-upload" class="flex flex-col items-center justify-center w-full h-48 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors">
+              <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                <svg class="w-8 h-8 mb-4 text-gray-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 16"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2"/></svg>
+                <p class="mb-2 text-sm text-gray-500"><span class="font-semibold">點擊上傳</span> 或拖曳檔案至此</p>
+                <p class="text-xs text-gray-500">支援格式: PDF, JPG, PNG (單檔 {MAX_SIZE_MB}MB 以內)</p>
+              </div>
+              <input id="file-upload" type="file" class="hidden" onChange={handleFileChange} accept={ALLOWED_EXTENSIONS.join(',')} multiple />
+            </label>
+          </div>
+        )}
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <For each={files()}>
+          {(filePreview, index) => (
+            <div class="relative border rounded-lg p-2 flex flex-col items-center">
+              {filePreview.file.type.startsWith('image/') ? (
+                <img src={filePreview.url} alt="Preview" class="w-full h-32 object-cover rounded-md mb-2" />
+              ) : (
+                <div class="w-full h-32 flex flex-col justify-center items-center bg-gray-100 rounded-md mb-2">
+                  <svg class="w-8 h-8 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                  <span class="text-sm text-gray-600 mt-2">PDF Document</span>
+                </div>
+              )}
+              <p class="text-xs text-gray-700 truncate w-full text-center" title={filePreview.file.name}>{filePreview.file.name}</p>
+              <button onClick={() => handleFileDelete(index())} type="button" class="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 text-xs leading-none w-5 h-5 flex items-center justify-center hover:bg-red-600">&times;</button>
+            </div>
+          )}
+        </For>
       </div>
 
 
