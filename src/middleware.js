@@ -20,7 +20,6 @@ const checkAuth = defineMiddleware(async (context, next) => {
             const data = await response.json();
             loginData.user = data;
             loginData.loggedIn = true;
-            console.log('User login status fetched successfully:', loginData.user);
         } else {
             loginData.loggedIn = false;
             loginData.user = null;
@@ -33,12 +32,9 @@ const checkAuth = defineMiddleware(async (context, next) => {
 
     context.locals.authData = loginData;
 
-    const protectedRoutes = ['/edit-job', '/post-job', '/dashboard', '/calendar'];
+    const protectedRoutes = ['/edit-job', '/post-job', '/dashboard', '/calendar','profile','account-settings']
     if (!loginData.loggedIn && protectedRoutes.includes(context.url.pathname)) {
         return Response.redirect(new URL('/redirect-login', context.url));
-    }
-    if (context.url.pathname === '/redirect-login') {
-        return Response.redirect(new URL('/login', context.url));
     }
     return next();
 });
