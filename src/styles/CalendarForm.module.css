@@ -14,6 +14,7 @@
 
 .gridWrapper {
   width: 100%;
+  margin-bottom: 20px;
   background-color: white;
   border-radius: 16px;
   box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
@@ -165,6 +166,10 @@
 .selectedGigs ul {
   list-style: disc inside;
   padding-left: 1rem;
+}
+
+.selectedGigs {
+  margin-bottom: 20px;
 }
 
 .today {

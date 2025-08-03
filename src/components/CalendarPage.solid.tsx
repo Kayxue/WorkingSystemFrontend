@@ -60,7 +60,7 @@ export default function CalendarPage() {
     let allGigs: JobOffer[] = [];
     let hasMore = true;
     let offset = 0;
-    const limit = 100; // As seen from the API response
+    const limit = 100;
 
     try {
       while (hasMore) {

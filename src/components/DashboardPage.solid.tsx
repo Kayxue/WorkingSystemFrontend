@@ -1,4 +1,3 @@
-//dashboard tsx
 import { createEffect, createSignal, createMemo, For, Show } from "solid-js";
 import styles from "../styles/DashboardForm.module.css";
 
@@ -12,6 +11,7 @@ type JobOffer = {
   publishedAt: string;
   unlistedAt: string;
   isActive: boolean;
+  isCurrentlyListed: boolean;
 };
 
 function formatDateToDDMMYYYY(dateStr: string): string {
@@ -81,55 +81,37 @@ export default function DashboardPage() {
 
   const paginatedJobs = createMemo(() => jobOffers());
 
-  async function handleDelete(gigId: string) {
-    const confirmed = confirm("Are you sure you want to delete this job?");
-    if (!confirmed) return;
-
-    try {
-      const res = await fetch(`/api/gig/${gigId}`, {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-          "platform": "web-employer",
-        },
-        credentials: "include",
-      });
-
-      if (!res.ok) {
-        const errorText = await res.text();
-        alert("Failed to delete: " + errorText);
-      } else {
-        alert("Job deleted successfully");
-      }
-    } catch (error) {
-      console.error("Delete failed:", error);
-      alert("An error occurred while deleting.");
-    }
-  }
-
-  function handleEdit(gigId: string) {
-    window.location.href = `/edit-job?gigId=${gigId}`;
-  }
-
-  async function handleToggleStatus(gigId: string) {
+  async function toggleStatus(gigId: string) {
     try {
       const res = await fetch(`/api/gig/${gigId}/toggle-status`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
-          "platform": "web-employer",
+          platform: "web-employer",
         },
         credentials: "include",
       });
-
-      const result = await res.json();
-
-      if (!res.ok) {
-        alert("Failed to toggle job status: " + (result?.message || res.statusText));
-      }
+      if (!res.ok) throw new Error("Failed to toggle status");
+      await fetchJobOffers(activeFilter() === "All" ? "" : activeFilter().toLowerCase(), currentPage());
     } catch (err) {
-      console.error("Toggle failed:", err);
-      alert("An error occurred while toggling job status.");
+      console.error("Toggle status failed:", err);
+    }
+  }
+
+  async function toggleListing(gigId: string) {
+    try {
+      const res = await fetch(`/api/gig/${gigId}/toggle-listing`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          platform: "web-employer",
+        },
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("Failed to toggle listing");
+      await fetchJobOffers(activeFilter() === "All" ? "" : activeFilter().toLowerCase(), currentPage());
+    } catch (err) {
+      console.error("Toggle listing failed:", err);
     }
   }
 
@@ -245,63 +227,56 @@ export default function DashboardPage() {
           <div class={styles.jobList}>
             <For each={paginatedJobs()}>
               {(job) => (
-                <div
-                  class={styles.jobCard}
-                  onClick={() => (window.location.href = `/job/${job.gigId}`)}
-                  style={{ cursor: "pointer" }}
-                >
+                <div class={styles.jobCardWrapper}>
                   <div
-                    class={styles.cardIcons}
-                    onClick={(e) => e.stopPropagation()}
+                    class={styles.jobCard}
+                    onClick={() => (window.location.href = `/job/${job.gigId}`)}
+                    style={{ cursor: "pointer" }}
                   >
-                    <button
-                      class={styles.iconButton}
-                      onClick={() => handleToggleStatus(job.gigId)}
-                      title={job.isActive ? "Deactivate" : "Activate"}
-                    >
-                      {job.isActive ? (
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"
-                          stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
-                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                          <circle cx="12" cy="12" r="3" />
-                        </svg>
-                      ) : (
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"
-                          stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
-                          <path d="M17.94 17.94A10.94 10.94 0 0 1 12 20c-7 0-11-8-11-8a21.42 21.42 0 0 1 5.17-6.18" />
-                          <path d="M1 1l22 22" />
-                          <path d="M9.53 9.53a3.5 3.5 0 0 0 4.95 4.95" />
-                          <path d="M14.47 14.47a3.5 3.5 0 0 1-4.95-4.95" />
-                          <path d="M12 12v0" />
-                        </svg>
-                      )}
-                    </button>
-                    <button class={styles.iconButton} onClick={() => handleEdit(job.gigId)} title="Edit">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
-                        <path d="M12 20h9" />
-                        <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" />
-                      </svg>
-                    </button>
-                    <button class={styles.iconButton} onClick={() => handleDelete(job.gigId)} title="Delete">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
-                        <polyline points="3 6 5 6 21 6" />
-                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                        <line x1="10" y1="11" x2="10" y2="17" />
-                        <line x1="14" y1="11" x2="14" y2="17" />
-                      </svg>
-                    </button>
+                    <h2 class={styles.jobTitle}>{job.title}</h2>
+                    <p class={styles.jobRate}>
+                      Date: {formatDateToDDMMYYYY(job.dateStart)} to {formatDateToDDMMYYYY(job.dateEnd)}
+                    </p>
+                    <p class={styles.jobTime}>
+                      Time: {job.timeStart} - {job.timeEnd}
+                    </p>
+                    <p class={styles.jobPostedAt}>
+                      Posted on: {formatDateToDDMMYYYY(job.publishedAt)}
+                    </p>
                   </div>
 
-                  <h2 class={styles.jobTitle}>{job.title}</h2>
-                  <p class={styles.jobRate}>
-                    Date: {formatDateToDDMMYYYY(job.dateStart)} to {formatDateToDDMMYYYY(job.dateEnd)}
-                  </p>
-                  <p class={styles.jobTime}>
-                    Time: {job.timeStart} - {job.timeEnd}
-                  </p>
-                  <p class={styles.jobPostedAt}>
-                    Posted on: {formatDateToDDMMYYYY(job.publishedAt)}
-                  </p>
+                  <div class={styles.jobCardActions}>
+                    <button
+                      class={`${styles.actionButton} ${job.isActive ? styles.blue : styles.grey}`}
+                      disabled={!job.isCurrentlyListed}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        window.location.href = `/edit-job?gigId=${job.gigId}`;
+                      }}
+                    >
+                      Edit - {String(job.isActive)} / {String(job.isCurrentlyListed)}
+                    </button>
+                    <button
+                      class={`${styles.actionButton} ${job.isCurrentlyListed ? styles.blue : styles.grey}`}
+                      disabled={!job.isCurrentlyListed}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleStatus(job.gigId);
+                      }}
+                    >
+                      {job.isActive ? "Deactivate" : "Activate"}
+                    </button>
+                    <button
+                      class={`${styles.actionButton} ${!job.isActive || !job.isCurrentlyListed ? styles.blue : styles.grey}`}
+                      disabled={!job.isActive}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleListing(job.gigId);
+                      }}
+                    >
+                      {job.isCurrentlyListed ? "Listed" : "NotListed"}
+                    </button>
+                  </div>
                 </div>
               )}
             </For>
