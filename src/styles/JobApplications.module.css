@@ -309,6 +309,47 @@
   text-decoration: underline;
 }
 
+/* --- NEW STYLES FOR CERTIFICATES AND JOB EXPERIENCE --- */
+.applicantDetails h4 {
+  margin: 1.5rem 0 0.75rem 0;
+  color: #333;
+  font-size: 1.1rem;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 0.5rem;
+}
+
+.infoList {
+  list-style: none; /* Remove default bullet points */
+  padding: 0;
+  margin: 0.75rem 0;
+}
+
+.infoList li {
+  background: #f8f9fa;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+  color: #555;
+}
+
+.infoList li strong {
+  color: #333;
+}
+
+.jobDescription {
+  margin-top: 0.5rem;
+  padding-left: 1rem;
+  border-left: 2px solid #007acc;
+  font-style: italic;
+  color: #666;
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+/* --- END OF NEW STYLES --- */
+
+
 .messageSection, .resumeSection {
   margin: 1.5rem 0;
   padding-top: 1.5rem;

@@ -1,0 +1,41 @@
+---
+import Layout from '../layouts/Layout.astro';
+import JobLayout from '../components/JobLayout.astro';
+import JobRatingView from '../components/JobRatingView.solid.tsx';
+
+const { gigId } = Astro.params;
+
+if (!gigId) {
+  return Astro.redirect('/404');
+}
+---
+
+<Layout title="WorkNow - Job Ratings">
+  <JobLayout gigId={gigId} currentView="rating" title="Job Management">
+    <div class="rating-page">
+      <div class="rating-container">
+        <JobRatingView gigId={gigId} client:load />
+      </div>
+    </div>
+  </JobLayout>
+</Layout>
+
+<style>
+  .rating-page {
+    display: flex;
+    flex-direction: column;
+    min-height: 100%;
+    background: #f8fafc;
+  }
+
+  .rating-container {
+    flex: 1;
+    padding: 0;
+    background: transparent;
+  }
+
+  /* Override default container styles if needed */
+  :global(.job-layout-container .main-content) {
+    background: #f8fafc;
+  }
+</style>

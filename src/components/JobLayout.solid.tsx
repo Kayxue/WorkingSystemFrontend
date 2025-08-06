@@ -2,9 +2,10 @@
 import { createSignal, Show, Switch, Match, onMount, onCleanup } from "solid-js";
 import JobDetailsView from "./JobDetailsView.solid";
 import JobApplicationsView from "./JobApplicationsView.solid";
+import JobRatingView from "./JobRatingView.solid"; // Import the new rating component
 import styles from "../styles/JobLayout.module.css";
 
-type View = 'details' | 'applications';
+type View = 'details' | 'applications' | 'rating'; // Add 'rating' to View type
 
 interface JobLayoutProps {
   gigId: string;
@@ -18,6 +19,7 @@ export default function JobLayout(props: JobLayoutProps) {
   const navigationItems = [
     { id: 'details' as View, label: 'Job Details', icon: '📋', shortcut: 'Alt+1' },
     { id: 'applications' as View, label: 'Applications', icon: '👥', shortcut: 'Alt+2' },
+    { id: 'rating' as View, label: 'Rating', icon: '⭐', shortcut: 'Alt+3' }, // Add rating item
   ];
 
   const goBack = () => {
@@ -39,6 +41,9 @@ export default function JobLayout(props: JobLayoutProps) {
     } else if (e.altKey && e.key === '2') {
       e.preventDefault();
       setCurrentView('applications');
+    } else if (e.altKey && e.key === '3') { // Add shortcut for rating
+      e.preventDefault();
+      setCurrentView('rating');
     } else if (e.altKey && e.key === 's') {
       e.preventDefault();
       toggleSidebar();
@@ -106,6 +111,9 @@ export default function JobLayout(props: JobLayoutProps) {
           </Match>
           <Match when={currentView() === 'applications'}>
             <JobApplicationsView gigId={props.gigId} />
+          </Match>
+          <Match when={currentView() === 'rating'}> {/* Add Match for rating */}
+            <JobRatingView gigId={props.gigId} />
           </Match>
         </Switch>
       </main>
