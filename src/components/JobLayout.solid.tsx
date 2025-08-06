@@ -1,4 +1,5 @@
-import { createSignal, Show, Switch, Match } from "solid-js";
+// File: JobLayoutInteractive.solid.tsx
+import { createSignal, Show, Switch, Match, onMount, onCleanup } from "solid-js";
 import JobDetailsView from "./JobDetailsView.solid";
 import JobApplicationsView from "./JobApplicationsView.solid";
 import styles from "../styles/JobLayout.module.css";
@@ -12,10 +13,11 @@ interface JobLayoutProps {
 export default function JobLayout(props: JobLayoutProps) {
   const [currentView, setCurrentView] = createSignal<View>('details');
   const [sidebarCollapsed, setSidebarCollapsed] = createSignal(false);
+  const [isMobile, setIsMobile] = createSignal(false);
 
   const navigationItems = [
-    { id: 'details' as View, label: 'Job Details', icon: '📋' },
-    { id: 'applications' as View, label: 'Applications', icon: '👥' },
+    { id: 'details' as View, label: 'Job Details', icon: '📋', shortcut: 'Alt+1' },
+    { id: 'applications' as View, label: 'Applications', icon: '👥', shortcut: 'Alt+2' },
   ];
 
   const goBack = () => {
@@ -26,9 +28,38 @@ export default function JobLayout(props: JobLayoutProps) {
     setSidebarCollapsed(!sidebarCollapsed());
   };
 
+  const handleResize = () => {
+    setIsMobile(window.innerWidth <= 768);
+  };
+
+  const handleKeyDown = (e: KeyboardEvent) => {
+    if (e.altKey && e.key === '1') {
+      e.preventDefault();
+      setCurrentView('details');
+    } else if (e.altKey && e.key === '2') {
+      e.preventDefault();
+      setCurrentView('applications');
+    } else if (e.altKey && e.key === 's') {
+      e.preventDefault();
+      toggleSidebar();
+    } else if (e.key === 'Escape' && isMobile() && !sidebarCollapsed()) {
+      setSidebarCollapsed(true);
+    }
+  };
+
+  onMount(() => {
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    document.addEventListener('keydown', handleKeyDown);
+  });
+
+  onCleanup(() => {
+    window.removeEventListener('resize', handleResize);
+    document.removeEventListener('keydown', handleKeyDown);
+  });
+
   return (
     <div class={styles.jobLayoutContainer}>
-      {/* Sidebar */}
       <aside class={`${styles.sidebar} ${sidebarCollapsed() ? styles.collapsed : ''}`}>
         <div class={styles.sidebarHeader}>
           <Show when={!sidebarCollapsed()}>
@@ -37,18 +68,18 @@ export default function JobLayout(props: JobLayoutProps) {
           <button 
             class={styles.collapseButton}
             onClick={toggleSidebar}
-            title={sidebarCollapsed() ? 'Expand sidebar' : 'Collapse sidebar'}
+            title={sidebarCollapsed() ? 'Expand sidebar (Alt+S)' : 'Collapse sidebar (Alt+S)'}
           >
             {sidebarCollapsed() ? '→' : '←'}
           </button>
         </div>
-        
+
         <nav class={styles.navigation}>
-          {navigationItems.map((item) => (
+          {navigationItems.map(item => (
             <button
               class={`${styles.navItem} ${currentView() === item.id ? styles.active : ''}`}
               onClick={() => setCurrentView(item.id)}
-              title={sidebarCollapsed() ? item.label : ''}
+              title={item.shortcut}
             >
               <span class={styles.navIcon}>{item.icon}</span>
               <Show when={!sidebarCollapsed()}>
@@ -68,9 +99,8 @@ export default function JobLayout(props: JobLayoutProps) {
         </div>
       </aside>
 
-      {/* Main Content */}
       <main class={styles.mainContent}>
-        <Switch>
+        <Switch fallback={<div>Loading...</div>}>
           <Match when={currentView() === 'details'}>
             <JobDetailsView gigId={props.gigId} />
           </Match>
@@ -79,6 +109,10 @@ export default function JobLayout(props: JobLayoutProps) {
           </Match>
         </Switch>
       </main>
+
+      <Show when={isMobile() && !sidebarCollapsed()}>
+        <div class={styles.mobileOverlay} onClick={() => setSidebarCollapsed(true)} />
+      </Show>
     </div>
   );
 }

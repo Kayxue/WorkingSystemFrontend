@@ -1,4 +1,5 @@
-import { createResource, createSignal, For, Show } from "solid-js";
+import { createResource, createSignal, For, Show, onCleanup } from "solid-js";
+import type { Component } from "solid-js";
 import styles from "../styles/JobDetails.module.css";
 
 type JobData = {
@@ -74,11 +75,13 @@ function stripQuotes(str: any): string {
   return str;
 }
 
-export default function JobDetailsView(props: JobDetailsViewProps) {
+const JobDetailsView: Component<JobDetailsViewProps> = (props) => {
+  // Create reactive resources and signals
   const [jobData] = createResource(() => props.gigId, fetchJobData);
   const [selectedPhoto, setSelectedPhoto] = createSignal<string | null>(null);
   const [imageErrors, setImageErrors] = createSignal<Set<number>>(new Set());
 
+  // Event handlers
   const handleImageError = (index: number) => {
     setImageErrors(prev => new Set([...prev, index]));
   };
@@ -97,9 +100,17 @@ export default function JobDetailsView(props: JobDetailsViewProps) {
     return typeof photo === 'string' ? photo : photo.url || '';
   };
 
-  // Close modal with Escape key
-  document.addEventListener('keydown', (e) => {
+  // Handle keyboard events for modal
+  const handleKeyDown = (e: KeyboardEvent) => {
     if (e.key === 'Escape') closePhotoModal();
+  };
+
+  // Add event listener on mount and clean up on unmount
+  document.addEventListener('keydown', handleKeyDown);
+  onCleanup(() => {
+    document.removeEventListener('keydown', handleKeyDown);
+    // Reset body overflow when component unmounts
+    document.body.style.overflow = 'auto';
   });
 
   return (
@@ -160,16 +171,64 @@ export default function JobDetailsView(props: JobDetailsViewProps) {
               <section class={styles.section}>
                 <h2>Job Description</h2>
                 <div class={styles.contentBox}>
-                  {stripQuotes(jobInfo.description || 'No description provided')}
+                  {
+                    typeof jobInfo.description === 'string' ? (
+                      stripQuotes(jobInfo.description)
+                    ) : Array.isArray(jobInfo.description) ? (
+                      <ul>
+                        {jobInfo.description.map(item => <li>{item}</li>)}
+                      </ul>
+                    ) : jobInfo.description && typeof jobInfo.description === 'object' ? (
+                      <div>
+                        {jobInfo.description.details && (
+                          <p><strong>Details:</strong> {jobInfo.description.details}</p>
+                        )}
+                        {jobInfo.description.responsibilities && (
+                          <p><strong>Responsibilities:</strong> {jobInfo.description.responsibilities}</p>
+                        )}
+                      </div>
+                    ) : (
+                      'No description provided'
+                    )
+                  }
                 </div>
               </section>
+
+
+
 
               <section class={styles.section}>
                 <h2>Requirements</h2>
                 <div class={styles.contentBox}>
-                  {stripQuotes(jobInfo.requirements || 'No specific requirements listed')}
+                  {
+                    typeof jobInfo.requirements === 'string' ? (
+                      stripQuotes(jobInfo.requirements)
+                    ) : Array.isArray(jobInfo.requirements) ? (
+                      <ul>
+                        {jobInfo.requirements.map(item => <li>{item}</li>)}
+                      </ul>
+                    ) : jobInfo.requirements && typeof jobInfo.requirements === 'object' ? (
+                      <div>
+                        {jobInfo.requirements.experience && (
+                          <p><strong>Experience:</strong> {jobInfo.requirements.experience}</p>
+                        )}
+                        {jobInfo.requirements.skills && Array.isArray(jobInfo.requirements.skills) && (
+                          <>
+                            <strong>Skills:</strong>
+                            <ul>
+                              {jobInfo.requirements.skills.map(skill => <li>{skill}</li>)}
+                            </ul>
+                          </>
+                        )}
+                      </div>
+                    ) : (
+                      'No specific requirements listed'
+                    )
+                  }
                 </div>
               </section>
+
+
 
               <section class={styles.section}>
                 <Show 
@@ -270,4 +329,6 @@ export default function JobDetailsView(props: JobDetailsViewProps) {
       </Show>
     </div>
   );
-}
+};
+
+export default JobDetailsView;
