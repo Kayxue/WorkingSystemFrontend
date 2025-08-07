@@ -48,9 +48,11 @@ export default function CalendarPage() {
   const [selectedDay, setSelectedDay] = createSignal<number | null>(null);
   const [gigCount, setGigCount] = createSignal<number | null>(null);
   const [isLoading, setIsLoading] = createSignal(true);
-  const [selectedPage, setSelectedPage] = createSignal(1);
+  const [currentPage, setCurrentPage] = createSignal(1);
   const [startPage, setStartPage] = createSignal(1);
+  const [pageInput, setPageInput] = createSignal("");
   const pageWindowSize = 10;
+  const itemsPerPage = 4;
   let selectedGigsref: HTMLDivElement | undefined;
 
   async function loadAndGroupGigs(y: number, m: number) {
@@ -127,13 +129,16 @@ export default function CalendarPage() {
     return gigMap()[selectedDay()!] ?? [];
   };
 
+  const totalPages = createMemo(() =>
+    Math.ceil(selectedGigs().length / itemsPerPage)
+  );
+
   const selectedPaginatedGig = createMemo(() => {
     const gigs = selectedGigs();
-    const index = selectedPage() - 1;
-    return gigs.length > 0 ? gigs[index] : null;
+    const start = (currentPage() - 1) * itemsPerPage;
+    return gigs.slice(start, start + itemsPerPage);
   });
 
-  const totalPages = createMemo(() => selectedGigs().length);
 
   function generatePaginationPages() {
     const total = totalPages();
@@ -141,20 +146,14 @@ export default function CalendarPage() {
     const end = Math.min(start + pageWindowSize - 1, total);
     const pages: (number | string)[] = [];
 
-    if (start > 1) pages.push("...");
+    if (start > 1) pages.push("prev");
 
     for (let i = start; i <= end; i++) {
       pages.push(i);
     }
 
-    if (end < total) pages.push("..."); 
+    if (end < total) pages.push("next"); 
     return pages;
-  }
-
-  function goToPage(page: number) {
-    setSelectedPage(page);
-    const windowStart = Math.floor((page - 1) / pageWindowSize) * pageWindowSize + 1;
-    setStartPage(windowStart);
   }
 
   function shiftPageWindow(direction: "prev" | "next") {
@@ -165,7 +164,19 @@ export default function CalendarPage() {
       : Math.min(current + pageWindowSize, total - pageWindowSize + 1);
 
     setStartPage(newStart);
-    setSelectedPage(newStart);
+    setCurrentPage(newStart);
+    setPageInput(String(newStart));
+  }
+
+  function jumpToPage() {
+    const page = parseInt(pageInput());
+    const total = totalPages();
+    if (!isNaN(page) && page >= 1 && page <= total) {
+      setCurrentPage(page);
+      const windowStart = Math.floor((page - 1) / pageWindowSize) * pageWindowSize + 1;
+      setStartPage(windowStart);
+      setPageInput(String(page));
+    }
   }
 
   return (
@@ -292,8 +303,9 @@ export default function CalendarPage() {
                     onClick={() => {
                       if (day !== null) {
                         setSelectedDay(day);
-                        setSelectedPage(1);
+                        setCurrentPage(1);
                         setStartPage(1);
+                        setPageInput("1");
                         queueMicrotask(() => {
                           selectedGigsref?.scrollIntoView({ behavior: "smooth", block: "start" });
                         });
@@ -335,76 +347,110 @@ export default function CalendarPage() {
         <div class={styles.selectedGigs} ref={el => (selectedGigsref =el)}>
           <Show when={selectedGigs().length > 0} fallback={<p>No jobs on this day.</p>}>
             <div class={styles.jobCard}>
-              <Show when={selectedPaginatedGig()}>
-                {(gig) => (
-                  <div
-                    class={styles.photoContainer}
-                    onClick={() => (window.location.href = `/job/${gig().gigId}`)}
-                  >
-                    <Show when={gig().environmentPhotos?.length > 0}
-                      fallback={
-                        <div class={styles.noPhoto}>No environment photos available for this job.</div>
-                      }>
-                      <img
-                        src={gig().environmentPhotos![0].url}
-                        alt="工作環境"
-                        class={styles.environmentPhoto}
-                      />
-                    </Show>
-                    <div class={styles.jobInfo}>
-                      <div>{gig().title} ({gig().timeStart} – {gig().timeEnd})</div>
+              <div class={styles.gridOfGigs}>
+                <For each={selectedPaginatedGig()}>
+                  {(gig) => (
+                    <div
+                      class={styles.photoContainer}
+                      onClick={() => (window.location.href = `/job/${gig.gigId}`)}
+                    >
+                      <Show
+                        when={gig.environmentPhotos?.length > 0}
+                        fallback={
+                          <div class={styles.noPhoto}>
+                            No environment photos available for this job.
+                          </div>
+                        }
+                      >
+                        <img
+                          src={gig.environmentPhotos![0].url}
+                          alt="工作環境"
+                          class={styles.environmentPhoto}
+                        />
+                      </Show>
+                      <div class={styles.jobInfo}>
+                        <div>{gig.title} ({gig.timeStart} – {gig.timeEnd})</div>
+                      </div>
                     </div>
-                  </div>
-                )}
-              </Show>
+                  )}
+                </For>
+              </div>
             </div>
 
             <div class={styles.pagination}>
-              <button onClick={() => goToPage(1)} disabled={selectedPage() === 1}>{"<<"}</button>
-              <button onClick={() => goToPage(selectedPage() - 1)} disabled={selectedPage() === 1}>{"<"}</button>
+              <button
+                class={styles.pageButton}
+                disabled={currentPage() === 1}
+                onClick={() => {
+                  const newPage = currentPage() - 1;
+                  setCurrentPage(newPage);
+                  setPageInput(String(newPage));
+                  const windowStart = Math.floor((newPage - 1) / pageWindowSize) * pageWindowSize + 1;
+                  setStartPage(windowStart);
+                }}
+              >
+                &lt;
+              </button>
 
               <For each={generatePaginationPages()}>
-                {(item) => {
-                  const isNumber = typeof item === "number";
-                  return (
-                    <button
-                      classList={{ [styles.activePage]: item === selectedPage() }}
-                      onClick={() => {
-                        if(isNumber) return goToPage(item);
-
-                        switch (item) {
-                          case "<<":
-                            goToPage(1);
-                            break;
-                          case "<":
-                            shiftPageWindow("prev");
-                            break;
-                          case "...":
-                            if (startPage() > 1) {
-                              shiftPageWindow("prev");
-                            } else {
-                              shiftPageWindow("next");
-                            }
-                            break;
-                          case ">":
-                            shiftPageWindow("next")
-                            break;
-                          case "<":
-                            goToPage(totalPages());
-                            break;
-                        }
-                      }}
-                    >
-                      {item}
-                    </button>
-                  );
-                }}
+                {(page) => typeof page === "number" ? (
+                  <button
+                    classList={{
+                      [styles.pageButton]: true,
+                      [styles.activePage]: currentPage() === page,
+                    }}
+                    onClick={() => {
+                      setCurrentPage(page);
+                      setPageInput(String(page));
+                    }}
+                  >
+                    {page}
+                  </button>
+                ) : (
+                  <button
+                    class={styles.pageButton}
+                    onClick={() => shiftPageWindow(page === "prev" ? "prev" : "next")}
+                  >
+                    ...
+                  </button>
+                )}
               </For>
 
-              <button onClick={() => goToPage(selectedPage() + 1)} disabled={selectedPage() === totalPages()}> {">"} </button>
-              <button onClick={() => goToPage(totalPages())} disabled={selectedPage() === totalPages()}> {">>"} </button>
+              <button
+                class={styles.pageButton}
+                onClick={() => {
+                  const newPage = currentPage() + 1;
+                  setCurrentPage(newPage);
+                  setPageInput(String(newPage));
+                  const nextWindowStart = Math.floor((newPage - 1) / pageWindowSize) * pageWindowSize + 1;
+                  setStartPage(nextWindowStart);
+                }}
+              >
+                &gt;
+              </button>
             </div>
           </Show>
+
+          <div style={{ "margin": "10px", "text-align": "center" }}>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                jumpToPage();
+              }}
+            >
+              Page{" "}
+              <input
+                type="number"
+                min="1"
+                max={totalPages()}
+                value={pageInput()}
+                onInput={(e) => setPageInput(e.currentTarget.value)}
+                style={{ width: "60px", "text-align": "center" }}
+              />{" "}
+              of {totalPages()} pages.
+            </form>
+          </div>
+
         </div>
       </Show>
     </div>

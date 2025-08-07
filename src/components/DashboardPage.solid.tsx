@@ -351,7 +351,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-function pageInput(): string {
-  throw new Error("Function not implemented.");
-}
-
