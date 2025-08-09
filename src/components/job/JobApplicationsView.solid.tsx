@@ -1,8 +1,9 @@
 // JobApplicationsView.solid.tsx
-import { createResource, createSignal, For, Show, onCleanup } from "solid-js";
-import styles from "../styles/JobApplications.module.css";
+import { createResource, createSignal, For, Show, onMount, onCleanup } from "solid-js";
+import styles from "../../styles/JobApplications.module.css";
 
 // Shared Types & Helpers
+type ApplicationStatus = 'all' | 'pending' | 'approved' | 'rejected' | 'cancelled';
 type Application = {
   applicationId: string;
   workerId: string;
@@ -55,6 +56,7 @@ async function updateApplicationStatus(applicationId: string, newStatus: 'approv
 
 interface JobApplicationsViewProps {
   gigId: string;
+  initialStatus: string;
 }
 
 async function fetchApplications(gigId: string): Promise<Application[]> {
@@ -87,7 +89,7 @@ async function fetchApplications(gigId: string): Promise<Application[]> {
 export default function JobApplicationsView(props: JobApplicationsViewProps) {
   const [applications, { refetch }] = createResource(() => props.gigId, fetchApplications);
   const [selectedApplication, setSelectedApplication] = createSignal<Application | null>(null);
-  const [statusFilter, setStatusFilter] = createSignal<'all' | 'pending' | 'approved' | 'rejected' | 'cancelled'>('all');
+  const [statusFilter, setStatusFilter] = createSignal<ApplicationStatus>(props.initialStatus as ApplicationStatus || 'all');
   const [updating, setUpdating] = createSignal<string | null>(null);
 
   const filteredApplications = () => {
@@ -96,6 +98,19 @@ export default function JobApplicationsView(props: JobApplicationsViewProps) {
     
     if (statusFilter() === 'all') return apps;
     return apps.filter(app => app.status === statusFilter());
+  };
+
+  const handleFilterChange = (newStatus: ApplicationStatus) => {
+    setStatusFilter(newStatus);
+    const url = new URL(window.location.href);
+    url.searchParams.set('status', newStatus);
+    window.history.pushState({}, '', url.toString());
+  };
+
+  const handlePopState = () => {
+    const params = new URLSearchParams(window.location.search);
+    const status = (params.get('status') || 'all') as ApplicationStatus;
+    setStatusFilter(status);
   };
 
   const openApplicationModal = (application: Application) => {
@@ -128,11 +143,13 @@ export default function JobApplicationsView(props: JobApplicationsViewProps) {
     }
   };
 
-  // Set up event listener for escape key
-  document.addEventListener('keydown', handleKeyDown);
+  onMount(() => {
+    window.addEventListener('popstate', handlePopState);
+    document.addEventListener('keydown', handleKeyDown);
+  });
   
-  // Cleanup event listener
   onCleanup(() => {
+    window.removeEventListener('popstate', handlePopState);
     document.removeEventListener('keydown', handleKeyDown);
     document.body.style.overflow = 'auto'; // Reset overflow on cleanup
   });
@@ -147,7 +164,7 @@ export default function JobApplicationsView(props: JobApplicationsViewProps) {
             id="status-filter" 
             class={styles.statusFilter}
             value={statusFilter()}
-            onChange={(e) => setStatusFilter(e.target.value as any)}
+            onChange={(e) => handleFilterChange(e.target.value as ApplicationStatus)}
           >
             <option value="all">All Applications</option>
             <option value="pending">Pending</option>

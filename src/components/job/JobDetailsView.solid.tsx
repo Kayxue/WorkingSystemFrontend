@@ -1,7 +1,7 @@
 // src/pages/job/[gigId].tsx (or .tsx component wrapped by your routing/astro layer)
 import { createResource, createSignal, For, Show, onMount, onCleanup } from "solid-js";
 import type { Component } from "solid-js";
-import styles from "../styles/JobDetails.module.css";
+import styles from "../../styles/JobDetails.module.css";
 
 type JobData = {
   gigId: string;

@@ -1,7 +1,7 @@
 ---
 // src/pages/job/[gigId]/index.astro
 import Layout from '../layouts/Layout.astro';
-import JobLayout from '../components/JobLayout.solid.tsx';
+import JobLayout from '../components/job/JobLayout.solid.tsx';
 
 function validateGigId(id: string | undefined): string | null {
   if (!id || id === '[object Object]' || typeof id !== 'string') {

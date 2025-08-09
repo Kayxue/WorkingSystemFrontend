@@ -1,6 +1,6 @@
 // File: JobRatingView.solid.tsx
 import { createSignal, createResource, Show, For, onMount } from "solid-js";
-import styles from "../styles/JobRating.module.css";
+import styles from "../../styles/JobRating.module.css";
 
 type RatingStatus = 'all' | 'rated' | 'unrated';
 

@@ -296,7 +296,7 @@ export default function DashboardPage() {
                 <div class={styles.jobCardWrapper}>
                   <div
                     class={styles.jobCard}
-                    onClick={() => (window.location.href = `/job/${job.gigId}`)}
+                    onClick={() => (window.location.href = `/job/${job.gigId}?section=details`)}
                     style={{ cursor: "pointer" }}
                   >
                     <h2 class={styles.jobTitle}>{job.title}</h2>
