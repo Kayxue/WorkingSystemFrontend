@@ -163,6 +163,7 @@ const EyeIcon = (props: { closed: boolean }) => (
   return (
     <form onSubmit={handleSubmit} class="w-full h-full flex flex-col justify-center">
       <div class="max-w-2xl mx-auto w-full">
+        <h2 class="text-2xl font-semibold mb-6">更新密碼</h2>
         <div class="mb-4">
           <label class={labelClass} for="currentPassword">當前密碼</label>
           <div class="relative">

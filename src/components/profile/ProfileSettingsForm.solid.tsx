@@ -1,5 +1,6 @@
-import { createSignal, createEffect, type Setter, type Accessor } from 'solid-js';
+import { createSignal, createEffect, For, onCleanup } from 'solid-js';
 import AvatarSection from './AvatarSection.solid.tsx';
+import areaData from '../../../public/areaData.json';
 
 interface EmployerData {
   employerName: string;
@@ -33,16 +34,101 @@ const ProfileSettingsForm = (props: ProfileSettingsFormProps) => {
   const [confirmMessage, setConfirmMessage]= createSignal<string>('');
   const [onConfirmCallback, setOnConfirmCallback] = createSignal<(() => void) | null>(null);
 
-
   const [formData, setFormData] = createSignal<EmployerData>({
     ...props.initialEmployerData,
     employerPhoto: props.initialEmployerData.employerPhoto || null,
   });
 
+  const [selectedCity, setSelectedCity] = createSignal<string>('');
+  const [selectedDistrict, setSelectedDistrict] = createSignal<string>('');
+  const [addressLine, setAddressLine] = createSignal<string>('');
+  const [districts, setDistricts] = createSignal<string[]>([]);
+
+  const [isCityDropdownOpen, setIsCityDropdownOpen] = createSignal(false);
+  const [isDistrictDropdownOpen, setIsDistrictDropdownOpen] = createSignal(false);
+  const [isIndustryDropdownOpen, setIsIndustryDropdownOpen] = createSignal(false);
+  let cityDropdownRef: HTMLDivElement | undefined;
+  let districtDropdownRef: HTMLDivElement | undefined;
+  let industryDropdownRef: HTMLDivElement | undefined; 
+
+  const industryTypes = ['餐飲', '批發/零售', '倉儲運輸', '展場活動', '其他']; 
+
+  const parseAddress = (fullAddress: string) => {
+    if (!fullAddress) return;
+
+    const cities = Object.keys(areaData);
+    let city = '';
+    let district = '';
+    let restOfAddress = fullAddress;
+
+    for (const c of cities) {
+      if (fullAddress.startsWith(c)) {
+        city = c;
+        const possibleDistricts = areaData[c as keyof typeof areaData];
+        let tempAddress = fullAddress.substring(c.length, 6);
+        
+        for (const d of possibleDistricts) {
+          if (tempAddress.startsWith(d)) {
+            district = d.trim();
+            restOfAddress = fullAddress.substring(c.length + d.length).trim();
+            break;
+          }
+        }
+        break;
+      }
+    }
+    
+    setSelectedCity(city);
+    if (city) {
+      setDistricts(areaData[city as keyof typeof areaData]);
+    }
+    setSelectedDistrict(district);
+    // console.log("districts", selectedDistrict());
+    setAddressLine(restOfAddress);
+  };
+
   createEffect(() => {
     setFormData({
       ...props.initialEmployerData,
       employerPhoto: props.initialEmployerData.employerPhoto || null,
+    });
+    parseAddress(props.initialEmployerData.address);
+  });
+
+  createEffect(() => {
+    const city = selectedCity();
+    if (city) {
+      setDistricts(areaData[city as keyof typeof areaData]);
+    } else {
+      setDistricts([]);
+      setSelectedDistrict('');
+    }
+  });
+
+  createEffect(() => {
+    const fullAddress = `${selectedCity()}${selectedDistrict()}${addressLine()}`;
+    if (fullAddress !== formData().address) {
+      setFormData(prev => ({ ...prev, address: fullAddress }));
+      setHaveChanges(true);
+    }
+  });
+
+  createEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (isCityDropdownOpen() && cityDropdownRef && !cityDropdownRef.contains(e.target as Node)) {
+        setIsCityDropdownOpen(false);
+      }
+      if (isDistrictDropdownOpen() && districtDropdownRef && !districtDropdownRef.contains(e.target as Node)) {
+        setIsDistrictDropdownOpen(false);
+      }
+      if (isIndustryDropdownOpen() && industryDropdownRef && !industryDropdownRef.contains(e.target as Node)) {
+        setIsIndustryDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    onCleanup(() => {
+      document.removeEventListener('mousedown', handleClickOutside);
     });
   });
 
@@ -58,6 +144,7 @@ const ProfileSettingsForm = (props: ProfileSettingsFormProps) => {
       ...prev,
       employerPhoto: newUrl ? { url: newUrl, originalName: 'new_photo', type: 'image/jpeg' } : null,
     }));
+    setHaveChanges(true);
   };
 
   const handleSubmit = async (e: Event) => {
@@ -97,6 +184,7 @@ const ProfileSettingsForm = (props: ProfileSettingsFormProps) => {
         ...props.initialEmployerData,
         employerPhoto: props.initialEmployerData.employerPhoto || null,
       });
+      parseAddress(props.initialEmployerData.address);
       setHaveChanges(false);
     })
     setShowConfirmModal(true);
@@ -179,70 +267,120 @@ const ProfileSettingsForm = (props: ProfileSettingsFormProps) => {
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
         <div>
           <label for="industryType" class={labelClass}>產業類型</label>
-          <select
-            id="industryType"
-            name="industryType"
-            value={formData().industryType}
-            onInput={handleChange}
-            class={selectClass}
-          >
-            <option value="餐飲">餐飲</option>
-            <option value="批發/零售">批發/零售</option>
-            <option value="倉儲運輸">倉儲運輸</option>
-            <option value="展場活動">展場活動</option>
-            <option value="其他">其他</option> 
-          </select>
+          <div class="relative" ref={industryDropdownRef}>
+            <button
+              type="button"
+              class={`${selectClass} w-full flex justify-between items-center text-left`}
+              onClick={() => setIsIndustryDropdownOpen(!isIndustryDropdownOpen())}
+            >
+              <span class="truncate">{formData().industryType || '選擇產業類型'}</span>
+              <svg class="w-4 h-4 ml-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+            </button>
+            {isIndustryDropdownOpen() && (
+              <div class="absolute z-10 w-full mt-1 bg-white rounded-md shadow-lg max-h-60 overflow-auto border border-gray-300">
+                <ul class="py-1">
+                  <For each={industryTypes}>{(type) =>
+                    <li
+                      class="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer"
+                      onClick={() => {
+                        setFormData(prev => ({ ...prev, industryType: type }));
+                        setHaveChanges(true);
+                        setIsIndustryDropdownOpen(false);
+                      }}
+                    >
+                      {type}
+                    </li>
+                  }</For>
+                </ul>
+              </div>
+            )}
+          </div>
         </div>
+        {/* 手機號碼 */}
         <div>
-          <label for="address" class={labelClass}>地址</label>
+          <label for="phoneNumber" class={labelClass}>手機號碼</label>
           <input
-            type="text"
-            id="address"
-            name="address"
-            value={formData().address}
+            type="tel"
+            id="phoneNumber"
+            name="phoneNumber"
+            value={formData().phoneNumber}
             onInput={handleChange}
             class={inputClass}
           />
         </div>
       </div>
 
-      {/* 手機號碼 */}
-      <div class="mb-4">
-        <label for="phoneNumber" class={labelClass}>手機號碼</label>
-        <input
-          type="tel"
-          id="phoneNumber"
-          name="phoneNumber"
-          value={formData().phoneNumber}
-          onInput={handleChange}
-          class={inputClass}
-        />
-      </div>
+      <div class="mb-6">
+        <label for="address" class={labelClass}>地址</label>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
+          {/* City Dropdown */}
+          <div class="relative" ref={cityDropdownRef}>
+            <button
+              type="button"
+              class={`${selectClass} w-full flex justify-between items-center text-left`}
+              onClick={() => setIsCityDropdownOpen(!isCityDropdownOpen())}
+            >
+              <span class="truncate">{selectedCity() || '選擇城市'}</span>
+              <svg class="w-4 h-4 ml-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+            </button>
+            {isCityDropdownOpen() && (
+              <div class="absolute z-10 w-full mt-1 bg-white rounded-md shadow-lg max-h-60 overflow-auto border border-gray-300">
+                <ul class="py-1">
+                  <For each={Object.keys(areaData)}>{(city) =>
+                    <li
+                      class="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer"
+                      onClick={() => {
+                        setSelectedCity(city);
+                        setIsCityDropdownOpen(false);
+                        setSelectedDistrict('');
+                      }}
+                    >
+                      {city}
+                    </li>
+                  }</For>
+                </ul>
+              </div>
+            )}
+          </div>
 
-      {/* 身份驗證類型和號碼 - RWD grid */}
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-        <div>
-          <label for="identificationType" class={labelClass}>身份驗證類型</label>
-          <select
-            id="identificationType"
-            name="identificationType"
-            value={formData().identificationType}
-            onChange={handleChange}
-            class={selectClass}
-          >
-            <option value="businessNo">統一編號</option>
-            <option value="personalId">個人身份證</option>
-          </select>
-        </div>
-        <div>
-          <label for="identificationNumber" class={labelClass}>身份驗證號碼</label>
+          {/* District Dropdown */}
+          <div class="relative" ref={districtDropdownRef}>
+            <button
+              type="button"
+              class={`${selectClass} w-full flex justify-between items-center text-left disabled:cursor-not-allowed disabled:bg-gray-200`}
+              onClick={() => selectedCity() && setIsDistrictDropdownOpen(!isDistrictDropdownOpen())}
+              disabled={!selectedCity()}
+            >
+              <span class="truncate">{selectedDistrict() || '選擇區域'}</span>
+              <svg class="w-4 h-4 ml-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+            </button>
+            {isDistrictDropdownOpen() && (
+              <div class="absolute z-10 w-full mt-1 bg-white rounded-md shadow-lg max-h-60 overflow-auto border border-gray-300">
+                <ul class="py-1">
+                  <For each={districts()}>{(district) =>
+                    <li
+                      class="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer"
+                      onClick={() => {
+                        setSelectedDistrict(district);
+                        setIsDistrictDropdownOpen(false);
+                      }}
+                    >
+                      {district}
+                    </li>
+                  }</For>
+                </ul>
+              </div>
+            )}
+          </div>
+
           <input
             type="text"
-            id="identificationNumber"
-            name="identificationNumber"
-            value={formData().identificationNumber}
-            onInput={handleChange}
+            id="addressLine"
+            name="addressLine"
+            value={addressLine()}
+            onInput={(e) => setAddressLine(e.currentTarget.value)}
             class={inputClass}
+            placeholder="街道巷弄門牌號碼"
           />
         </div>
       </div>
