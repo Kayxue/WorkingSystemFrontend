@@ -23,57 +23,46 @@ function formatDateToDDMMYYYY(dateStr: string): string {
 }
 
 export default function DashboardPage() {
-  const [activeFilter, setActiveFilter] = createSignal("All");
+  const [activeFilter, setActiveFilter] = createSignal("Ongoing");
   const [currentPage, setCurrentPage] = createSignal(1);
   const itemsPerPage = 10;
   const [totalJobCount, setTotalJobCount] = createSignal(0);
+  const [totalPages, setTotalPages] = createSignal(0);
   const [jobOffers, setJobOffers] = createSignal<JobOffer[]>([]);
   const [isLoading, setIsLoading] = createSignal(false);
-  const [pageInput, setPageInput] = createSignal("");
+  const [pageInput, setPageInput] = createSignal("1");
   const [startPage, setStartPage] = createSignal(1);
   const pageWindowSize = 10;
 
   async function fetchJobOffers(status?: string) {
     try {
       setIsLoading(true);
-      const limit = 100;
-      let offset = 0;
-      let allGigs: JobOffer[] = [];
-      let hasMore = true;
-
-      while (hasMore) {
-        let url = `/api/gig/my-gigs?offset=${offset}&limit=${limit}`;
-        if (status && status.trim() !== "") {
-          url += `&status=${encodeURIComponent(status)}`;
-        }
-
-        const response = await fetch(url, {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            platform: "web-employer",
-          },
-          credentials: "include",
-        });
-
-        if (!response.ok) {
-          const text = await response.text();
-          console.error("Error status:", response.status);
-          console.error("Error body:", text);
-          throw new Error("Failed to fetch job offers");
-        }
-
-        const data = await response.json();
-        if (Array.isArray(data.gigs)) {
-          allGigs = allGigs.concat(data.gigs);
-        }
-
-        hasMore = data.pagination?.hasMore || false;
-        offset += limit;
+      let offset = (currentPage() - 1) * itemsPerPage;
+      let url = `/api/gig/my-gigs?offset=${offset}&limit=${itemsPerPage}`;
+      if (status && status.trim() !== "") {
+        url += `&status=${encodeURIComponent(status)}`;
       }
 
-      setJobOffers(allGigs);
-      setTotalJobCount(allGigs.length);
+      const response = await fetch(url, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          platform: "web-employer",
+        },
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        const text = await response.text();
+        console.error("Error status:", response.status);
+        console.error("Error body:", text);
+        throw new Error("Failed to fetch job offers");
+      }
+
+      const data = await response.json();
+      setJobOffers(data.gigs);
+      setTotalJobCount(data.pagination?.totalCount || 0);
+      setTotalPages(data.pagination?.totalPage || 0);
     } catch (err) {
       console.error("Failed to fetch job offers:", err);
     } finally {
@@ -82,27 +71,16 @@ export default function DashboardPage() {
   }
 
   createEffect(() => {
-    const status = {
-      "Ongoing": "ongoing",
-      "Completed": "completed",
+    const statusMap: Record<string, string> = {
+      Ongoing: "ongoing",
+      Completed: "completed",
       "Not Started": "not_started",
-      "All": ""
-    }[activeFilter()];
-    setCurrentPage(1);
-    setPageInput("1");
-    setStartPage(1);
+    };
+    const status = statusMap[activeFilter()] || "";
     fetchJobOffers(status);
   });
 
-  const totalPages = createMemo(() => {
-    return Math.ceil(totalJobCount() / itemsPerPage)
-  });
-
-  const paginatedJobs = createMemo(() => {
-    const all = jobOffers();
-    const start = (currentPage() - 1) * itemsPerPage;
-    return all.slice(start, start + itemsPerPage);
-  });
+  const paginatedJobs = createMemo(() => jobOffers());
 
   function generatePaginationPages() {
     const total = totalPages();
@@ -111,11 +89,9 @@ export default function DashboardPage() {
     const pages: (number | string)[] = [];
 
     if (start > 1) pages.push("prev");
-
     for (let i = start; i <= end; i++) {
       pages.push(i);
     }
-
     if (end < total) pages.push("next");
 
     return pages;
@@ -132,7 +108,7 @@ export default function DashboardPage() {
     setStartPage(newStart);
     setCurrentPage(newStart);
     setPageInput(String(newStart));
-    fetchJobOffers(activeFilter() === "All" ? "" : activeFilter().toLowerCase());
+    fetchJobOffers(activeFilter().toLowerCase());
   }
 
   function jumpToPage() {
@@ -142,7 +118,7 @@ export default function DashboardPage() {
       setCurrentPage(page);
       const windowStart = Math.floor((page - 1) / pageWindowSize) * pageWindowSize + 1;
       setStartPage(windowStart);
-      fetchJobOffers(activeFilter() === "All" ? "" : activeFilter().toLowerCase());
+      fetchJobOffers(activeFilter().toLowerCase());
       setPageInput(String(page));
     }
   }
@@ -158,7 +134,7 @@ export default function DashboardPage() {
         credentials: "include",
       });
       if (!res.ok) throw new Error("Failed to toggle status");
-      await fetchJobOffers(activeFilter() === "All" ? "" : activeFilter().toLowerCase());
+      await fetchJobOffers(activeFilter().toLowerCase());
     } catch (err) {
       console.error("Toggle status failed:", err);
     }
@@ -175,7 +151,7 @@ export default function DashboardPage() {
         credentials: "include",
       });
       if (!res.ok) throw new Error("Failed to toggle listing");
-      await fetchJobOffers(activeFilter() === "All" ? "" : activeFilter().toLowerCase());
+      await fetchJobOffers(activeFilter().toLowerCase());
     } catch (err) {
       console.error("Toggle listing failed:", err);
     }
@@ -200,11 +176,39 @@ export default function DashboardPage() {
           stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <polygon points="3 4 21 4 14 12.5 14 19 10 21 10 12.5 3 4" />
         </svg>
-
-        <button classList={{ [styles.btn]: true, active: activeFilter() === "All" }} onClick={() => setActiveFilter("All")}>All</button>
-        <button classList={{ [styles.btn]: true, active: activeFilter() === "Ongoing" }} onClick={() => setActiveFilter("Ongoing")}>Ongoing</button>
-        <button classList={{ [styles.btn]: true, active: activeFilter() === "Completed" }} onClick={() => setActiveFilter("Completed")}>Completed</button>
-        <button classList={{ [styles.btn]: true, active: activeFilter() === "Not Started" }} onClick={() => setActiveFilter("Not Started")}>Not Started</button>
+        <button
+          classList={{ [styles.btn]: true, active: activeFilter() === "Ongoing" }} 
+          onClick={() => {
+            setActiveFilter("Ongoing");
+            setStartPage(1);
+            setCurrentPage(1);
+            setPageInput("1");
+          }}
+        >
+          Ongoing
+        </button>
+        <button
+          classList={{ [styles.btn]: true, active: activeFilter() === "Completed" }} 
+          onClick={() => {
+            setActiveFilter("Completed");
+            setStartPage(1);
+            setCurrentPage(1);
+            setPageInput("1");
+          }}
+        >
+          Completed
+        </button>
+        <button
+          classList={{ [styles.btn]: true, active: activeFilter() === "Not Started" }} 
+          onClick={() => {
+            setActiveFilter("Not Started");
+            setStartPage(1);
+            setCurrentPage(1);
+            setPageInput("1");
+          }}
+        >
+          Not Started
+        </button>
       </div>
 
       <Show when={isLoading()}>
@@ -228,9 +232,9 @@ export default function DashboardPage() {
                 max={totalPages()}
                 value={pageInput()}
                 onInput={(e) => setPageInput(e.currentTarget.value)}
-                style={{ width: "60px", "text-align": "center" }}
+                style={{ width: "60px", "text-align": "center"}}
               />{" "}
-              of {totalPages()} pages.
+              of {totalPages()} pages ({totalJobCount()} jobs)
             </form>
           </div>
 
@@ -244,7 +248,7 @@ export default function DashboardPage() {
                 setPageInput(String(newPage));
                 const windowStart = Math.floor((newPage - 1) / pageWindowSize) * pageWindowSize + 1;
                 setStartPage(windowStart);
-                fetchJobOffers(activeFilter() === "All" ? "" : activeFilter().toLowerCase());
+                fetchJobOffers(activeFilter().toLowerCase());
               }}
             >
               &lt;
@@ -260,7 +264,7 @@ export default function DashboardPage() {
                   onClick={() => {
                     setCurrentPage(page);
                     setPageInput(String(page));
-                    fetchJobOffers(activeFilter() === "All" ? "" : activeFilter().toLowerCase());
+                    fetchJobOffers(activeFilter().toLowerCase());
                   }}
                 >
                   {page}
@@ -277,13 +281,14 @@ export default function DashboardPage() {
 
             <button
               class={styles.pageButton}
+              disabled={currentPage() === totalPages()}
               onClick={() => {
                 const newPage = currentPage() + 1;
                 setCurrentPage(newPage);
                 setPageInput(String(newPage));
                 const nextWindowStart = Math.floor((newPage - 1) / pageWindowSize) * pageWindowSize + 1;
                 setStartPage(nextWindowStart);
-                fetchJobOffers(activeFilter() === "All" ? "" : activeFilter().toLowerCase());
+                fetchJobOffers(activeFilter().toLowerCase());
               }}
             >
               &gt;
@@ -296,7 +301,7 @@ export default function DashboardPage() {
                 <div class={styles.jobCardWrapper}>
                   <div
                     class={styles.jobCard}
-                    onClick={() => (window.location.href = `/job/${job.gigId}?section=details`)}
+                    onClick={() => (window.location.href = `/job/${job.gigId}`)}
                     style={{ cursor: "pointer" }}
                   >
                     <h2 class={styles.jobTitle}>{job.title}</h2>
@@ -313,33 +318,34 @@ export default function DashboardPage() {
 
                   <div class={styles.jobCardActions}>
                     <button
-                      class={`${styles.actionButton} ${styles.blue}`}
+                      class={`${styles.actionButton} ${activeFilter() === "Completed" ? styles.grey : styles.blue}`}
+                      disabled={activeFilter() === "Completed"}
                       onClick={(e) => {
                         e.stopPropagation();
                         window.location.href = `/edit-job?gigId=${job.gigId}`;
                       }}
                     >
-                      Edit - {String(job.isActive)} / {String(job.isCurrentlyListed)}
+                      Edit
                     </button>
                     <button
-                      class={`${styles.actionButton} ${job.isCurrentlyListed ? styles.blue : styles.grey}`}
-                      disabled={!job.isCurrentlyListed}
+                      class={`${styles.actionButton} ${(activeFilter() !== "Completed") ? styles.blue : styles.grey}`}
+                      disabled={activeFilter() === "Completed"}
                       onClick={(e) => {
                         e.stopPropagation();
                         toggleStatus(job.gigId);
                       }}
                     >
-                      {job.isActive ? "Deactivate" : "Activate"}
+                      {activeFilter() === "Completed" ? "Inactive" : "Active"}
                     </button>
                     <button
-                      class={`${styles.actionButton} ${!job.isActive || !job.isCurrentlyListed ? styles.blue : styles.grey}`}
-                      disabled={!job.isActive}
+                      class={`${styles.actionButton} ${(activeFilter() === "Not Started" || activeFilter() === "Completed") ? styles.grey : styles.blue}`}
+                      disabled={activeFilter() === "Not Started" || activeFilter() === "Completed"}
                       onClick={(e) => {
                         e.stopPropagation();
                         toggleListing(job.gigId);
                       }}
                     >
-                      {job.isCurrentlyListed ? "NotListed" : "Listed"}
+                      {(activeFilter() === "Not Started" || activeFilter() === "Completed") ? "Not Listed" : "Listed"}
                     </button>
                   </div>
                 </div>
