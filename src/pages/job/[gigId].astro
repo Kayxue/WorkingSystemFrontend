@@ -1,7 +1,10 @@
 ---
 import Layout from '../../layouts/Layout.astro';
-import JobLayout from '../../components/JobLayout.solid.tsx';
+import JobLayout from '../../components/job/JobLayout.solid.tsx';
 const { gigId } = Astro.params;
+const section = Astro.url.searchParams.get('section') || 'details';
+const status = Astro.url.searchParams.get('status') || 'all';
+
 
 function validateGigId(id: string | undefined): string | null {
   if (!id || id === '[object Object]' || typeof id !== 'string') {
@@ -54,7 +57,7 @@ const pageTitle = `Job Management | WorkNow`;
 <Layout title={pageTitle}>
   <main class="job-management-page">
     <!-- ✅ Load the new JobLayout component with sidebar navigation -->
-    <JobLayout client:only="solid" gigId={validatedGigId} />
+    <JobLayout client:only="solid" gigId={validatedGigId} initialSection={section} initialStatus={status} />
   </main>
 </Layout>
 
