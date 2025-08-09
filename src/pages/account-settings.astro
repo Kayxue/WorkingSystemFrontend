@@ -1,0 +1,30 @@
+---
+// src/pages/account/settings.astro
+import Layout from '../layouts/Layout.astro';
+import AccountSettingsPage from '../components/profile/AccountSettingsPage.solid.tsx';
+
+const userData = Astro.locals?.authData?.user;
+const currentYear = new Date().getFullYear();
+
+if (!userData) {
+  return Astro.redirect('/redirect-login');
+}
+
+const url = new URL(Astro.request.url);
+const section = url.searchParams.get('section') || 'profile';
+---
+
+<Layout title="Account Settings" showNavbar={true}>
+  <div class="flex flex-col min-h-[calc(100vh-4.5rem)]">
+    <main class="flex-1 flex justify-center items-start py-8 px-2 sm:px-4">
+      <div class="w-full">
+        <AccountSettingsPage initialEmployerData={userData} initialSection={section} client:load />
+      </div>
+    </main>
+    <footer class="bg-gray-800 text-white text-center py-6 w-full sm:py-8 text-xs sm:text-sm">
+      <div>
+        <p class="m-0">&copy; {currentYear} WorkNow. 保留所有權利。</p>
+      </div>
+    </footer>
+  </div>
+</Layout>
