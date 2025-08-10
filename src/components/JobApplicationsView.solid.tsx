@@ -1,5 +1,5 @@
 // JobApplicationsView.solid.tsx
-import { createResource, createSignal, For, Show, onCleanup } from "solid-js";
+import { createResource, createSignal, For, Show, onCleanup, createEffect } from "solid-js";
 import styles from "../styles/JobApplications.module.css";
 
 // Shared Types & Helpers
@@ -12,6 +12,8 @@ type Application = {
   workerEducation?: string;
   workerSchool?: string;
   workerMajor?: string;
+  workerCertificates?: any;
+  workerJobExperience?: any;
   status: 'pending' | 'approved' | 'rejected' | 'cancelled';
   appliedAt: string;
 };
@@ -87,8 +89,21 @@ async function fetchApplications(gigId: string): Promise<Application[]> {
 export default function JobApplicationsView(props: JobApplicationsViewProps) {
   const [applications, { refetch }] = createResource(() => props.gigId, fetchApplications);
   const [selectedApplication, setSelectedApplication] = createSignal<Application | null>(null);
-  const [statusFilter, setStatusFilter] = createSignal<'all' | 'pending' | 'approved' | 'rejected' | 'cancelled'>('all');
+  const [statusFilter, setStatusFilter] = createSignal<'all' | 'pending' | 'approved' | 'rejected' | 'cancelled'>(
+    (new URLSearchParams(window.location.search).get('filter') as any) || 'all'
+  );
   const [updating, setUpdating] = createSignal<string | null>(null);
+
+  // Sync URL with filter changes
+  createEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (statusFilter() === 'all') {
+      params.delete('filter');
+    } else {
+      params.set('filter', statusFilter());
+    }
+    window.history.replaceState(null, '', `?${params.toString()}`);
+  });
 
   const filteredApplications = () => {
     const apps = applications();
@@ -260,6 +275,44 @@ export default function JobApplicationsView(props: JobApplicationsViewProps) {
                 </Show>
                 <p><strong>Applied on:</strong> {formatDateToDDMMYYYY(selectedApplication()!.appliedAt)}</p>
                 <p><strong>Status:</strong> <span class={`${styles.status} ${getStatusClass(selectedApplication()!.status)}`}>{selectedApplication()!.status.charAt(0).toUpperCase() + selectedApplication()!.status.slice(1)}</span></p>
+                
+                 <Show when={selectedApplication()!.workerJobExperience && selectedApplication()!.workerJobExperience.length > 0}>
+                  <div class={styles.section}>
+                    <h4>Work Experience</h4>
+                    <For each={selectedApplication()!.workerJobExperience}>
+                      {(exp) => (
+                        <div class={styles.experienceItem}>
+                          <p><strong>{exp.jobTitle || 'N/A'}</strong> at {exp.company || 'N/A'}</p>
+                          <p class={styles.dates}>
+                            {exp.startDate || 'N/A'} - {exp.endDate || 'Present'}
+                          </p>
+                          <Show when={exp.description}>
+                            <p>{exp.description}</p>
+                          </Show>
+                        </div>
+                      )}
+                    </For>
+                  </div>
+                </Show>
+                
+                 <Show when={selectedApplication()!.workerJobExperience && selectedApplication()!.workerJobExperience.length > 0}>
+                  <div class={styles.section}>
+                    <h4>Work Experience</h4>
+                    <For each={selectedApplication()!.workerJobExperience}>
+                      {(exp) => (
+                        <div class={styles.experienceItem}>
+                          <p><strong>{exp.jobTitle || 'N/A'}</strong> at {exp.company || 'N/A'}</p>
+                          <p class={styles.dates}>
+                            {exp.startDate || 'N/A'} - {exp.endDate || 'Present'}
+                          </p>
+                          <Show when={exp.description}>
+                            <p>{exp.description}</p>
+                          </Show>
+                        </div>
+                      )}
+                    </For>
+                  </div>
+                </Show>
               </div>
             </div>
             <Show when={selectedApplication()!.status === 'pending'}>
