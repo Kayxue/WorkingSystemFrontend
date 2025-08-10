@@ -72,13 +72,14 @@ const VerificationForm = (props: VerificationFormProps) => {
     const formData = new FormData();
     formData.append('identificationType', documentType());
     formData.append('identificationNumber', documentNumber());
-    files().forEach(filePreview => {
-      formData.append('verificationDocuments', filePreview.file);
-    });
-
-    console.log('Form data prepared for submission:');
-    for (let [key, value] of formData.entries()) {
-      console.log(key, value);
+    if (documentType() === 'businessNo') {
+      files().forEach(filePreview => {
+        formData.append('verificationDocuments', filePreview.file);
+      });
+    } else if (documentType() === 'personalId') {
+      files().forEach(filePreview => {
+        formData.append('identificationDocuments', filePreview.file);
+      });
     }
 
     try {
@@ -88,8 +89,7 @@ const VerificationForm = (props: VerificationFormProps) => {
         headers: { 'platform': 'web-employer' },
       });
       if (!response.ok) throw new Error('Verification submission failed');
-      const result = await response.json();
-      console.log('Submission successful', result);
+      const result = await response.text();
       alert('驗證資料更新成功！');
       window.location.reload();
     } catch (error) {

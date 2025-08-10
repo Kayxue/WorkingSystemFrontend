@@ -42,15 +42,15 @@ const AvatarSection = (props: AvatarSectionProps) => {
 
   const handleRemoveAvatar = async (): Promise<void> => {
     if (confirm('Are you sure you want to remove your avatar?')) {
+      const formData = new FormData();
+      formData.append("deleteProfilePhoto", "true");
       try {
           const response = await fetch('/api/user/update/profilePhoto', {
             method: 'PUT',
             headers: {
               "platform": "web-employer",
             },
-            body: JSON.stringify({
-              deleteProfilePhoto: "true"
-            }),
+            body: formData,
           });
 
           setNotificationMessage('Profile photo removed successfully!');

@@ -1,5 +1,7 @@
 import { createSignal, createEffect, onCleanup, Show, For } from "solid-js";
 import styles from '../styles/PostJobForm.module.css';
+import areaDataJson from '../static/areaData.json';
+
 
 interface FilePreview {
   file: File;
@@ -38,10 +40,7 @@ export default function PostJobForm() {
 
   createEffect(async () => {
     try {
-      const res = await fetch("/AreaData.json");
-      if (!res.ok) throw new Error("Failed to load AreaData.json");
-      const data = await res.json();
-      setAreaData(data);
+      setAreaData(areaDataJson);
     } catch (err) {
       console.error("Error loading area data", err);
     }
