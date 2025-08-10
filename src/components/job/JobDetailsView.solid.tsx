@@ -89,12 +89,12 @@ function getJobStatus(publishedAt: string, unlistedAt?: string): { text: string;
     return { text: "Unlisted", className: styles.unlisted };
   }
   
-  if (!unlistedAt && publishDate < today) {
-    return { text: "Unpublished", className: styles.unpublished };
+  if (!unlistedAt && publishDate <= today) {
+    return { text: "Published", className: styles.published };
   }
   
-  if (!unlistedAt && publishDate >= today) {
-    return { text: "Published", className: styles.published };
+  if (!unlistedAt && publishDate > today) {
+    return { text: "Unpublished", className: styles.unpublished };
   }
   
   // Fallback (shouldn't reach here with proper data)
