@@ -21,6 +21,7 @@ type JobData = {
   contactPhone?: string;
   contactEmail?: string;
   publishedAt: string;
+  unlistedAt?: string; // Added for new status logic
   environmentPhotos?: (string | { url: string })[];
 };
 
@@ -73,6 +74,31 @@ function stripQuotes(str: any): string {
     return str.slice(1, -1);
   }
   return str;
+}
+
+// Utility: determine job status based on unlistedAt and publishedAt
+function getJobStatus(publishedAt: string, unlistedAt?: string): { text: string; className: string } {
+  const today = new Date();
+  const publishDate = new Date(publishedAt);
+  
+  // Reset time to start of day for accurate comparison
+  today.setHours(0, 0, 0, 0);
+  publishDate.setHours(0, 0, 0, 0);
+  
+  if (unlistedAt) {
+    return { text: "Unlisted", className: styles.unlisted };
+  }
+  
+  if (!unlistedAt && publishDate < today) {
+    return { text: "Unpublished", className: styles.unpublished };
+  }
+  
+  if (!unlistedAt && publishDate >= today) {
+    return { text: "Published", className: styles.published };
+  }
+  
+  // Fallback (shouldn't reach here with proper data)
+  return { text: "Unknown", className: styles.unknown };
 }
 
 // Component
@@ -151,6 +177,8 @@ const JobDetailsView: Component<JobDetailsViewProps> = (props) => {
           const location = [jobInfo.address, jobInfo.district, jobInfo.city]
             .filter(Boolean)
             .join(", ") || "Location not specified";
+          
+          const status = getJobStatus(jobInfo.publishedAt, jobInfo.unlistedAt);
 
           return (
             <>
@@ -185,8 +213,14 @@ const JobDetailsView: Component<JobDetailsViewProps> = (props) => {
                 </div>
                 <div class={styles.infoItem}>
                   <span class={styles.label}>Status:</span>
+                  <span class={`${styles.status} ${status.className}`}>
+                    {status.text}
+                  </span>
+                </div>
+                <div class={styles.infoItem}>
+                  <span class={styles.label}>Active:</span>
                   <span class={`${styles.status} ${jobInfo.isActive ? styles.active : styles.inactive}`}>
-                    {jobInfo.isActive ? "Active" : "Inactive"}
+                    {jobInfo.isActive ? "Yes" : "No"}
                   </span>
                 </div>
               </div>
