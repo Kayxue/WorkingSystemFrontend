@@ -27,6 +27,18 @@
   font-size: 14px;
 }
 
+/* Error Message Styles */
+.errorMessage {
+  background: #fee;
+  border: 1px solid #fcc;
+  color: #c33;
+  padding: 10px;
+  margin: 10px 0;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
 .filters {
   margin-bottom: 24px;
 }
@@ -89,6 +101,7 @@
   height: 48px;
   border-radius: 50%;
   overflow: hidden;
+  flex-shrink: 0;
 }
 
 .avatar img {
@@ -109,6 +122,11 @@
   font-size: 18px;
 }
 
+.userDetails {
+  flex: 1;
+  min-width: 0; /* Allows text to wrap properly */
+}
+
 .userDetails h4 {
   margin: 0 0 4px 0;
   color: #1f2937;
@@ -117,7 +135,7 @@
 }
 
 .workDate {
-  margin: 0;
+  margin: 0 0 2px 0;
   color: #6b7280;
   font-size: 14px;
 }
@@ -130,6 +148,7 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
+  align-items: flex-start;
 }
 
 .statusBadge {
@@ -151,22 +170,42 @@
 
 .ratingInfo {
   margin-bottom: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .stars {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 2px;
   margin-bottom: 4px;
 }
 
 .star {
-  font-size: 16px;
+  font-size: 18px;
   color: #d1d5db;
+  display: inline-block;
+  user-select: none;
+  transition: color 0.2s ease;
 }
 
 .star.filled {
   color: #fbbf24;
+}
+
+.star.interactive {
+  cursor: pointer;
+  font-size: 24px;
+}
+
+.star.interactive:hover {
+  color: #fbbf24 !important;
+  transform: scale(1.1);
+}
+
+.star.unfilled {
+  color: #d1d5db;
 }
 
 .ratingValue {
@@ -190,12 +229,21 @@
   border-radius: 6px;
   cursor: pointer;
   font-size: 14px;
-  transition: background 0.2s;
+  transition: all 0.2s;
   margin-top: 8px;
 }
 
-.rateButton:hover, .editButton:hover {
+.rateButton:hover:not(:disabled), 
+.editButton:hover:not(:disabled) {
   background: #2563eb;
+  transform: translateY(-1px);
+}
+
+.rateButton:disabled,
+.editButton:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+  transform: none;
 }
 
 .editButton {
@@ -203,19 +251,11 @@
   font-size: 12px;
   padding: 6px 12px;
   margin-left: 8px;
+  margin-top: 0;
 }
 
-.editButton:hover {
+.editButton:hover:not(:disabled) {
   background: #4b5563;
-}
-
-.star.interactive {
-  cursor: pointer;
-  transition: color 0.2s;
-}
-
-.star.interactive:hover {
-  color: #fbbf24;
 }
 
 /* Modal Styles */
@@ -228,6 +268,7 @@
   justify-content: center;
   z-index: 1000;
   padding: 20px;
+  backdrop-filter: blur(2px);
 }
 
 .modal {
@@ -237,7 +278,7 @@
   max-width: 500px;
   max-height: 90vh;
   overflow-y: auto;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
 }
 
 .modalHeader {
@@ -246,12 +287,16 @@
   justify-content: space-between;
   padding: 20px;
   border-bottom: 1px solid #e5e7eb;
+  background: #f9fafb;
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
 }
 
 .modalHeader h3 {
   margin: 0;
   color: #1f2937;
   font-size: 18px;
+  font-weight: 600;
 }
 
 .closeButton {
@@ -267,10 +312,11 @@
   align-items: center;
   justify-content: center;
   border-radius: 4px;
+  transition: all 0.2s;
 }
 
 .closeButton:hover {
-  background: #f3f4f6;
+  background: #e5e7eb;
   color: #374151;
 }
 
@@ -281,12 +327,16 @@
 .employeeInfo {
   margin-bottom: 20px;
   text-align: center;
+  padding: 16px;
+  background: #f9fafb;
+  border-radius: 8px;
 }
 
 .employeeInfo h4 {
   margin: 0 0 4px 0;
   color: #1f2937;
   font-size: 16px;
+  font-weight: 600;
 }
 
 .employeeInfo p {
@@ -312,10 +362,19 @@
   gap: 4px;
   justify-content: center;
   margin-bottom: 8px;
+  padding: 12px;
 }
 
 .starRating .star {
-  font-size: 24px;
+  font-size: 28px;
+}
+
+.ratingInstruction {
+  text-align: center;
+  color: #6b7280;
+  font-size: 12px;
+  margin: 8px 0 0 0;
+  font-style: italic;
 }
 
 .commentInput {
@@ -327,6 +386,8 @@
   resize: vertical;
   min-height: 100px;
   font-family: inherit;
+  box-sizing: border-box;
+  transition: border-color 0.2s, box-shadow 0.2s;
 }
 
 .commentInput:focus {
@@ -340,21 +401,30 @@
   gap: 12px;
   justify-content: flex-end;
   margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid #e5e7eb;
 }
 
 .cancelButton {
   padding: 10px 20px;
   background: #f3f4f6;
   color: #374151;
-  border: none;
+  border: 1px solid #d1d5db;
   border-radius: 6px;
   cursor: pointer;
   font-size: 14px;
-  transition: background 0.2s;
+  transition: all 0.2s;
+  font-weight: 500;
 }
 
-.cancelButton:hover {
+.cancelButton:hover:not(:disabled) {
   background: #e5e7eb;
+  border-color: #9ca3af;
+}
+
+.cancelButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .submitButton {
@@ -365,14 +435,91 @@
   border-radius: 6px;
   cursor: pointer;
   font-size: 14px;
-  transition: background 0.2s;
+  transition: all 0.2s;
+  font-weight: 500;
 }
 
 .submitButton:hover:not(:disabled) {
   background: #2563eb;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px rgba(59, 130, 246, 0.3);
 }
 
-/* Responsive */
+.submitButton:disabled,
+.submitButton.disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.comment {
+  background: #f9fafb;
+  border-left: 4px solid #3b82f6;
+  padding: 12px 16px;
+  border-radius: 4px;
+  margin-top: 12px;
+}
+
+.comment p {
+  margin: 0;
+  color: #374151;
+  font-style: italic;
+  line-height: 1.5;
+  font-size: 14px;
+}
+
+.loading, .loadingMore {
+  text-align: center;
+  padding: 40px;
+  color: #6b7280;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.loading::before,
+.loadingMore::before {
+  content: '';
+  width: 20px;
+  height: 20px;
+  border: 2px solid #e5e7eb;
+  border-top-color: #3b82f6;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.loadingMore {
+  padding: 20px;
+}
+
+.emptyState {
+  text-align: center;
+  padding: 60px 20px;
+  color: #6b7280;
+}
+
+.emptyState h3 {
+  margin: 0 0 8px 0;
+  color: #374151;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.emptyState p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* Responsive Design */
 @media (max-width: 768px) {
   .ratingViewContainer {
     padding: 16px;
@@ -386,6 +533,13 @@
   
   .statusFilter {
     flex-wrap: wrap;
+    width: 100%;
+  }
+  
+  .filterButton {
+    flex: 1;
+    min-width: 80px;
+    text-align: center;
   }
   
   .ratingCard {
@@ -404,6 +558,7 @@
   .modal {
     margin: 10px;
     max-width: none;
+    max-height: calc(100vh - 20px);
   }
   
   .modalActions {
@@ -413,45 +568,106 @@
   .modalActions button {
     width: 100%;
   }
+  
+  .starRating {
+    gap: 8px;
+  }
+  
+  .starRating .star {
+    font-size: 24px;
+  }
 }
 
-.comment {
-  background: #f9fafb;
-  border-left: 4px solid #3b82f6;
-  padding: 12px 16px;
-  border-radius: 4px;
+@media (max-width: 480px) {
+  .ratingViewContainer {
+    padding: 12px;
+  }
+  
+  .header h2 {
+    font-size: 20px;
+  }
+  
+  .statusFilter {
+    flex-direction: column;
+  }
+  
+  .filterButton {
+    width: 100%;
+  }
+  
+  .ratingCard {
+    padding: 12px;
+  }
+  
+  .modalContent {
+    padding: 16px;
+  }
+  
+  .modalHeader {
+    padding: 16px;
+  }
 }
 
-.comment p {
-  margin: 0;
-  color: #374151;
-  font-style: italic;
-  line-height: 1.5;
+/* Animation for smooth transitions */
+.ratingCard {
+  animation: fadeIn 0.3s ease-in-out;
 }
 
-.loading, .loadingMore {
-  text-align: center;
-  padding: 40px;
-  color: #6b7280;
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-.loadingMore {
-  padding: 20px;
+/* Focus states for accessibility */
+.filterButton:focus,
+.rateButton:focus,
+.editButton:focus,
+.submitButton:focus,
+.cancelButton:focus,
+.closeButton:focus {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
 }
 
-.emptyState {
-  text-align: center;
-  padding: 60px 20px;
-  color: #6b7280;
+.star.interactive:focus {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+  border-radius: 2px;
 }
 
-.emptyState h3 {
-  margin: 0 0 8px 0;
-  color: #374151;
-  font-size: 18px;
+/* Better visual feedback for interactive elements */
+.rateButton:active,
+.editButton:active,
+.submitButton:active {
+  transform: translateY(0);
 }
 
-.emptyState p {
-  margin: 0;
-  font-size: 14px;
+.star.interactive:active {
+  transform: scale(0.95);
+}
+
+/* Loading state improvements */
+.submitButton:disabled {
+  position: relative;
+}
+
+.submitButton:disabled::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 16px;
+  height: 16px;
+  margin-left: -8px;
+  margin-top: -8px;
+  border: 2px solid transparent;
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
 }

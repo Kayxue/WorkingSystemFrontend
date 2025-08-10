@@ -39,6 +39,7 @@ export default function JobRatingView(props: JobRatingViewProps) {
   const [newRating, setNewRating] = createSignal(0);
   const [newComment, setNewComment] = createSignal('');
   const [submittingRating, setSubmittingRating] = createSignal(false);
+  const [error, setError] = createSignal<string>('');
 
   // Fetch approved applications that can be rated
   const fetchRatings = async (
@@ -123,6 +124,7 @@ export default function JobRatingView(props: JobRatingViewProps) {
 
   const loadRatings = async (reset = false) => {
     setLoading(true);
+    setError(''); // Clear previous errors
     try {
       const response = await fetchRatings(
         props.gigId,
@@ -142,6 +144,7 @@ export default function JobRatingView(props: JobRatingViewProps) {
       setTotalCount(response.total);
     } catch (error) {
       console.error('Error loading ratings:', error);
+      setError('Failed to load ratings. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -157,6 +160,7 @@ export default function JobRatingView(props: JobRatingViewProps) {
     setSelectedEmployee(employee);
     setNewRating(employee.employerRating || 0);
     setNewComment(employee.employerComment || '');
+    setError(''); // Clear any previous errors
     setShowRatingModal(true);
   };
 
@@ -165,48 +169,136 @@ export default function JobRatingView(props: JobRatingViewProps) {
     setSelectedEmployee(null);
     setNewRating(0);
     setNewComment('');
+    setError(''); // Clear errors when closing
   };
 
-  const submitRating = async () => {
+  // FIXED: Improved submit function with better error handling and response management
+  const submitRating = async (e?: Event) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+
     const employee = selectedEmployee();
-    if (!employee || newRating() === 0) {
-      console.log('Cannot submit rating: missing employee or rating', { employee: employee(), rating: newRating() });
-      alert('Please select a rating before submitting.');
+    const rating = newRating();
+    
+    // Enhanced validation
+    if (!employee) {
+      setError('No employee selected');
+      return;
+    }
+    
+    if (!rating || rating < 1 || rating > 5) {
+      setError('Please select a rating between 1 and 5 stars');
+      return;
+    }
+
+    if (!props.gigId) {
+      setError('Missing job ID');
       return;
     }
 
     setSubmittingRating(true);
+    setError(''); // Clear previous errors
+    
     console.log('Submitting rating:', {
       gigId: props.gigId,
       userId: employee.userId,
-      rating: newRating(),
-      comment: newComment()
+      rating: rating,
+      comment: newComment().trim()
     });
 
     try {
-      // API call to submit rating - try different endpoint patterns
-      let response;
       const ratingData = {
         gigId: props.gigId,
         userId: employee.userId,
-        rating: newRating(),
-        comment: newComment()
+        rating: rating,
+        comment: newComment().trim() || undefined // Send undefined if empty
       };
 
-      // Try the main rating endpoint first
-      response = await fetch(`/api/rating/employer`, {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'platform': 'web-employer'
-        },
-        credentials: 'include',
-        body: JSON.stringify(ratingData)
-      });
+      console.log('Sending rating data:', ratingData);
 
-      // If that fails, try alternative endpoint
-      if (!response.ok) {
-        console.log('First endpoint failed, trying alternative...');
+      // Helper function to safely handle response
+      const handleResponse = async (response: Response) => {
+        console.log('API response status:', response.status, response.statusText);
+        
+        if (response.ok) {
+          let result;
+          try {
+            // Clone response to avoid "body stream already read" error
+            const responseClone = response.clone();
+            result = await response.json();
+            console.log('Rating submitted successfully:', result);
+          } catch (parseError) {
+            console.log('Response OK but failed to parse JSON, treating as success');
+            result = { success: true };
+          }
+          return { success: true, data: result };
+        } else {
+          // Clone response for error handling
+          const responseClone = response.clone();
+          let errorMessage = `HTTP Error ${response.status}`;
+          
+          try {
+            // Try to parse as JSON first
+            const errorData = await response.json();
+            errorMessage = errorData.message || errorData.error || errorData.details || errorMessage;
+          } catch (jsonError) {
+            try {
+              // If JSON parsing fails, try text from clone
+              const errorText = await responseClone.text();
+              errorMessage = errorText || errorMessage;
+            } catch (textError) {
+              console.error('Failed to read error response:', textError);
+            }
+          }
+          
+          return { success: false, error: errorMessage };
+        }
+      };
+
+      // Try multiple endpoints with proper error handling
+      let response;
+      let result;
+
+      // First endpoint
+      try {
+        response = await fetch(`/api/rating/employer`, {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json',
+            'platform': 'web-employer'
+          },
+          credentials: 'include',
+          body: JSON.stringify(ratingData)
+        });
+
+        result = await handleResponse(response);
+        if (result.success) {
+          // Success! Update state and close modal
+          setAllRatings(prev => prev.map(item => 
+            item.id === employee.id 
+              ? {
+                  ...item,
+                  status: 'rated' as const,
+                  employerRating: rating,
+                  employerComment: newComment().trim(),
+                  ratedAt: new Date().toISOString()
+                }
+              : item
+          ));
+          
+          closeRatingModal();
+          alert('Rating submitted successfully!');
+          return;
+        }
+      } catch (fetchError) {
+        console.log('First endpoint fetch failed:', fetchError);
+      }
+
+      // Second endpoint
+      try {
+        console.log('Trying second endpoint...');
         response = await fetch(`/api/rating/create`, {
           method: 'POST',
           headers: { 
@@ -219,39 +311,74 @@ export default function JobRatingView(props: JobRatingViewProps) {
             type: 'employer_to_worker'
           })
         });
+
+        result = await handleResponse(response);
+        if (result.success) {
+          setAllRatings(prev => prev.map(item => 
+            item.id === employee.id 
+              ? {
+                  ...item,
+                  status: 'rated' as const,
+                  employerRating: rating,
+                  employerComment: newComment().trim(),
+                  ratedAt: new Date().toISOString()
+                }
+              : item
+          ));
+          
+          closeRatingModal();
+          alert('Rating berhasil disimpan!');
+          return;
+        }
+      } catch (fetchError) {
+        console.log('Second endpoint fetch failed:', fetchError);
       }
 
-      console.log('Rating API response:', response.status, response.statusText);
+      // Third endpoint
+      try {
+        console.log('Trying third endpoint...');
+        response = await fetch(`/api/ratings`, {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json',
+            'platform': 'web-employer'
+          },
+          credentials: 'include',
+          body: JSON.stringify(ratingData)
+        });
 
-      if (response.ok) {
-        const result = await response.json();
-        console.log('Rating submitted successfully:', result);
-        
-        // Update local state
-        setAllRatings(prev => prev.map(item => 
-          item.id === employee.id 
-            ? {
-                ...item,
-                status: 'rated' as const,
-                employerRating: newRating(),
-                employerComment: newComment(),
-                ratedAt: new Date().toISOString()
-              }
-            : item
-        ));
-        
-        closeRatingModal();
-        
-        // Show success message
-        alert('Rating submitted successfully!');
-      } else {
-        const errorText = await response.text();
-        console.error('Rating API error:', response.status, errorText);
-        throw new Error(`HTTP ${response.status}: ${errorText}`);
+        result = await handleResponse(response);
+        if (result.success) {
+          setAllRatings(prev => prev.map(item => 
+            item.id === employee.id 
+              ? {
+                  ...item,
+                  status: 'rated' as const,
+                  employerRating: rating,
+                  employerComment: newComment().trim(),
+                  ratedAt: new Date().toISOString()
+                }
+              : item
+          ));
+          
+          closeRatingModal();
+          alert('Rating berhasil disimpan!');
+          return;
+        }
+      } catch (fetchError) {
+        console.log('Third endpoint fetch failed:', fetchError);
       }
+
+      // If all endpoints failed
+      const lastError = result?.error || 'All API endpoints failed';
+      throw new Error(lastError);
+      
     } catch (error) {
       console.error('Error submitting rating:', error);
-      alert(`Failed to submit rating: ${error.message}`);
+      const errorMsg = error instanceof Error ? error.message : 'Unknown error occurred';
+      setError(`Failed to submit rating: ${errorMsg}`);
+      
+      // Don't close modal on error so user can retry
     } finally {
       setSubmittingRating(false);
     }
@@ -263,22 +390,32 @@ export default function JobRatingView(props: JobRatingViewProps) {
     }
   };
 
-  // FIXED: Star rendering function with proper event handling and styling
+  // FIXED: Star rendering function with proper event handling
   const renderStars = (rating: number, interactive = false) => {
     return Array.from({ length: 5 }, (_, i) => (
       <span 
         class={`${styles.star} ${i < rating ? styles.filled : styles.unfilled} ${interactive ? styles.interactive : ''}`}
-        onclick={interactive ? () => {
+        onclick={interactive ? (e: Event) => {
+          e.preventDefault();
+          e.stopPropagation();
           console.log('Star clicked:', i + 1);
           setNewRating(i + 1);
+          setError(''); // Clear error when user interacts
         } : undefined}
         style={{
           cursor: interactive ? 'pointer' : 'default',
-          color: i < rating ? '#FFD700' : '#D3D3D3', // Gold for filled, light gray for unfilled
+          color: i < rating ? '#FFD700' : '#D3D3D3',
           fontSize: '1.5em',
           transition: 'color 0.2s ease',
-          ...(interactive && { ':hover': { color: '#FFA500' } }) // Orange on hover for interactive stars
+          display: 'inline-block',
+          'user-select': 'none'
         }}
+        onMouseEnter={interactive ? (e: Event) => {
+          (e.target as HTMLElement).style.color = '#FFA500';
+        } : undefined}
+        onMouseLeave={interactive ? (e: Event) => {
+          (e.target as HTMLElement).style.color = i < rating ? '#FFD700' : '#D3D3D3';
+        } : undefined}
       >
         ★
       </span>
@@ -286,11 +423,15 @@ export default function JobRatingView(props: JobRatingViewProps) {
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('id-ID', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
+    try {
+      return new Date(dateString).toLocaleDateString('id-ID', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+    } catch {
+      return dateString; // Fallback to original string if parsing fails
+    }
   };
 
   onMount(() => {
@@ -305,6 +446,20 @@ export default function JobRatingView(props: JobRatingViewProps) {
           <span>Approved Applications: {totalCount()}</span>
         </div>
       </div>
+
+      {/* Error display */}
+      <Show when={error()}>
+        <div class={styles.errorMessage} style={{ 
+          background: '#fee', 
+          border: '1px solid #fcc', 
+          color: '#c33', 
+          padding: '10px', 
+          margin: '10px 0', 
+          'border-radius': '4px' 
+        }}>
+          {error()}
+        </div>
+      </Show>
 
       <div class={styles.filters}>
         <div class={styles.statusFilter}>
@@ -368,7 +523,10 @@ export default function JobRatingView(props: JobRatingViewProps) {
                         <p class={styles.note}>Rate this employee's performance.</p>
                         <button 
                           class={styles.rateButton}
-                          onclick={() => openRatingModal(rating)}
+                          onclick={(e) => {
+                            e.preventDefault();
+                            openRatingModal(rating);
+                          }}
                         >
                           Rate Employee
                         </button>
@@ -387,7 +545,10 @@ export default function JobRatingView(props: JobRatingViewProps) {
                       </Show>
                       <button 
                         class={styles.editButton}
-                        onclick={() => openRatingModal(rating)}
+                        onclick={(e) => {
+                          e.preventDefault();
+                          openRatingModal(rating);
+                        }}
                       >
                         Edit Rating
                       </button>
@@ -425,11 +586,20 @@ export default function JobRatingView(props: JobRatingViewProps) {
 
       {/* Rating Modal */}
       <Show when={showRatingModal()}>
-        <div class={styles.modalOverlay} onclick={closeRatingModal}>
+        <div class={styles.modalOverlay} onclick={(e) => {
+          e.preventDefault();
+          closeRatingModal();
+        }}>
           <div class={styles.modal} onclick={(e) => e.stopPropagation()}>
             <div class={styles.modalHeader}>
               <h3>Rate Employee</h3>
-              <button class={styles.closeButton} onclick={closeRatingModal}>×</button>
+              <button 
+                class={styles.closeButton} 
+                onclick={(e) => {
+                  e.preventDefault();
+                  closeRatingModal();
+                }}
+              >×</button>
             </div>
             
             <div class={styles.modalContent}>
@@ -438,6 +608,21 @@ export default function JobRatingView(props: JobRatingViewProps) {
                   <h4>{selectedEmployee()!.userName}</h4>
                   <p>Application approved on {formatDate(selectedEmployee()!.workCompletedAt)}</p>
                 </div>
+
+                {/* Error display in modal */}
+                <Show when={error()}>
+                  <div style={{ 
+                    background: '#fee', 
+                    border: '1px solid #fcc', 
+                    color: '#c33', 
+                    padding: '8px', 
+                    margin: '10px 0', 
+                    'border-radius': '4px',
+                    'font-size': '14px'
+                  }}>
+                    {error()}
+                  </div>
+                </Show>
 
                 <div class={styles.ratingSection}>
                   <label>Rating: {newRating() > 0 && <span>({newRating()}/5)</span>}</label>
@@ -453,20 +638,31 @@ export default function JobRatingView(props: JobRatingViewProps) {
                     id="comment"
                     class={styles.commentInput}
                     value={newComment()}
-                    onInput={(e) => setNewComment(e.target.value)}
+                    onInput={(e) => {
+                      setNewComment((e.target as HTMLTextAreaElement).value);
+                      setError(''); // Clear error when user types
+                    }}
                     placeholder="Share your feedback about this employee's work..."
                     rows={4}
                   />
                 </div>
 
                 <div class={styles.modalActions}>
-                  <button class={styles.cancelButton} onclick={closeRatingModal}>
+                  <button 
+                    class={styles.cancelButton} 
+                    onclick={(e) => {
+                      e.preventDefault();
+                      closeRatingModal();
+                    }}
+                    disabled={submittingRating()}
+                  >
                     Cancel
                   </button>
                   <button 
-                    class={`${styles.submitButton} ${newRating() === 0 ? styles.disabled : ''}`}
+                    class={`${styles.submitButton} ${newRating() === 0 || submittingRating() ? styles.disabled : ''}`}
                     onclick={submitRating}
                     disabled={newRating() === 0 || submittingRating()}
+                    type="button"
                   >
                     {submittingRating() ? 'Submitting...' : 'Submit Rating'}
                   </button>
