@@ -3,6 +3,20 @@ import { createResource, createSignal, For, Show, onCleanup, createEffect } from
 import styles from "../../styles/JobApplications.module.css";
 
 // Shared Types & Helpers
+type JobExperience = {
+  jobTitle?: string;
+  company?: string;
+  startDate?: string;
+  endDate?: string;
+  description?: string;
+};
+
+type Certificate = {
+  name?: string;
+  issuer?: string;
+  date?: string;
+};
+
 type Application = {
   applicationId: string;
   workerId: string;
@@ -12,8 +26,8 @@ type Application = {
   workerEducation?: string;
   workerSchool?: string;
   workerMajor?: string;
-  workerCertificates?: any;
-  workerJobExperience?: any;
+  workerCertificates?: string | Certificate[] | null; // Should be JSON string from database
+  workerJobExperience?: string | JobExperience[] | null; // Should be JSON string from database
   status: 'pending' | 'approved' | 'rejected' | 'cancelled';
   appliedAt: string;
 };
@@ -36,6 +50,173 @@ function getStatusClass(status: string): string {
     case 'cancelled': return styles.statusRejected;
     default: return '';
   }
+}
+
+// Helper functions to parse JSON fields - handles multiple data formats
+function parseJobExperience(experience: string | JobExperience[] | null | undefined): JobExperience[] {
+  console.log('🔍 Parsing job experience:', {
+    type: typeof experience,
+    value: experience,
+    isNull: experience === null,
+    isUndefined: experience === undefined,
+    isArray: Array.isArray(experience),
+    arrayLength: Array.isArray(experience) ? experience.length : 'N/A'
+  });
+
+  // Handle null, undefined, or falsy values
+  if (experience === null || experience === undefined) {
+    console.log('❌ Job experience is null/undefined');
+    return [];
+  }
+  
+  // If already an array, validate and return
+  if (Array.isArray(experience)) {
+    console.log('✅ Job experience is already an array with length:', experience.length);
+    
+    if (experience.length === 0) {
+      console.log('❌ Job experience array is empty');
+      return [];
+    }
+    
+    // Validate each experience object has expected structure
+    const validExperiences = experience.filter(exp => 
+      exp && typeof exp === 'object' && 
+      (exp.jobTitle || exp.company || exp.startDate || exp.endDate || exp.description)
+    );
+    console.log('✅ Valid experiences after filtering:', validExperiences);
+    return validExperiences;
+  }
+  
+  // Handle string cases (JSON strings from database)
+  if (typeof experience === 'string') {
+    const trimmed = experience.trim();
+    
+    if (trimmed === '' || trimmed === '[]' || trimmed === 'null') {
+      console.log('❌ Job experience is empty or null string');
+      return [];
+    }
+    
+    try {
+      const parsed = JSON.parse(trimmed);
+      console.log('✅ Parsed job experience JSON:', parsed);
+      
+      if (Array.isArray(parsed)) {
+        const validExperiences = parsed.filter(exp => 
+          exp && typeof exp === 'object' && 
+          (exp.jobTitle || exp.company || exp.startDate || exp.endDate || exp.description)
+        );
+        return validExperiences;
+      }
+      return [];
+    } catch (error) {
+      console.warn('❌ Failed to parse job experience JSON:', error);
+      return [];
+    }
+  }
+  
+  return [];
+}
+
+function parseCertificates(certificates: string | Certificate[] | string[] | null | undefined): Certificate[] {
+  console.log('🔍 Parsing certificates:', {
+    type: typeof certificates,
+    value: certificates,
+    isNull: certificates === null,
+    isUndefined: certificates === undefined,
+    isArray: Array.isArray(certificates),
+    arrayLength: Array.isArray(certificates) ? certificates.length : 'N/A'
+  });
+
+  // Handle null, undefined, or falsy values
+  if (certificates === null || certificates === undefined) {
+    console.log('❌ Certificates is null/undefined');
+    return [];
+  }
+  
+  // If already an array, handle both object and string arrays
+  if (Array.isArray(certificates)) {
+    console.log('✅ Certificates is already an array with length:', certificates.length);
+    
+    if (certificates.length === 0) {
+      console.log('❌ Certificates array is empty');
+      return [];
+    }
+    
+    // Check if it's array of strings (like ["Java SCJP", "AWS Solutions Architect"])
+    if (certificates.every(cert => typeof cert === 'string')) {
+      console.log('✅ Converting string array to certificate objects');
+      const convertedCerts = certificates.map(certName => ({
+        name: certName,
+        issuer: undefined,
+        date: undefined
+      }));
+      console.log('✅ Converted certificates:', convertedCerts);
+      return convertedCerts;
+    }
+    
+    // Check if it's array of objects
+    if (certificates.every(cert => typeof cert === 'object' && cert !== null)) {
+      console.log('✅ Certificates is array of objects');
+      const validCertificates = certificates.filter(cert => 
+        cert && typeof cert === 'object' && 
+        (cert.name || cert.issuer || cert.date)
+      );
+      console.log('✅ Valid certificates after filtering:', validCertificates);
+      return validCertificates;
+    }
+    
+    console.log('❌ Mixed array format, filtering valid items');
+    // Handle mixed array (some strings, some objects)
+    return certificates
+      .map(cert => {
+        if (typeof cert === 'string') {
+          return { name: cert, issuer: undefined, date: undefined };
+        }
+        if (typeof cert === 'object' && cert !== null && (cert.name || cert.issuer || cert.date)) {
+          return cert;
+        }
+        return null;
+      })
+      .filter(cert => cert !== null);
+  }
+  
+  // Handle string cases (JSON strings from database)
+  if (typeof certificates === 'string') {
+    const trimmed = certificates.trim();
+    
+    if (trimmed === '' || trimmed === '[]' || trimmed === 'null') {
+      console.log('❌ Certificates is empty or null string');
+      return [];
+    }
+    
+    try {
+      const parsed = JSON.parse(trimmed);
+      console.log('✅ Parsed certificates JSON:', parsed);
+      
+      if (Array.isArray(parsed)) {
+        // Handle both string arrays and object arrays from JSON
+        if (parsed.every(cert => typeof cert === 'string')) {
+          return parsed.map(certName => ({
+            name: certName,
+            issuer: undefined,
+            date: undefined
+          }));
+        }
+        
+        const validCertificates = parsed.filter(cert => 
+          cert && typeof cert === 'object' && 
+          (cert.name || cert.issuer || cert.date)
+        );
+        return validCertificates;
+      }
+      return [];
+    } catch (error) {
+      console.warn('❌ Failed to parse certificates JSON:', error);
+      return [];
+    }
+  }
+  
+  return [];
 }
 
 async function updateApplicationStatus(applicationId: string, newStatus: 'approved' | 'rejected') {
@@ -77,6 +258,21 @@ async function fetchApplications(gigId: string): Promise<Application[]> {
     }
 
     const result = await response.json();
+    console.log('🔍 Full API Response:', result);
+    console.log('🔍 Applications data:', result.data.applications);
+    
+    // Debug each application's certificate and experience data
+    result.data.applications.forEach((app: Application, index: number) => {
+      console.log(`🔍 Application ${index + 1} (${app.workerName}):`, {
+        certificatesRaw: app.workerCertificates,
+        certificatesType: typeof app.workerCertificates,
+        certificatesLength: typeof app.workerCertificates === 'string' ? app.workerCertificates.length : 'N/A',
+        experienceRaw: app.workerJobExperience,
+        experienceType: typeof app.workerJobExperience,
+        experienceLength: typeof app.workerJobExperience === 'string' ? app.workerJobExperience.length : 'N/A'
+      });
+    });
+    
     console.log('Applications loaded successfully:', result.data.applications.length);
     
     return result.data.applications;
@@ -108,6 +304,34 @@ export default function JobApplicationsView(props: JobApplicationsViewProps) {
   );
   const [updating, setUpdating] = createSignal<string | null>(null);
 
+  // Debug effect to log application data when it loads
+  createEffect(() => {
+    const apps = applications();
+    if (apps && apps.length > 0) {
+      console.log('🔍 DEBUG: Applications loaded, checking first application:');
+      const firstApp = apps[0];
+      console.log('First application full data:', firstApp);
+      console.log('Certificate data detailed analysis:');
+      console.log('- Type:', typeof firstApp.workerCertificates);
+      console.log('- Value:', firstApp.workerCertificates);
+      console.log('- String length:', typeof firstApp.workerCertificates === 'string' ? firstApp.workerCertificates.length : 'N/A');
+      console.log('- Is empty string:', firstApp.workerCertificates === '');
+      
+      console.log('Experience data detailed analysis:');
+      console.log('- Type:', typeof firstApp.workerJobExperience);
+      console.log('- Value:', firstApp.workerJobExperience);
+      console.log('- String length:', typeof firstApp.workerJobExperience === 'string' ? firstApp.workerJobExperience.length : 'N/A');
+      console.log('- Is empty string:', firstApp.workerJobExperience === '');
+      
+      // Test parsing functions
+      console.log('🧪 Testing parsing functions:');
+      const parsedCerts = parseCertificates(firstApp.workerCertificates);
+      const parsedExp = parseJobExperience(firstApp.workerJobExperience);
+      console.log('Final parsed certificates result:', parsedCerts);
+      console.log('Final parsed experience result:', parsedExp);
+    }
+  });
+
   // Declare all functions
   const filteredApplications = () => {
     const apps = applications();
@@ -118,6 +342,9 @@ export default function JobApplicationsView(props: JobApplicationsViewProps) {
   };
 
   const openApplicationModal = (application: Application) => {
+    console.log('🔍 Opening modal for application:', application);
+    console.log('🔍 Modal data - Certificates:', application.workerCertificates);
+    console.log('🔍 Modal data - Experience:', application.workerJobExperience);
     setSelectedApplication(application);
     document.body.style.overflow = 'hidden';
   };
@@ -245,6 +472,29 @@ export default function JobApplicationsView(props: JobApplicationsViewProps) {
                     <Show when={application.workerMajor}>
                       <p class={styles.applicantInfo}><strong>Major:</strong> {application.workerMajor}</p>
                     </Show>
+                    
+                    {/* Display certificates info in card preview */}
+                    <div class={styles.applicantInfo}>
+                      <strong>Certificates:</strong> 
+                      <Show 
+                        when={parseCertificates(application.workerCertificates).length > 0} 
+                        fallback={<span class={styles.noData}> None</span>}
+                      >
+                        <span> {parseCertificates(application.workerCertificates).length} certificate(s)</span>
+                      </Show>
+                    </div>
+
+                    {/* Display experience info in card preview */}
+                    <div class={styles.applicantInfo}>
+                      <strong>Experience:</strong> 
+                      <Show 
+                        when={parseJobExperience(application.workerJobExperience).length > 0} 
+                        fallback={<span class={styles.noData}> None</span>}
+                      >
+                        <span> {parseJobExperience(application.workerJobExperience).length} job(s)</span>
+                      </Show>
+                    </div>
+                    
                     <p class={styles.applicantInfo}><strong>Applied:</strong> {formatDateToDDMMYYYY(application.appliedAt)}</p>
                   </div>
                   <div class={styles.cardActions}>
@@ -306,10 +556,14 @@ export default function JobApplicationsView(props: JobApplicationsViewProps) {
                 <p><strong>Applied on:</strong> {formatDateToDDMMYYYY(selectedApplication()!.appliedAt)}</p>
                 <p><strong>Status:</strong> <span class={`${styles.status} ${getStatusClass(selectedApplication()!.status)}`}>{selectedApplication()!.status.charAt(0).toUpperCase() + selectedApplication()!.status.slice(1)}</span></p>
                 
-                <Show when={selectedApplication()!.workerJobExperience && selectedApplication()!.workerJobExperience.length > 0}>
-                  <div class={styles.section}>
-                    <h4>Work Experience</h4>
-                    <For each={selectedApplication()!.workerJobExperience}>
+                {/* Work Experience Section */}
+                <div class={styles.section}>
+                  <h4>Work Experience</h4>
+                  <Show 
+                    when={parseJobExperience(selectedApplication()!.workerJobExperience).length > 0}
+                    fallback={<p class={styles.noData}>No work experience provided</p>}
+                  >
+                    <For each={parseJobExperience(selectedApplication()!.workerJobExperience)}>
                       {(exp) => (
                         <div class={styles.experienceItem}>
                           <p><strong>{exp.jobTitle || 'N/A'}</strong> at {exp.company || 'N/A'}</p>
@@ -317,32 +571,36 @@ export default function JobApplicationsView(props: JobApplicationsViewProps) {
                             {exp.startDate || 'N/A'} - {exp.endDate || 'Present'}
                           </p>
                           <Show when={exp.description}>
-                            <p>{exp.description}</p>
+                            <p class={styles.description}>{exp.description}</p>
                           </Show>
                         </div>
                       )}
                     </For>
-                  </div>
-                </Show>
+                  </Show>
+                </div>
                 
-                <Show when={selectedApplication()!.workerCertificates && selectedApplication()!.workerCertificates.length > 0}>
-                  <div class={styles.section}>
-                    <h4>Certificates</h4>
-                    <For each={selectedApplication()!.workerCertificates}>
+                {/* Certificates Section */}
+                <div class={styles.section}>
+                  <h4>Certificates</h4>
+                  <Show 
+                    when={parseCertificates(selectedApplication()!.workerCertificates).length > 0}
+                    fallback={<p class={styles.noData}>No certificates provided</p>}
+                  >
+                    <For each={parseCertificates(selectedApplication()!.workerCertificates)}>
                       {(cert) => (
                         <div class={styles.certificateItem}>
                           <p><strong>{cert.name || 'N/A'}</strong></p>
                           <Show when={cert.issuer}>
-                            <p>Issued by: {cert.issuer}</p>
+                            <p class={styles.issuer}>Issued by: {cert.issuer}</p>
                           </Show>
                           <Show when={cert.date}>
-                            <p>Date: {cert.date}</p>
+                            <p class={styles.certDate}>Date: {cert.date}</p>
                           </Show>
                         </div>
                       )}
                     </For>
-                  </div>
-                </Show>
+                  </Show>
+                </div>
               </div>
             </div>
             <Show when={selectedApplication()!.status === 'pending'}>
