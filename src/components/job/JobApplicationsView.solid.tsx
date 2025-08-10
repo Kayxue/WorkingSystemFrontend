@@ -87,24 +87,28 @@ async function fetchApplications(gigId: string): Promise<Application[]> {
 }
 
 export default function JobApplicationsView(props: JobApplicationsViewProps) {
+  // Get initial status from URL params (both 'status' and 'filter' for compatibility)
+  const getInitialStatusFilter = () => {
+    const params = new URLSearchParams(window.location.search);
+    const statusParam = params.get('status') || params.get('filter');
+    
+    // Validate the status parameter
+    const validStatuses = ['all', 'pending', 'approved', 'rejected', 'cancelled'];
+    if (statusParam && validStatuses.includes(statusParam)) {
+      return statusParam as 'all' | 'pending' | 'approved' | 'rejected' | 'cancelled';
+    }
+    return 'all';
+  };
+
+  // Declare all signals first
   const [applications, { refetch }] = createResource(() => props.gigId, fetchApplications);
   const [selectedApplication, setSelectedApplication] = createSignal<Application | null>(null);
   const [statusFilter, setStatusFilter] = createSignal<'all' | 'pending' | 'approved' | 'rejected' | 'cancelled'>(
-    (new URLSearchParams(window.location.search).get('filter') as any) || 'all'
+    getInitialStatusFilter()
   );
   const [updating, setUpdating] = createSignal<string | null>(null);
 
-  // Sync URL with filter changes
-  createEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    if (statusFilter() === 'all') {
-      params.delete('filter');
-    } else {
-      params.set('filter', statusFilter());
-    }
-    window.history.replaceState(null, '', `?${params.toString()}`);
-  });
-
+  // Declare all functions
   const filteredApplications = () => {
     const apps = applications();
     if (!apps) return [];
@@ -143,13 +147,35 @@ export default function JobApplicationsView(props: JobApplicationsViewProps) {
     }
   };
 
-  // Set up event listener for escape key
+  // Listen for URL changes (back/forward browser buttons)
+  const handlePopState = () => {
+    setStatusFilter(getInitialStatusFilter());
+  };
+
+  // Effects and event listeners
+  // Sync URL with filter changes
+  createEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (statusFilter() === 'all') {
+      params.delete('status');
+    } else {
+      params.set('status', statusFilter());
+    }
+    
+    // Update URL without reloading the page
+    const newUrl = `${window.location.pathname}?${params.toString()}`;
+    window.history.replaceState(null, '', newUrl);
+  });
+
+  // Set up event listeners
+  window.addEventListener('popstate', handlePopState);
   document.addEventListener('keydown', handleKeyDown);
   
   // Cleanup event listener
   onCleanup(() => {
     document.removeEventListener('keydown', handleKeyDown);
     document.body.style.overflow = 'auto'; // Reset overflow on cleanup
+    window.removeEventListener('popstate', handlePopState); // Clean up popstate listener
   });
 
   return (
@@ -190,7 +216,11 @@ export default function JobApplicationsView(props: JobApplicationsViewProps) {
         <div class={styles.applicationsGrid}>
           <Show 
             when={filteredApplications().length > 0} 
-            fallback={<div class={styles.noApplications}>No applications found for the selected filter.</div>}
+            fallback={
+              <div class={styles.noApplications}>
+                No {statusFilter() === 'all' ? '' : statusFilter()} applications found.
+              </div>
+            }
           >
             <For each={filteredApplications()}>
               {(application) => (
@@ -276,7 +306,7 @@ export default function JobApplicationsView(props: JobApplicationsViewProps) {
                 <p><strong>Applied on:</strong> {formatDateToDDMMYYYY(selectedApplication()!.appliedAt)}</p>
                 <p><strong>Status:</strong> <span class={`${styles.status} ${getStatusClass(selectedApplication()!.status)}`}>{selectedApplication()!.status.charAt(0).toUpperCase() + selectedApplication()!.status.slice(1)}</span></p>
                 
-                 <Show when={selectedApplication()!.workerJobExperience && selectedApplication()!.workerJobExperience.length > 0}>
+                <Show when={selectedApplication()!.workerJobExperience && selectedApplication()!.workerJobExperience.length > 0}>
                   <div class={styles.section}>
                     <h4>Work Experience</h4>
                     <For each={selectedApplication()!.workerJobExperience}>
@@ -295,18 +325,18 @@ export default function JobApplicationsView(props: JobApplicationsViewProps) {
                   </div>
                 </Show>
                 
-                 <Show when={selectedApplication()!.workerJobExperience && selectedApplication()!.workerJobExperience.length > 0}>
+                <Show when={selectedApplication()!.workerCertificates && selectedApplication()!.workerCertificates.length > 0}>
                   <div class={styles.section}>
-                    <h4>Work Experience</h4>
-                    <For each={selectedApplication()!.workerJobExperience}>
-                      {(exp) => (
-                        <div class={styles.experienceItem}>
-                          <p><strong>{exp.jobTitle || 'N/A'}</strong> at {exp.company || 'N/A'}</p>
-                          <p class={styles.dates}>
-                            {exp.startDate || 'N/A'} - {exp.endDate || 'Present'}
-                          </p>
-                          <Show when={exp.description}>
-                            <p>{exp.description}</p>
+                    <h4>Certificates</h4>
+                    <For each={selectedApplication()!.workerCertificates}>
+                      {(cert) => (
+                        <div class={styles.certificateItem}>
+                          <p><strong>{cert.name || 'N/A'}</strong></p>
+                          <Show when={cert.issuer}>
+                            <p>Issued by: {cert.issuer}</p>
+                          </Show>
+                          <Show when={cert.date}>
+                            <p>Date: {cert.date}</p>
                           </Show>
                         </div>
                       )}
