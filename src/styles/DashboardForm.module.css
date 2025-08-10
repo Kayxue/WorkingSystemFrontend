@@ -46,6 +46,7 @@
 }
 
 .actionButton {
+  width: 120px;
   border: none;
   padding: 0.5rem 1rem;
   border-radius: 6px;
@@ -67,7 +68,7 @@
 
 .jobTitle {
   font-size: 1.4rem;
-  font-weight: 600;
+  font-weight: bolder;
   margin-bottom: 0.5rem;
 }
 

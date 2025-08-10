@@ -3,16 +3,18 @@ import { createSignal, Show, Switch, Match, onMount, onCleanup } from "solid-js"
 import JobDetailsView from "./JobDetailsView.solid";
 import JobApplicationsView from "./JobApplicationsView.solid";
 import JobRatingView from "./JobRatingView.solid"; // Import the new rating component
-import styles from "../styles/JobLayout.module.css";
+import styles from "../../styles/JobLayout.module.css";
 
 type View = 'details' | 'applications' | 'rating'; // Add 'rating' to View type
 
 interface JobLayoutProps {
   gigId: string;
+  initialSection: string;
+  initialStatus: string;
 }
 
 export default function JobLayout(props: JobLayoutProps) {
-  const [currentView, setCurrentView] = createSignal<View>('details');
+  const [currentView, setCurrentView] = createSignal<View>(props.initialSection as View || 'details');
   const [sidebarCollapsed, setSidebarCollapsed] = createSignal(false);
   const [isMobile, setIsMobile] = createSignal(false);
 
@@ -21,6 +23,24 @@ export default function JobLayout(props: JobLayoutProps) {
     { id: 'applications' as View, label: 'Applications', icon: '👥', shortcut: 'Alt+2' },
     { id: 'rating' as View, label: 'Rating', icon: '⭐', shortcut: 'Alt+3' }, // Add rating item
   ];
+
+  const showSection = (sectionId: View) => {
+    setCurrentView(sectionId);
+    const url = new URL(window.location.href);
+    url.searchParams.set('section', sectionId);
+    if (sectionId == 'applications') {
+      url.searchParams.set('status', props.initialStatus);
+    } else {
+      url.searchParams.delete('status');
+    }
+    window.history.pushState({}, '', url.toString());
+  };
+
+  const handlePopState = () => {
+    const params = new URLSearchParams(window.location.search);
+    const section = (params.get('section') || 'details') as View;
+    setCurrentView(section);
+  };
 
   const goBack = () => {
     window.history.back();
@@ -37,13 +57,13 @@ export default function JobLayout(props: JobLayoutProps) {
   const handleKeyDown = (e: KeyboardEvent) => {
     if (e.altKey && e.key === '1') {
       e.preventDefault();
-      setCurrentView('details');
+      showSection('details');
     } else if (e.altKey && e.key === '2') {
       e.preventDefault();
-      setCurrentView('applications');
+      showSection('applications');
     } else if (e.altKey && e.key === '3') { // Add shortcut for rating
       e.preventDefault();
-      setCurrentView('rating');
+      showSection('rating');
     } else if (e.altKey && e.key === 's') {
       e.preventDefault();
       toggleSidebar();
@@ -56,11 +76,13 @@ export default function JobLayout(props: JobLayoutProps) {
     handleResize();
     window.addEventListener('resize', handleResize);
     document.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('popstate', handlePopState);
   });
 
   onCleanup(() => {
     window.removeEventListener('resize', handleResize);
     document.removeEventListener('keydown', handleKeyDown);
+    window.removeEventListener('popstate', handlePopState);
   });
 
   return (
@@ -83,7 +105,7 @@ export default function JobLayout(props: JobLayoutProps) {
           {navigationItems.map(item => (
             <button
               class={`${styles.navItem} ${currentView() === item.id ? styles.active : ''}`}
-              onClick={() => setCurrentView(item.id)}
+              onClick={() => showSection(item.id)}
               title={item.shortcut}
             >
               <span class={styles.navIcon}>{item.icon}</span>
@@ -95,12 +117,12 @@ export default function JobLayout(props: JobLayoutProps) {
         </nav>
 
         <div class={styles.sidebarFooter}>
-          <button class={styles.backButton} onClick={goBack}>
+          <a class={styles.backButton} href="/dashboard">
             <span class={styles.navIcon}>←</span>
             <Show when={!sidebarCollapsed()}>
               <span class={styles.navLabel}>Back to Dashboard</span>
             </Show>
-          </button>
+          </a>
         </div>
       </aside>
 
@@ -110,7 +132,7 @@ export default function JobLayout(props: JobLayoutProps) {
             <JobDetailsView gigId={props.gigId} />
           </Match>
           <Match when={currentView() === 'applications'}>
-            <JobApplicationsView gigId={props.gigId} />
+            <JobApplicationsView gigId={props.gigId} initialStatus={props.initialStatus} />
           </Match>
           <Match when={currentView() === 'rating'}> {/* Add Match for rating */}
             <JobRatingView gigId={props.gigId} />

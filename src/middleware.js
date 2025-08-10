@@ -2,6 +2,9 @@
 import { defineMiddleware, sequence } from 'astro:middleware';
 
 const checkAuth = defineMiddleware(async (context, next) => {
+    if (context.url.pathname.startsWith('/api/')) {
+        return next();
+    }
     const userCookies = context.request.headers.get('cookie') || '';
     let loginData = { loggedIn: false, user: null }; 
 

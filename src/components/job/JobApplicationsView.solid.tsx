@@ -1,6 +1,6 @@
 // JobApplicationsView.solid.tsx
 import { createResource, createSignal, For, Show, onCleanup, createEffect } from "solid-js";
-import styles from "../styles/JobApplications.module.css";
+import styles from "../../styles/JobApplications.module.css";
 
 // Shared Types & Helpers
 type Application = {
