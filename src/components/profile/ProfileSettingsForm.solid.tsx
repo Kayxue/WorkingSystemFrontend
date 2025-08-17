@@ -1,6 +1,6 @@
 import { createSignal, createEffect, For, onCleanup } from 'solid-js';
 import AvatarSection from './AvatarSection.solid.tsx';
-import areaData from '../../static/areaData.json';
+import areaData from '../../static/AreaData.json';
 
 interface EmployerData {
   employerName: string;
