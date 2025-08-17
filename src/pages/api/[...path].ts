@@ -1,10 +1,12 @@
+import { BACKEND_BASE_URL } from "../../Constant";
+
 export async function ALL({ request, params }) {
   const originalUrl = new URL(request.url);
   const path = params.path;
 
   const pathStr = Array.isArray(path) ? path.join('/') : path;
 
-  const targetUrl = new URL(`http://localhost:3000/${pathStr}`);
+  const targetUrl = new URL(`${BACKEND_BASE_URL}/${pathStr}`);
   targetUrl.search = originalUrl.search;
 
   console.log(`Proxying to: ${targetUrl.href}`);
