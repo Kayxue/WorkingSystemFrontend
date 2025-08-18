@@ -11,7 +11,7 @@
   },
   "dependencies": {
     "@astrojs/solid-js": "5.1.0",
-    "@nurodev/astro-bun": "^2.0.5",
+    "@hedystia/astro-bun": "^0.3.2",
     "@solidjs/router": "^0.15.3",
     "@tailwindcss/vite": "^4.1.11",
     "astro": "5.10.1",
