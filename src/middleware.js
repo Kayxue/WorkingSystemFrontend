@@ -1,5 +1,6 @@
 // src/middleware.js
 import { defineMiddleware, sequence } from 'astro:middleware';
+import { BACKEND_BASE_URL } from './Constant';
 
 const checkAuth = defineMiddleware(async (context, next) => {
     if (context.url.pathname.startsWith('/api/')) {
@@ -9,7 +10,7 @@ const checkAuth = defineMiddleware(async (context, next) => {
     let loginData = { loggedIn: false, user: null }; 
 
     try {
-        const response = await fetch('http://localhost:3000/user/profile', {
+        const response = await fetch(`${BACKEND_BASE_URL}/user/profile`, {
             method: "GET",
             headers: {
             "Content-Type": "application/json",
