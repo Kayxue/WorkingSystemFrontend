@@ -1,1 +1,1 @@
-export const BACKEND_BASE_URL = `http://${process.env.BACKENDCONTAINER ?? 'localhost'}:3000`;
+export const BACKEND_BASE_URL = `http://${process.env.BACKENDCONTAINER ?? '100.118.254.105'}:3000`;
