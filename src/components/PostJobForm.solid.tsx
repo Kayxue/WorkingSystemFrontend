@@ -1,11 +1,15 @@
 import { createSignal, createEffect, onCleanup, Show, For } from "solid-js";
 import styles from '../styles/PostJobForm.module.css';
-import areaDataJson from '../static/AreaData.json';
-
+import areaDataJson from '../static/areaData.json';
 
 interface FilePreview {
   file: File;
   url: string;
+}
+
+interface Requirements {
+  experience: string;
+  skills: string[];
 }
 
 export default function PostJobForm() {
@@ -19,7 +23,13 @@ export default function PostJobForm() {
   const [district, setDistrict] = createSignal("");
   const [address, setAddress] = createSignal("");
   const [description, setDescription] = createSignal("");
-  const [requirements, setRequirements] = createSignal("");
+  
+  // Changed to handle requirements as JSON object
+  const [requirements, setRequirements] = createSignal<Requirements>({
+    experience: "",
+    skills: []
+  });
+  
   const [contactPerson, setContactPerson] = createSignal("");
   const [contactPhone, setContactPhone] = createSignal("");
   const [contactEmail, setContactEmail] = createSignal("");
@@ -32,11 +42,72 @@ export default function PostJobForm() {
   const [areaData, setAreaData] = createSignal<Record<string, string[]>>({});
   const [districtList, setDistrictList] = createSignal<string[]>([]);
 
+  // For handling skills as tags
+  const [skillInput, setSkillInput] = createSignal("");
+
   const MAX_FILES = 3;
   const MAX_SIZE_MB = 2;
   const MAX_SIZE_BYTES = MAX_SIZE_MB * 1024 * 1024;
   const ALLOWED_TYPES = ["image/jpeg", "image/png"];
   const ALLOWED_EXTENSIONS = [".jpg", ".jpeg", ".png"];
+
+  // Get today's date in YYYY-MM-DD format
+  const getTodayDate = () => {
+    const today = new Date();
+    return today.toISOString().split('T')[0];
+  };
+
+  // Validate date selection
+  const handleDateStartChange = (value: string) => {
+    setError("");
+    setDateStart(value);
+    
+    // If end date is before the new start date, reset it
+    if (dateEnd() && dateEnd() < value) {
+      setDateEnd("");
+    }
+  };
+
+  const handleDateEndChange = (value: string) => {
+    const startDate = dateStart();
+    
+    if (startDate && value < startDate) {
+      setError("End date cannot be before start date.");
+      return;
+    }
+    setError("");
+    setDateEnd(value);
+  };
+
+  // Handle requirements updates
+  const updateRequirementExperience = (experience: string) => {
+    setRequirements(prev => ({ ...prev, experience }));
+  };
+
+  const addSkill = () => {
+    const skill = skillInput().trim();
+    if (skill && !requirements().skills.includes(skill)) {
+      setRequirements(prev => ({
+        ...prev,
+        skills: [...prev.skills, skill]
+      }));
+      setSkillInput("");
+    }
+  };
+
+  const removeSkill = (skillToRemove: string) => {
+    setRequirements(prev => ({
+      ...prev,
+      skills: prev.skills.filter(skill => skill !== skillToRemove)
+    }));
+  };
+
+  const handleSkillInputKeyPress = (e: KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      addSkill();
+    }
+  };
 
   createEffect(async () => {
     try {
@@ -104,6 +175,35 @@ export default function PostJobForm() {
     e.preventDefault();
     setError("");
     setSuccess(false);
+
+    // Additional validation before submission
+    const today = getTodayDate();
+    if (dateStart() < today) {
+      setError("Start date cannot be in the past. Please select today or a future date.");
+      return;
+    }
+
+    if (dateEnd() < today) {
+      setError("End date cannot be in the past. Please select today or a future date.");
+      return;
+    }
+
+    if (dateEnd() && dateEnd() < dateStart()) {
+      setError("End date cannot be before start date. Please select an end date that is the same or after the start date.");
+      return;
+    }
+
+    // Validate requirements
+    if (!requirements().experience.trim()) {
+      setError("Experience is required.");
+      return;
+    }
+
+    if (requirements().skills.length === 0) {
+      setError("At least one skill is required.");
+      return;
+    }
+
     setIsLoading(true);
 
     try {
@@ -118,7 +218,10 @@ export default function PostJobForm() {
       formData.append("district", district());
       formData.append("address", address());
       formData.append("description", description());
-      formData.append("requirements", requirements());
+      
+      // Send requirements as JSON string
+      formData.append("requirements", JSON.stringify(requirements()));
+      
       formData.append("contactPerson", contactPerson());
       formData.append("contactPhone", contactPhone());
 
@@ -204,7 +307,8 @@ export default function PostJobForm() {
                 class={styles.postjobInput}
                 type="date"
                 value={dateStart()}
-                onInput={(e) => setDateStart(e.currentTarget.value)}
+                min={getTodayDate()}
+                onInput={(e) => handleDateStartChange(e.currentTarget.value)}
                 required
               />
             </label>
@@ -214,7 +318,8 @@ export default function PostJobForm() {
                 class={styles.postjobInput}
                 type="date"
                 value={dateEnd()}
-                onInput={(e) => setDateEnd(e.currentTarget.value)}
+                min={dateStart() || getTodayDate()}
+                onInput={(e) => handleDateEndChange(e.currentTarget.value)}
                 required
               />
             </label>
@@ -319,37 +424,153 @@ export default function PostJobForm() {
           </label>
         </div>
 
-        {/* 5. Job Information Section */}
+        {/* 5. Job Description Section */}
         <div class={styles.formSection}>
           <h3 class={styles.sectionTitle}>
             <svg class={styles.sectionIcon} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
             </svg>
-            Job Information
+            Job Description
           </h3>
           <label class={styles.postjobLabel}>
-            <span>Job Description <span class={styles.required}>*</span></span>
+            <span>Description <span class={styles.required}>*</span></span>
             <textarea
               class={styles.postjobTextarea}
               value={description()}
               onInput={(e) => setDescription(e.currentTarget.value)}
-              rows={5}
+              rows={4}
+              required
             />
           </label>
+        </div>
 
-          <label class={styles.postjobLabel}>
-            <span>Job Requirements <span class={styles.required}>*</span></span>
-            <input
-              class={styles.postjobInput}
-              type="text"
-              value={requirements()}
-              onInput={(e) => setRequirements(e.currentTarget.value)}
-            />
-          </label>
+        {/* 6. Job Requirements Section - JSON */}
+        <div class={styles.formSection}>
+          <h3 class={styles.sectionTitle}>
+            <svg class={styles.sectionIcon} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
+            </svg>
+            Job Requirements
+          </h3>
+          
+          {/* Experience Field */}
+          <div class={styles.requirementField}>
+            <label class={styles.postjobLabel}>
+              <span>Experience <span class={styles.required}>*</span></span>
+              <input
+                class={styles.postjobInput}
+                type="text"
+                value={requirements().experience}
+                onInput={(e) => updateRequirementExperience(e.currentTarget.value)}
+                placeholder="e.g., 2年工作經驗, 無經驗可, 3-5年相關經驗"
+                required
+              />
+            </label>
+          </div>
+
+          {/* Skills Field */}
+          <div class={styles.requirementField}>
+            <label class={styles.postjobLabel}>
+              <span>Required Skills <span class={styles.required}>*</span></span>
+              
+              <div class={styles.skillsContainer}>
+                {/* Skill Input */}
+                <div class={styles.skillInputSection}>
+                  <div class={styles.skillInputWrapper}>
+                    <div class={styles.skillInputBox}>
+                      <svg class={styles.skillInputIcon} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                      </svg>
+                      <input
+                        class={styles.skillInput}
+                        type="text"
+                        value={skillInput()}
+                        onInput={(e) => setSkillInput(e.currentTarget.value)}
+                        onKeyPress={handleSkillInputKeyPress}
+                        placeholder="Add a skill requirement..."
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      class={`${styles.addSkillButton} ${!skillInput().trim() ? styles.addSkillButtonDisabled : ''}`}
+                      onClick={addSkill}
+                      disabled={!skillInput().trim()}
+                    >
+                      <svg class={styles.addButtonIcon} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                      </svg>
+                      Add
+                    </button>
+                  </div>
+                  
+                  <div class={styles.skillInputHint}>
+                    💡 Press <kbd class={styles.kbd}>Enter</kbd> or click Add to include this skill
+                  </div>
+                </div>
+
+                {/* Skills Display */}
+                <Show when={requirements().skills.length > 0}>
+                  <div class={styles.skillsDisplay}>
+                    <div class={styles.skillsHeader}>
+                      <svg class={styles.skillsHeaderIcon} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/>
+                      </svg>
+                      <span class={styles.skillsHeaderText}>
+                        {requirements().skills.length} skill{requirements().skills.length !== 1 ? 's' : ''} added
+                      </span>
+                    </div>
+                    
+                    <div class={styles.skillTags}>
+                      <For each={requirements().skills}>
+                        {(skill, index) => (
+                          <div class={`${styles.skillTag} ${styles.skillTagAnimated}`}>
+                            <span class={styles.skillTagText}>{skill}</span>
+                            <button
+                              type="button"
+                              class={styles.removeSkillButton}
+                              onClick={() => removeSkill(skill)}
+                              title={`Remove ${skill}`}
+                            >
+                              <svg class={styles.removeIcon} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                              </svg>
+                            </button>
+                          </div>
+                        )}
+                      </For>
+                    </div>
+                  </div>
+                </Show>
+                
+                {/* Empty State */}
+                <Show when={requirements().skills.length === 0}>
+                  <div class={styles.skillsEmptyState}>
+                    <div class={styles.emptyStateIcon}>
+                      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+                      </svg>
+                    </div>
+                    <p class={styles.emptyStateText}>No skills added yet</p>
+                    <p class={styles.emptyStateSubtext}>Add at least one skill requirement to continue</p>
+                  </div>
+                </Show>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        {/* 7. Environment Photos Section */}
+        <div class={styles.formSection}>
+          <h3 class={styles.sectionTitle}>
+            <svg class={styles.sectionIcon} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+            </svg>
+            Environment Photos
+          </h3>
 
           <div class={styles.fileUploadSection}>
             <label class={styles.postjobLabel}>
-              <span>Environment Photos <span class={styles.fileHint}>(Max: {MAX_FILES} photos, {MAX_SIZE_MB}MB each)</span></span>
+              <span>Workplace Photos <span class={styles.fileHint}>(Max: {MAX_FILES} photos, {MAX_SIZE_MB}MB each)</span></span>
             </label>
             
             {files().length < MAX_FILES && (
@@ -403,7 +624,7 @@ export default function PostJobForm() {
           </div>
         </div>
 
-        {/* 6. Contact Information Section */}
+        {/* 8. Contact Information Section */}
         <div class={styles.formSection}>
           <h3 class={styles.sectionTitle}>
             <svg class={styles.sectionIcon} fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -418,6 +418,7 @@ export default function CalendarPage() {
 
               <button
                 class={styles.pageButton}
+                disabled={currentPage() === totalPages()}
                 onClick={() => {
                   const newPage = currentPage() + 1;
                   setCurrentPage(newPage);
