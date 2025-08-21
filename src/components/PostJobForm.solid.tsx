@@ -1,6 +1,6 @@
 import { createSignal, createEffect, onCleanup, Show, For } from "solid-js";
 import styles from '../styles/PostJobForm.module.css';
-import areaDataJson from '../static/areaData.json';
+import areaDataJson from '../static/AreaData.json';
 
 interface FilePreview {
   file: File;
