@@ -41,7 +41,7 @@ export default function JobRatingView(props: JobRatingViewProps) {
   const [submittingRating, setSubmittingRating] = createSignal(false);
   const [error, setError] = createSignal<string>('');
 
-  // Fetch approved applications that can be rated
+  // FIXED: Updated fetch function to use correct API endpoints
   const fetchRatings = async (
     gigId: string, 
     status: RatingStatus, 
@@ -64,46 +64,86 @@ export default function JobRatingView(props: JobRatingViewProps) {
       }
 
       const applicationsResult = await applicationsResponse.json();
-      const approvedApplications = applicationsResult.data.applications.filter(
+      console.log('Applications API response:', applicationsResult);
+      
+      // Handle different possible response structures
+      let applications = [];
+      if (applicationsResult.data?.applications) {
+        applications = applicationsResult.data.applications;
+      } else if (applicationsResult.data && Array.isArray(applicationsResult.data)) {
+        applications = applicationsResult.data;
+      } else if (applicationsResult.applications && Array.isArray(applicationsResult.applications)) {
+        applications = applicationsResult.applications;
+      } else if (Array.isArray(applicationsResult)) {
+        applications = applicationsResult;
+      }
+      
+      console.log('Found applications:', applications);
+      
+      const approvedApplications = applications.filter(
         (app: any) => app.status === 'approved'
       );
 
-      // Then get existing ratings for this gig
-      const ratingsResponse = await fetch(
-        `/api/rating/list/employer/gig/${gigId}?status=${status}&limit=${limit}&offset=${offset}`,
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            "platform": "web-employer",
-          },
-          credentials: "include",
-        }
-      );
+      // FIXED: Get existing ratings using the correct endpoint
+      const ratingsResponse = await fetch(`/api/rating/my-ratings/employer`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          "platform": "web-employer",
+        },
+        credentials: "include",
+      });
 
       let existingRatings = [];
       if (ratingsResponse.ok) {
         const ratingsResult = await ratingsResponse.json();
-        existingRatings = ratingsResult.data || [];
+        console.log('Ratings API response:', ratingsResult);
+        
+        // FIXED: Update field mapping to match backend response structure
+        let ratings = [];
+        if (ratingsResult.data && ratingsResult.data.myRatings && Array.isArray(ratingsResult.data.myRatings)) {
+          ratings = ratingsResult.data.myRatings;
+        } else if (ratingsResult.data && Array.isArray(ratingsResult.data)) {
+          ratings = ratingsResult.data;
+        } else if (Array.isArray(ratingsResult)) {
+          ratings = ratingsResult;
+        }
+        
+        // Filter ratings for this specific gig and map to match frontend structure
+        existingRatings = ratings
+          .filter((rating: any) => rating.gig?.gigId === gigId || rating.gigId === gigId)
+          .map((rating: any) => ({
+            userId: rating.worker?.workerId || rating.workerId,
+            rating: rating.ratingValue, // Backend uses 'ratingValue'
+            comment: rating.comment,
+            ratedAt: rating.createdAt, // Backend uses 'createdAt' for rating date
+            gigId: rating.gig?.gigId || rating.gigId
+          }));
+        console.log('Filtered existing ratings:', existingRatings);
       }
+
+      console.log('Approved applications found:', approvedApplications.length);
+      console.log('Sample approved application:', approvedApplications[0]);
 
       // Combine approved applications with existing ratings
       const ratingItems: RatingItem[] = approvedApplications.map((app: any) => {
         const existingRating = existingRatings.find((rating: any) => rating.userId === app.workerId);
         
         return {
-          id: app.applicationId,
-          userId: app.workerId,
-          userName: app.workerName,
-          userAvatar: app.workerAvatar,
+          id: app.applicationId || app.id || `${app.workerId}-${gigId}`,
+          userId: app.workerId || app.userId,
+          userName: app.workerName || app.userName || app.name || 'Unknown Worker',
+          userAvatar: app.workerAvatar || app.userAvatar || app.avatar,
           status: existingRating ? 'rated' : 'unrated',
           employerRating: existingRating?.rating,
           employerComment: existingRating?.comment,
-          ratedAt: existingRating?.ratedAt,
-          workCompletedAt: app.updatedAt, // Use application update time as work completion
-          workSubmittedAt: app.updatedAt,
+          ratedAt: existingRating?.ratedAt || existingRating?.createdAt,
+          workCompletedAt: app.updatedAt || app.completedAt || app.createdAt,
+          workSubmittedAt: app.updatedAt || app.submittedAt || app.createdAt,
         };
       });
+
+      console.log('Generated rating items:', ratingItems.length);
 
       // Filter by status if needed
       const filteredData = status === 'all' 
@@ -172,7 +212,7 @@ export default function JobRatingView(props: JobRatingViewProps) {
     setError(''); // Clear errors when closing
   };
 
-  // FIXED: Improved submit function with better error handling and response management
+  // FIXED: Using the correct API endpoint for submitting ratings
   const submitRating = async (e?: Event) => {
     if (e) {
       e.preventDefault();
@@ -202,176 +242,80 @@ export default function JobRatingView(props: JobRatingViewProps) {
     setError(''); // Clear previous errors
     
     console.log('Submitting rating:', {
+      workerId: employee.userId,
       gigId: props.gigId,
-      userId: employee.userId,
       rating: rating,
       comment: newComment().trim()
     });
 
     try {
+      // FIXED: Use the correct field name that matches the backend schema
       const ratingData = {
-        gigId: props.gigId,
-        userId: employee.userId,
-        rating: rating,
-        comment: newComment().trim() || undefined // Send undefined if empty
+        ratingValue: rating, // Backend expects 'ratingValue', not 'rating'
+        comment: newComment().trim() || undefined
       };
 
-      console.log('Sending rating data:', ratingData);
+      console.log('Sending rating data with correct field name:', ratingData);
 
-      // Helper function to safely handle response
-      const handleResponse = async (response: Response) => {
-        console.log('API response status:', response.status, response.statusText);
+      // Use the correct API endpoint from your documentation
+      const response = await fetch(`/api/rating/worker/${employee.userId}/gig/${props.gigId}`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'platform': 'web-employer'
+        },
+        credentials: 'include',
+        body: JSON.stringify(ratingData)
+      });
+
+      console.log('API response status:', response.status, response.statusText);
+
+      if (response.ok) {
+        let result;
+        try {
+          result = await response.json();
+          console.log('Rating submitted successfully:', result);
+        } catch (parseError) {
+          console.log('Response OK but failed to parse JSON, treating as success');
+          result = { success: true };
+        }
+
+        // Update the local state to reflect the new rating
+        setAllRatings(prev => prev.map(item => 
+          item.id === employee.id 
+            ? {
+                ...item,
+                status: 'rated' as const,
+                employerRating: rating,
+                employerComment: newComment().trim(),
+                ratedAt: new Date().toISOString()
+              }
+            : item
+        ));
         
-        if (response.ok) {
-          let result;
+        closeRatingModal();
+        alert('Rating submitted successfully!');
+        
+      } else {
+        // Better error handling to see actual error message
+        let errorMessage = `HTTP Error ${response.status}`;
+        
+        try {
+          const errorData = await response.json();
+          console.log('Error response data:', errorData);
+          errorMessage = errorData.message || errorData.error || errorData.details || JSON.stringify(errorData);
+        } catch (jsonError) {
           try {
-            // Clone response to avoid "body stream already read" error
-            const responseClone = response.clone();
-            result = await response.json();
-            console.log('Rating submitted successfully:', result);
-          } catch (parseError) {
-            console.log('Response OK but failed to parse JSON, treating as success');
-            result = { success: true };
+            const errorText = await response.text();
+            console.log('Error response text:', errorText);
+            errorMessage = errorText || errorMessage;
+          } catch (textError) {
+            console.error('Failed to read error response:', textError);
           }
-          return { success: true, data: result };
-        } else {
-          // Clone response for error handling
-          const responseClone = response.clone();
-          let errorMessage = `HTTP Error ${response.status}`;
-          
-          try {
-            // Try to parse as JSON first
-            const errorData = await response.json();
-            errorMessage = errorData.message || errorData.error || errorData.details || errorMessage;
-          } catch (jsonError) {
-            try {
-              // If JSON parsing fails, try text from clone
-              const errorText = await responseClone.text();
-              errorMessage = errorText || errorMessage;
-            } catch (textError) {
-              console.error('Failed to read error response:', textError);
-            }
-          }
-          
-          return { success: false, error: errorMessage };
         }
-      };
-
-      // Try multiple endpoints with proper error handling
-      let response;
-      let result;
-
-      // First endpoint
-      try {
-        response = await fetch(`/api/rating/employer`, {
-          method: 'POST',
-          headers: { 
-            'Content-Type': 'application/json',
-            'platform': 'web-employer'
-          },
-          credentials: 'include',
-          body: JSON.stringify(ratingData)
-        });
-
-        result = await handleResponse(response);
-        if (result.success) {
-          // Success! Update state and close modal
-          setAllRatings(prev => prev.map(item => 
-            item.id === employee.id 
-              ? {
-                  ...item,
-                  status: 'rated' as const,
-                  employerRating: rating,
-                  employerComment: newComment().trim(),
-                  ratedAt: new Date().toISOString()
-                }
-              : item
-          ));
-          
-          closeRatingModal();
-          alert('Rating submitted successfully!');
-          return;
-        }
-      } catch (fetchError) {
-        console.log('First endpoint fetch failed:', fetchError);
+        
+        throw new Error(errorMessage);
       }
-
-      // Second endpoint
-      try {
-        console.log('Trying second endpoint...');
-        response = await fetch(`/api/rating/create`, {
-          method: 'POST',
-          headers: { 
-            'Content-Type': 'application/json',
-            'platform': 'web-employer'
-          },
-          credentials: 'include',
-          body: JSON.stringify({
-            ...ratingData,
-            type: 'employer_to_worker'
-          })
-        });
-
-        result = await handleResponse(response);
-        if (result.success) {
-          setAllRatings(prev => prev.map(item => 
-            item.id === employee.id 
-              ? {
-                  ...item,
-                  status: 'rated' as const,
-                  employerRating: rating,
-                  employerComment: newComment().trim(),
-                  ratedAt: new Date().toISOString()
-                }
-              : item
-          ));
-          
-          closeRatingModal();
-          alert('Rating berhasil disimpan!');
-          return;
-        }
-      } catch (fetchError) {
-        console.log('Second endpoint fetch failed:', fetchError);
-      }
-
-      // Third endpoint
-      try {
-        console.log('Trying third endpoint...');
-        response = await fetch(`/api/ratings`, {
-          method: 'POST',
-          headers: { 
-            'Content-Type': 'application/json',
-            'platform': 'web-employer'
-          },
-          credentials: 'include',
-          body: JSON.stringify(ratingData)
-        });
-
-        result = await handleResponse(response);
-        if (result.success) {
-          setAllRatings(prev => prev.map(item => 
-            item.id === employee.id 
-              ? {
-                  ...item,
-                  status: 'rated' as const,
-                  employerRating: rating,
-                  employerComment: newComment().trim(),
-                  ratedAt: new Date().toISOString()
-                }
-              : item
-          ));
-          
-          closeRatingModal();
-          alert('Rating berhasil disimpan!');
-          return;
-        }
-      } catch (fetchError) {
-        console.log('Third endpoint fetch failed:', fetchError);
-      }
-
-      // If all endpoints failed
-      const lastError = result?.error || 'All API endpoints failed';
-      throw new Error(lastError);
       
     } catch (error) {
       console.error('Error submitting rating:', error);
@@ -390,7 +334,7 @@ export default function JobRatingView(props: JobRatingViewProps) {
     }
   };
 
-  // FIXED: Star rendering function with proper event handling
+  // Star rendering function with proper event handling
   const renderStars = (rating: number, interactive = false) => {
     return Array.from({ length: 5 }, (_, i) => (
       <span 
