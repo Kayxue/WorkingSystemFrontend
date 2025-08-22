@@ -34,6 +34,15 @@ export default function DashboardPage() {
   const [startPage, setStartPage] = createSignal(1);
   const pageWindowSize = 10;
 
+  function getStatusForAPI(filter: string): string {
+    const statusMap: Record<string, string> = {
+      Ongoing: "ongoing",
+      Completed: "completed",
+      "Not Started": "not_started",
+    };
+    return statusMap[filter] || "";
+  }
+
   async function fetchJobOffers(status?: string) {
     try {
       setIsLoading(true);
@@ -42,7 +51,6 @@ export default function DashboardPage() {
       if (status && status.trim() !== "") {
         url += `&status=${encodeURIComponent(status)}`;
       }
-
       const response = await fetch(url, {
         method: "GET",
         headers: {
@@ -71,12 +79,7 @@ export default function DashboardPage() {
   }
 
   createEffect(() => {
-    const statusMap: Record<string, string> = {
-      Ongoing: "ongoing",
-      Completed: "completed",
-      "Not Started": "not_started",
-    };
-    const status = statusMap[activeFilter()] || "";
+    const status = getStatusForAPI(activeFilter());
     fetchJobOffers(status);
   });
 
@@ -108,7 +111,7 @@ export default function DashboardPage() {
     setStartPage(newStart);
     setCurrentPage(newStart);
     setPageInput(String(newStart));
-    fetchJobOffers(activeFilter().toLowerCase());
+    fetchJobOffers(getStatusForAPI(activeFilter()));
   }
 
   function jumpToPage() {
@@ -118,7 +121,7 @@ export default function DashboardPage() {
       setCurrentPage(page);
       const windowStart = Math.floor((page - 1) / pageWindowSize) * pageWindowSize + 1;
       setStartPage(windowStart);
-      fetchJobOffers(activeFilter().toLowerCase());
+      fetchJobOffers(getStatusForAPI(activeFilter()));
       setPageInput(String(page));
     }
   }
@@ -134,7 +137,7 @@ export default function DashboardPage() {
         credentials: "include",
       });
       if (!res.ok) throw new Error("Failed to toggle status");
-      await fetchJobOffers(activeFilter().toLowerCase());
+      await fetchJobOffers(getStatusForAPI(activeFilter()));
     } catch (err) {
       console.error("Toggle status failed:", err);
     }
@@ -151,7 +154,7 @@ export default function DashboardPage() {
         credentials: "include",
       });
       if (!res.ok) throw new Error("Failed to toggle listing");
-      await fetchJobOffers(activeFilter().toLowerCase());
+      await fetchJobOffers(getStatusForAPI(activeFilter()));
     } catch (err) {
       console.error("Toggle listing failed:", err);
     }
@@ -248,7 +251,8 @@ export default function DashboardPage() {
                 setPageInput(String(newPage));
                 const windowStart = Math.floor((newPage - 1) / pageWindowSize) * pageWindowSize + 1;
                 setStartPage(windowStart);
-                fetchJobOffers(activeFilter().toLowerCase());
+                // ✅ Fixed: Use the helper function
+                fetchJobOffers(getStatusForAPI(activeFilter()));
               }}
             >
               &lt;
@@ -264,7 +268,8 @@ export default function DashboardPage() {
                   onClick={() => {
                     setCurrentPage(page);
                     setPageInput(String(page));
-                    fetchJobOffers(activeFilter().toLowerCase());
+                    // ✅ Fixed: Use the helper function
+                    fetchJobOffers(getStatusForAPI(activeFilter()));
                   }}
                 >
                   {page}
@@ -288,7 +293,8 @@ export default function DashboardPage() {
                 setPageInput(String(newPage));
                 const nextWindowStart = Math.floor((newPage - 1) / pageWindowSize) * pageWindowSize + 1;
                 setStartPage(nextWindowStart);
-                fetchJobOffers(activeFilter().toLowerCase());
+                // ✅ Fixed: Use the helper function
+                fetchJobOffers(getStatusForAPI(activeFilter()));
               }}
             >
               &gt;
