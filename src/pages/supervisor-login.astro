@@ -1,0 +1,21 @@
+---
+import SupervisorLoginForm from '../components/SupervisorLoginForm.solid';
+import "../styles/global.css";
+---
+
+<!doctype html>
+<html lang="zh-Hant">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="description" content="WorkNow - Supervisor Login" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<meta name="generator" content={Astro.generator} />
+		<title>Supervisor Login</title>
+	</head>
+	<body class="font-sans bg-gradient-to-br from-gray-50 to-gray-200 dark:from-gray-800 dark:to-gray-900 m-0 p-0 min-h-screen">
+        <main class="flex justify-center items-center min-h-screen p-4">
+            <SupervisorLoginForm client:load />
+        </main>
+	</body>
+</html>
