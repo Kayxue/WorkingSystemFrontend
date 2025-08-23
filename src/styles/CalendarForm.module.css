@@ -1,6 +1,7 @@
 .calendar {
   margin-top: 1rem;
   width: 70%;
+  overflow-y: auto;
 }
 
 .header {
