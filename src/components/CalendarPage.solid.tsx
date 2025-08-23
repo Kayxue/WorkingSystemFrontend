@@ -51,18 +51,9 @@ export default function CalendarPage() {
   const [currentPage, setCurrentPage] = createSignal(1);
   const [startPage, setStartPage] = createSignal(1);
   const [pageInput, setPageInput] = createSignal("");
-  const [shouldScrollToGigs, setShouldScrollToGigs] = createSignal(false);
   const pageWindowSize = 10;
   const itemsPerPage = 4;
   let selectedGigsref: HTMLDivElement | undefined;
-
-  // Effect to handle scrolling when a day is selected
-  createEffect(() => {
-    if (shouldScrollToGigs() && selectedGigsref) {
-      selectedGigsref.scrollIntoView({ behavior: "smooth", block: "start" });
-      setShouldScrollToGigs(false);
-    }
-  });
 
   async function loadAndGroupGigs(y: number, m: number) {
     setIsLoading(true);
@@ -315,7 +306,14 @@ export default function CalendarPage() {
                         setCurrentPage(1);
                         setStartPage(1);
                         setPageInput("1");
-                        setShouldScrollToGigs(true);
+                        // Use requestAnimationFrame + setTimeout for better reliability
+                        requestAnimationFrame(() => {
+                          setTimeout(() => {
+                            if (selectedGigsref) {
+                              selectedGigsref.scrollIntoView({ behavior: "smooth", block: "start" });
+                            }
+                          }, 50);
+                        });
                       }
                     }}
                     style={{ cursor: day !== null ? "pointer" : "default" }}
