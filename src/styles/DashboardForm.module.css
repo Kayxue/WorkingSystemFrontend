@@ -45,8 +45,23 @@
   margin-left: 1rem;
 }
 
+.jobStatusContainer {
+  display: flex;
+  gap: 10px;
+}
+
+.jobStatus {
+  width: 130px;
+  border: none;
+  border-radius: 10px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-weight: 500;
+}
+
 .actionButton {
-  width: 120px;
+  width: 135px;
   border: none;
   padding: 0.5rem 1rem;
   border-radius: 6px;
@@ -56,15 +71,25 @@
 }
 
 .blue {
-  background-color: #3b82f6;
-  color: white;
+  background-color: #93c5fd;
+  color: #1e293b;
 }
 
-.grey {
-  background-color: #d1d5db;
-  color: #374151;
-  cursor: not-allowed;
+.green {
+  background-color: #a7f3d0;
+  color: #065f46;
 }
+
+.yellow {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+.red {
+  background-color: #fecaca;
+  color: #991b1b;
+}
+
 
 .jobTitle {
   font-size: 1.4rem;

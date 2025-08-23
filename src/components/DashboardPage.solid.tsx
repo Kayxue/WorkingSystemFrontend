@@ -11,7 +11,6 @@ type JobOffer = {
   publishedAt: string;
   unlistedAt: string;
   isActive: boolean;
-  isCurrentlyListed: boolean;
 };
 
 function formatDateToDDMMYYYY(dateStr: string): string {
@@ -160,6 +159,24 @@ export default function DashboardPage() {
     }
   }
 
+  function getJobStatus(job: JobOffer) {
+    const today = new Date();
+    const publishedDate = new Date(job.publishedAt);
+
+    if (job.unlistedAt) return "Unlisted"; // 已下架
+    if (!job.unlistedAt && publishedDate <= today) return "Published"; // 已上架
+    if (!job.unlistedAt && publishedDate > today) return "Unpublished"; // 未發佈
+    return "Unknown";
+  }
+
+  function getJobStatusColor(job: JobOffer) {
+    const status = getJobStatus(job);
+    if (status === "Unlisted") return styles.red;
+    if (status === "Published") return styles.green;
+    if (status === "Unpublished") return styles.yellow;
+    return styles.blue;
+  }
+
   return (
     <div class={styles.dashboardContainer}>
       <div class={styles.viewToggle}>
@@ -251,7 +268,6 @@ export default function DashboardPage() {
                 setPageInput(String(newPage));
                 const windowStart = Math.floor((newPage - 1) / pageWindowSize) * pageWindowSize + 1;
                 setStartPage(windowStart);
-                // ✅ Fixed: Use the helper function
                 fetchJobOffers(getStatusForAPI(activeFilter()));
               }}
             >
@@ -268,7 +284,6 @@ export default function DashboardPage() {
                   onClick={() => {
                     setCurrentPage(page);
                     setPageInput(String(page));
-                    // ✅ Fixed: Use the helper function
                     fetchJobOffers(getStatusForAPI(activeFilter()));
                   }}
                 >
@@ -293,7 +308,6 @@ export default function DashboardPage() {
                 setPageInput(String(newPage));
                 const nextWindowStart = Math.floor((newPage - 1) / pageWindowSize) * pageWindowSize + 1;
                 setStartPage(nextWindowStart);
-                // ✅ Fixed: Use the helper function
                 fetchJobOffers(getStatusForAPI(activeFilter()));
               }}
             >
@@ -320,12 +334,19 @@ export default function DashboardPage() {
                     <p class={styles.jobPostedAt}>
                       Posted on: {formatDateToDDMMYYYY(job.publishedAt)}
                     </p>
+                    <div class={styles.jobStatusContainer}>
+                      Status: 
+                      <p
+                        class={`${styles.jobStatus} ${getJobStatusColor(job)}`}
+                      >
+                        {getJobStatus(job)}
+                      </p>
+                    </div>
                   </div>
 
                   <div class={styles.jobCardActions}>
                     <button
-                      class={`${styles.actionButton} ${activeFilter() === "Completed" ? styles.grey : styles.blue}`}
-                      disabled={activeFilter() === "Completed"}
+                      class={`${styles.actionButton} ${styles.blue}`}
                       onClick={(e) => {
                         e.stopPropagation();
                         window.location.href = `/edit-job?gigId=${job.gigId}`;
@@ -334,24 +355,23 @@ export default function DashboardPage() {
                       Edit
                     </button>
                     <button
-                      class={`${styles.actionButton} ${(activeFilter() !== "Completed") ? styles.blue : styles.grey}`}
-                      disabled={activeFilter() === "Completed"}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        toggleStatus(job.gigId);
-                      }}
-                    >
-                      {activeFilter() === "Completed" ? "Inactive" : "Active"}
-                    </button>
-                    <button
-                      class={`${styles.actionButton} ${(activeFilter() === "Not Started" || activeFilter() === "Completed") ? styles.grey : styles.blue}`}
-                      disabled={activeFilter() === "Not Started" || activeFilter() === "Completed"}
+                      class={`${styles.actionButton} ${job.unlistedAt? styles.green :styles.red}`}
                       onClick={(e) => {
                         e.stopPropagation();
                         toggleListing(job.gigId);
                       }}
                     >
-                      {(activeFilter() === "Not Started" || activeFilter() === "Completed") ? "Not Listed" : "Listed"}
+                      {job.unlistedAt?"Activate":"Deactivate"}
+                    </button>
+                    <button
+                      class={`${styles.actionButton} ${styles.red}`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        window.alert("Are you sure to remove this job?");
+                        toggleStatus(job.gigId);
+                      }}
+                    >
+                      Remove
                     </button>
                   </div>
                 </div>
