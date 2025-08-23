@@ -10,14 +10,14 @@ const currentYear = new Date().getFullYear();
 
 <Layout title="WorkNow - 登入">
   {isLoggedIn ? (
-    <main class="flex justify-center items-center min-h-[calc(100vh-4.5rem)] py-8 px-2 sm:px-4 bg-gray-50">
+    <main class="flex justify-center items-center  min-h-screen px-2 sm:px-4 bg-gray-50">
       <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-md text-center">
         <h1 class="mb-6 text-gray-800 text-2xl font-bold">歡迎回來，{user.employerName}！</h1>
         <p class="text-gray-600">您已經登入了。</p>
       </div>
     </main>
   ) : (
-    <main class="flex justify-center items-center min-h-[calc(100vh-4.5rem)] py-8 px-2 sm:px-4 bg-gray-50">
+    <main class="flex justify-center items-center min-h-screen px-2 sm:px-4 bg-gray-50">
       <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-md text-center">
         <h1 class="mb-6 text-gray-800 text-2xl font-bold">登入 WorkNow</h1>
         <LoginForm client:load />

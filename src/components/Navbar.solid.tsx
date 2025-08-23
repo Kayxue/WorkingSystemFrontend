@@ -203,7 +203,7 @@ onMount(async () => {
   };
 
   return (
-    <nav class="bg-white px-2 sm:px-4 md:px-6 h-16 sm:h-18 flex items-center justify-between shadow-md border-b border-gray-200 relative z-50 w-full">
+    <nav class="bg-white px-2 sm:px-4 md:px-6 h-16 sm:h-18 flex items-center justify-between shadow-md border-b border-gray-200 fixed z-50 w-full">
       <div class="text-xl sm:text-2xl font-bold text-gray-800 hover:text-blue-600 transition-colors">
         <a href="/">WorkNow</a>
       </div>
@@ -230,7 +230,7 @@ onMount(async () => {
                 </span>
               </Show>
             </button>
-            <div class={`fixed max-h-max top-16 left-0 right-0 sm:absolute sm:top-12 sm:-start-30 bg-white border-t sm:border border-gray-200 sm:rounded-lg shadow-lg py-1 w-full sm:w-80 transition-all duration-200 ${notificationsOpen() ? 'opacity-100 translate-y-0 pointer-events-auto' : 'opacity-0 -translate-y-2 pointer-events-none'}`}>
+            <div class={`fixed max-h-max w-[95vw] sm:mx-2 top-14 right-3 sm:top-16 sm:right-0 sm:w-80 bg-white border-t sm:border border-gray-200 sm:rounded-lg shadow-lg py-1 transition-all duration-200 ${notificationsOpen() ? 'opacity-100 translate-y-0 pointer-events-auto' : 'opacity-0 -translate-y-2 pointer-events-none'}`}>
               <div class= "flex flex-row place-content-between">
                 <div class="text-2xl px-4 py-2 font-semibold text-gray-800 ">通知</div>
                 <button 

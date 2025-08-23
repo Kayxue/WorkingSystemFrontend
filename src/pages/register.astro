@@ -10,14 +10,14 @@ const currentYear = new Date().getFullYear();
 
 <Layout title="WorkNow - 商家帳號註冊">
   {isLoggedIn? (
-    <main class="flex justify-center items-center min-h-[calc(100vh-4.5rem)] py-8 px-2 sm:px-4 bg-gray-50">
+    <main class="flex justify-center items-center min-h-[calc(100vh-4.5rem)] py-36 px-2 sm:px-4 bg-gray-50">
       <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-2xl text-center mb-12">
         <h1 class="mb-4 text-gray-800 text-2xl font-bold">歡迎回來，{user.employerName}！</h1>
         <p class="text-gray-600 text-base">您已經是 WorkNow 的合作夥伴了。</p>
       </div>
     </main>
   ) : (
-    <main class="flex justify-center items-start min-h-[calc(100vh-4.5rem-4.5rem)] py-8 px-2 sm:px-4 bg-gray-50">
+    <main class="flex justify-center items-start min-h-[calc(100vh-4.5rem-4.5rem)] py-24 px-2 sm:px-4 bg-gray-50">
       <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-2xl text-center mb-12">
         <h1 class="mb-3 text-gray-800 text-2xl font-bold">註冊成為 WorkNow 合作商家</h1>
         <p class="mb-8 text-gray-600 text-base leading-relaxed">填寫以下資料，即可開始發布職缺、管理您的招募流程。</p>
