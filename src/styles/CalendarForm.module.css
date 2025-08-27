@@ -1,7 +1,7 @@
 .calendar {
   margin-top: 1rem;
   width: 70%;
-  overflow-y: auto;
+  overflow: visible !important;
 }
 
 .header {
@@ -328,7 +328,7 @@ button:disabled {
 
 @media (max-width: 900px) {
   .calendar {
-    width: 100%;
+    width: 90%;
   }
 
   .grid {

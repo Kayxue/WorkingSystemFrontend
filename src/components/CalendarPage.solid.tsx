@@ -11,9 +11,6 @@ type JobOffer = {
   dateEnd: string;
   timeStart: string;
   timeEnd: string;
-  publishedAt: string;
-  unlistedAt: string;
-  isActive?: boolean;
   environmentPhotos: {url: string}[];
 };
 
@@ -51,8 +48,7 @@ export default function CalendarPage() {
   const [currentPage, setCurrentPage] = createSignal(1);
   const [startPage, setStartPage] = createSignal(1);
   const [pageInput, setPageInput] = createSignal("");
-  const [showFloatingButton, setShowFloatingButton] = createSignal(false);
-  const [showCalendar, setShowCalendar] = createSignal(true); // New state for calendar visibility
+  const [showCalendar, setShowCalendar] = createSignal(true);
   const pageWindowSize = 10;
   const itemsPerPage = 4;
   let selectedGigsref: HTMLDivElement | undefined;
@@ -213,7 +209,6 @@ export default function CalendarPage() {
                 return m - 1;
               });
               setSelectedDay(null);
-              setShowFloatingButton(false);
             }}
           >
             &lt;
@@ -236,7 +231,6 @@ export default function CalendarPage() {
               onInput={(e) => {
                 setYear(parseInt(e.currentTarget.value));
                 setSelectedDay(null);
-                setShowFloatingButton(false);
               }}
             >
               <For each={Array.from({ length: 31 }, (_, i) => 2020 + i)}>
@@ -253,7 +247,6 @@ export default function CalendarPage() {
               onInput={(e) => {
                 setMonth(parseInt(e.currentTarget.value));
                 setSelectedDay(null);
-                setShowFloatingButton(false);
               }}
             >
               <For
@@ -282,7 +275,6 @@ export default function CalendarPage() {
                 return m + 1;
               });
               setSelectedDay(null);
-              setShowFloatingButton(false);
             }}
           >
             &gt;
@@ -317,8 +309,7 @@ export default function CalendarPage() {
                           setCurrentPage(1);
                           setStartPage(1);
                           setPageInput("1");
-                          setShowFloatingButton(true);
-                          setShowCalendar(false); // Hide calendar when day is selected
+                          setShowCalendar(false);
                         }
                       }}
                       style={{ cursor: day !== null ? "pointer" : "default" }}
