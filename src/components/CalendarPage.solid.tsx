@@ -51,6 +51,7 @@ export default function CalendarPage() {
   const [currentPage, setCurrentPage] = createSignal(1);
   const [startPage, setStartPage] = createSignal(1);
   const [pageInput, setPageInput] = createSignal("");
+  const [showFloatingButton, setShowFloatingButton] = createSignal(false);
   const pageWindowSize = 10;
   const itemsPerPage = 4;
   let selectedGigsref: HTMLDivElement | undefined;
@@ -139,6 +140,11 @@ export default function CalendarPage() {
     return gigs.slice(start, start + itemsPerPage);
   });
 
+  function scrollToJobs() {
+    if (selectedGigsref) {
+      selectedGigsref.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }
 
   function generatePaginationPages() {
     const total = totalPages();
@@ -207,6 +213,7 @@ export default function CalendarPage() {
               return m - 1;
             });
             setSelectedDay(null);
+            setShowFloatingButton(false);
           }}
         >
           &lt;
@@ -229,6 +236,7 @@ export default function CalendarPage() {
             onInput={(e) => {
               setYear(parseInt(e.currentTarget.value));
               setSelectedDay(null);
+              setShowFloatingButton(false);
             }}
           >
             <For each={Array.from({ length: 31 }, (_, i) => 2020 + i)}>
@@ -245,6 +253,7 @@ export default function CalendarPage() {
             onInput={(e) => {
               setMonth(parseInt(e.currentTarget.value));
               setSelectedDay(null);
+              setShowFloatingButton(false);
             }}
           >
             <For
@@ -273,6 +282,7 @@ export default function CalendarPage() {
               return m + 1;
             });
             setSelectedDay(null);
+            setShowFloatingButton(false);
           }}
         >
           &gt;
@@ -306,14 +316,7 @@ export default function CalendarPage() {
                         setCurrentPage(1);
                         setStartPage(1);
                         setPageInput("1");
-                        // Use requestAnimationFrame + setTimeout for better reliability
-                        requestAnimationFrame(() => {
-                          setTimeout(() => {
-                            if (selectedGigsref) {
-                              selectedGigsref.scrollIntoView({ behavior: "smooth", block: "start" });
-                            }
-                          }, 50);
-                        });
+                        setShowFloatingButton(true);
                       }
                     }}
                     style={{ cursor: day !== null ? "pointer" : "default" }}
@@ -346,6 +349,19 @@ export default function CalendarPage() {
             </For>
           </div>
         </div>
+      </Show>
+
+      {/* Floating scroll button */}
+      <Show when={showFloatingButton() && selectedDay() !== null}>
+        <button
+          class={styles.floatingButton}
+          onClick={scrollToJobs}
+          title="Scroll to jobs"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+            <polyline points="6,9 12,15 18,9" />
+          </svg>
+        </button>
       </Show>
 
       <Show when={selectedDay() !== null}>
@@ -435,28 +451,26 @@ export default function CalendarPage() {
                 &gt;
               </button>
             </div>
+            <div style={{ "margin": "10px", "text-align": "center" }}>
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  jumpToPage();
+                }}
+              >
+                Page{" "}
+                <input
+                  type="number"
+                  min="1"
+                  max={totalPages()}
+                  value={pageInput()}
+                  onInput={(e) => setPageInput(e.currentTarget.value)}
+                  style={{ width: "60px", "text-align": "center" }}
+                />{" "}
+                of {totalPages()} pages.
+              </form>
+            </div>
           </Show>
-
-          <div style={{ "margin": "10px", "text-align": "center" }}>
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                jumpToPage();
-              }}
-            >
-              Page{" "}
-              <input
-                type="number"
-                min="1"
-                max={totalPages()}
-                value={pageInput()}
-                onInput={(e) => setPageInput(e.currentTarget.value)}
-                style={{ width: "60px", "text-align": "center" }}
-              />{" "}
-              of {totalPages()} pages.
-            </form>
-          </div>
-
         </div>
       </Show>
     </div>
