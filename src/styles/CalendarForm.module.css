@@ -173,6 +173,41 @@
   margin-bottom: 20px;
 }
 
+.jobsHeader {
+  display: flex;
+  align-items: center;
+  background: #e8f5e8;
+  padding: 10px;
+  margin: 10px 0;
+  border: 2px solid #4caf50;
+  border-radius: 8px;
+  gap: 12px;
+}
+
+.calendarToggleButton {
+  background: #4caf50;
+  color: white;
+  border: none;
+  padding: 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s ease;
+  flex-shrink: 0;
+}
+
+.calendarToggleButton:hover {
+  background: #45a049;
+}
+
+.jobsLoadedText {
+  text-align: center;
+  font-weight: bold;
+  flex: 1;
+}
+
 .today {
   background-color: #f87171;
   color: white;
@@ -285,58 +320,6 @@ button:disabled {
   margin: 2rem auto;
 }
 
-.floatingButton {
-  position: fixed;
-  bottom: 30px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
-  background: #55b6f2;
-  color: white;
-  border: none;
-  box-shadow: 0 4px 16px rgba(85, 182, 242, 0.3);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.3s ease;
-  z-index: 1000;
-  animation: fadeInUp 0.3s ease-out;
-}
-
-.floatingButton:hover {
-  background: #4aa3e0;
-  transform: translateX(-50%) translateY(-2px);
-  box-shadow: 0 6px 20px rgba(85, 182, 242, 0.4);
-}
-
-.floatingButton:active {
-  transform: translateX(-50%) translateY(0);
-}
-
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@media (max-width: 768px) {
-  .floatingButton {
-    bottom: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 48px;
-    height: 48px;
-  }
-}
-
 @keyframes spin {
   to {
     transform: rotate(360deg);
@@ -355,5 +338,15 @@ button:disabled {
   .day {
     padding: 5px;
     height: 70px;
+  }
+  
+  .jobsHeader {
+    flex-direction: column;
+    gap: 8px;
+    text-align: center;
+  }
+  
+  .calendarToggleButton {
+    align-self: center;
   }
 }

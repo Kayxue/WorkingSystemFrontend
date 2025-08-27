@@ -52,6 +52,7 @@ export default function CalendarPage() {
   const [startPage, setStartPage] = createSignal(1);
   const [pageInput, setPageInput] = createSignal("");
   const [showFloatingButton, setShowFloatingButton] = createSignal(false);
+  const [showCalendar, setShowCalendar] = createSignal(true); // New state for calendar visibility
   const pageWindowSize = 10;
   const itemsPerPage = 4;
   let selectedGigsref: HTMLDivElement | undefined;
@@ -140,13 +141,6 @@ export default function CalendarPage() {
     return gigs.slice(start, start + itemsPerPage);
   });
 
-  function scrollToJobs() {
-    window.scrollTo({
-      top: document.body.scrollHeight,
-      behavior: "smooth"
-    });
-  }
-
   function generatePaginationPages() {
     const total = totalPages();
     const start = startPage();
@@ -186,6 +180,10 @@ export default function CalendarPage() {
     }
   }
 
+  function toggleCalendar() {
+    setShowCalendar(!showCalendar());
+  }
+
   return (
     <div class={styles.calendar}>
       <div class={styles.viewToggle}>
@@ -202,183 +200,178 @@ export default function CalendarPage() {
         </button>
       </div>
 
-      <div class={styles.header}>
-        <button
-          class={styles.navButton}
-          onClick={() => {
-            setMonth((m) => {
-              if (m === 0) {
-                setYear((y) => y - 1);
-                return 11;
-              }
-              return m - 1;
-            });
-            setSelectedDay(null);
-            setShowFloatingButton(false);
-          }}
-        >
-          &lt;
-        </button>
-
-        <div class={styles.selectGroup}>
+      <Show when={showCalendar()}>
+        <div class={styles.header}>
           <button
-            class={styles.todayButton}
+            class={styles.navButton}
             onClick={() => {
-              const now = new Date();
-              setYear(now.getFullYear());
-              setMonth(now.getMonth());
+              setMonth((m) => {
+                if (m === 0) {
+                  setYear((y) => y - 1);
+                  return 11;
+                }
+                return m - 1;
+              });
+              setSelectedDay(null);
+              setShowFloatingButton(false);
             }}
           >
-            Today
+            &lt;
           </button>
 
-          <select
-            class={styles.select}
-            onInput={(e) => {
-              setYear(parseInt(e.currentTarget.value));
-              setSelectedDay(null);
-              setShowFloatingButton(false);
-            }}
-          >
-            <For each={Array.from({ length: 31 }, (_, i) => 2020 + i)}>
-              {(y) => (
-                <option value={y} selected={y === year()}>
-                  {y}
-                </option>
-              )}
-            </For>
-          </select>
-
-          <select
-            class={styles.select}
-            onInput={(e) => {
-              setMonth(parseInt(e.currentTarget.value));
-              setSelectedDay(null);
-              setShowFloatingButton(false);
-            }}
-          >
-            <For
-              each={[
-                "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-                "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
-              ]}
-            >
-              {(m, i) => (
-                <option value={i()} selected={i() === month()}>
-                  {m}
-                </option>
-              )}
-            </For>
-          </select>
-        </div>
-
-        <button
-          class={styles.navButton}
-          onClick={() => {
-            setMonth((m) => {
-              if (m === 11) {
-                setYear((y) => y + 1);
-                return 0;
-              }
-              return m + 1;
-            });
-            setSelectedDay(null);
-            setShowFloatingButton(false);
-          }}
-        >
-          &gt;
-        </button>
-      </div>
-
-      <Show when={isLoading()}>
-          <div class={styles.spinner}></div>
-      </Show>
-
-      <Show when={gigCount()!==null}>
-        <div class={styles.gridWrapper}>
-          <div class={styles.grid}>
-            <For each={days}>{(day) => <div class={styles.dayHeader}>{day}</div>}</For>
-            <For each={dates()}>
-              {(day) => {
-                const y = year();
-                const m = month();
-                const gigsToday = () => (typeof day === "number" ? gigMap()[day]?.length ?? 0 : 0);
-
-                return (
-                  <div
-                    classList={{
-                      [styles.day]: true,
-                      [styles.emptyDay]: day === null,
-                      [styles.selectedDay]: day !== null && selectedDay() === day
-                    }}
-                    onClick={() => {
-                      if (day !== null) {
-                        const jobsCount = gigMap()[day]?.length ?? 0;
-                        setSelectedDay(day);
-                        setCurrentPage(1);
-                        setStartPage(1);
-                        setPageInput("1");
-                        setShowFloatingButton(true);
-                      }
-                    }}
-                    style={{ cursor: day !== null ? "pointer" : "default" }}
-                  >
-                    {day !== null ? (
-                      <>
-                        <span
-                          classList={{
-                            [styles.today]: isToday(y, m, day),
-                            [styles.selectedDayRing]: selectedDay() === day,
-                          }}
-                        >
-                          {day}
-                        </span>
-                        <div class={styles.gigCount}>
-                          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="#55b6f2" stroke-width="2"
-                            stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
-                            <rect x="2" y="7" width="20" height="14" rx="2" ry="2" />
-                            <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2" />
-                            <path d="M2 13h20" />
-                          </svg> {gigsToday()}
-                        </div>
-                      </>
-                    ) : (
-                      ""
-                    )}
-                  </div>
-                );
+          <div class={styles.selectGroup}>
+            <button
+              class={styles.todayButton}
+              onClick={() => {
+                const now = new Date();
+                setYear(now.getFullYear());
+                setMonth(now.getMonth());
               }}
-            </For>
-          </div>
-        </div>
-      </Show>
+            >
+              Today
+            </button>
 
-      <Show when={showFloatingButton() && selectedDay() !== null}>
-        <button
-          class={styles.floatingButton}
-          onClick={() => {
-            scrollToJobs();
-          }}
-          title="Scroll to jobs"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
-            <polyline points="6,9 12,15 18,9" />
-          </svg>
-        </button>
+            <select
+              class={styles.select}
+              onInput={(e) => {
+                setYear(parseInt(e.currentTarget.value));
+                setSelectedDay(null);
+                setShowFloatingButton(false);
+              }}
+            >
+              <For each={Array.from({ length: 31 }, (_, i) => 2020 + i)}>
+                {(y) => (
+                  <option value={y} selected={y === year()}>
+                    {y}
+                  </option>
+                )}
+              </For>
+            </select>
+
+            <select
+              class={styles.select}
+              onInput={(e) => {
+                setMonth(parseInt(e.currentTarget.value));
+                setSelectedDay(null);
+                setShowFloatingButton(false);
+              }}
+            >
+              <For
+                each={[
+                  "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+                  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+                ]}
+              >
+                {(m, i) => (
+                  <option value={i()} selected={i() === month()}>
+                    {m}
+                  </option>
+                )}
+              </For>
+            </select>
+          </div>
+
+          <button
+            class={styles.navButton}
+            onClick={() => {
+              setMonth((m) => {
+                if (m === 11) {
+                  setYear((y) => y + 1);
+                  return 0;
+                }
+                return m + 1;
+              });
+              setSelectedDay(null);
+              setShowFloatingButton(false);
+            }}
+          >
+            &gt;
+          </button>
+        </div>
+
+        <Show when={isLoading()}>
+            <div class={styles.spinner}></div>
+        </Show>
+
+        <Show when={gigCount()!==null}>
+          <div class={styles.gridWrapper}>
+            <div class={styles.grid}>
+              <For each={days}>{(day) => <div class={styles.dayHeader}>{day}</div>}</For>
+              <For each={dates()}>
+                {(day) => {
+                  const y = year();
+                  const m = month();
+                  const gigsToday = () => (typeof day === "number" ? gigMap()[day]?.length ?? 0 : 0);
+
+                  return (
+                    <div
+                      classList={{
+                        [styles.day]: true,
+                        [styles.emptyDay]: day === null,
+                        [styles.selectedDay]: day !== null && selectedDay() === day
+                      }}
+                      onClick={() => {
+                        if (day !== null) {
+                          const jobsCount = gigMap()[day]?.length ?? 0;
+                          setSelectedDay(day);
+                          setCurrentPage(1);
+                          setStartPage(1);
+                          setPageInput("1");
+                          setShowFloatingButton(true);
+                          setShowCalendar(false); // Hide calendar when day is selected
+                        }
+                      }}
+                      style={{ cursor: day !== null ? "pointer" : "default" }}
+                    >
+                      {day !== null ? (
+                        <>
+                          <span
+                            classList={{
+                              [styles.today]: isToday(y, m, day),
+                              [styles.selectedDayRing]: selectedDay() === day,
+                            }}
+                          >
+                            {day}
+                          </span>
+                          <div class={styles.gigCount}>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="#55b6f2" stroke-width="2"
+                              stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                              <rect x="2" y="7" width="20" height="14" rx="2" ry="2" />
+                              <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2" />
+                              <path d="M2 13h20" />
+                            </svg> {gigsToday()}
+                          </div>
+                        </>
+                      ) : (
+                        ""
+                      )}
+                    </div>
+                  );
+                }}
+              </For>
+            </div>
+          </div>
+        </Show>
       </Show>
 
       <Show when={selectedDay() !== null}>
         <div class={styles.selectedGigs} ref={el => (selectedGigsref =el)}>
-          <div style={{ 
-            background: "#e8f5e8", 
-            padding: "10px", 
-            margin: "10px 0", 
-            border: "2px solid #4caf50",
-            "border-radius": "8px",
-            "text-align": "center",
-            "font-weight": "bold"
-          }}>
-            Jobs section loaded for {month()+1}/{selectedDay()}! Found {selectedGigs().length} jobs.
+          <div class={styles.jobsHeader}>
+            <button 
+              class={styles.calendarToggleButton}
+              onClick={toggleCalendar}
+              title="Toggle Calendar View"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                <line x1="16" y1="2" x2="16" y2="6"/>
+                <line x1="8" y1="2" x2="8" y2="6"/>
+                <line x1="3" y1="10" x2="21" y2="10"/>
+              </svg>
+            </button>
+            <div class={styles.jobsLoadedText}>
+              Jobs section loaded for {month()+1}/{selectedDay()}! Found {selectedGigs().length} jobs.
+            </div>
           </div>
           
           <Show when={selectedGigs().length > 0} fallback={<p>No jobs on this day.</p>}>
