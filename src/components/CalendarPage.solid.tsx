@@ -141,9 +141,10 @@ export default function CalendarPage() {
   });
 
   function scrollToJobs() {
-    if (selectedGigsref) {
-      selectedGigsref.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
+    window.scrollTo({
+      top: document.body.scrollHeight,
+      behavior: "smooth"
+    });
   }
 
   function generatePaginationPages() {
@@ -312,6 +313,7 @@ export default function CalendarPage() {
                     }}
                     onClick={() => {
                       if (day !== null) {
+                        const jobsCount = gigMap()[day]?.length ?? 0;
                         setSelectedDay(day);
                         setCurrentPage(1);
                         setStartPage(1);
@@ -351,11 +353,12 @@ export default function CalendarPage() {
         </div>
       </Show>
 
-      {/* Floating scroll button */}
       <Show when={showFloatingButton() && selectedDay() !== null}>
         <button
           class={styles.floatingButton}
-          onClick={scrollToJobs}
+          onClick={() => {
+            scrollToJobs();
+          }}
           title="Scroll to jobs"
         >
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
@@ -366,6 +369,18 @@ export default function CalendarPage() {
 
       <Show when={selectedDay() !== null}>
         <div class={styles.selectedGigs} ref={el => (selectedGigsref =el)}>
+          <div style={{ 
+            background: "#e8f5e8", 
+            padding: "10px", 
+            margin: "10px 0", 
+            border: "2px solid #4caf50",
+            "border-radius": "8px",
+            "text-align": "center",
+            "font-weight": "bold"
+          }}>
+            Jobs section loaded for {month()+1}/{selectedDay()}! Found {selectedGigs().length} jobs.
+          </div>
+          
           <Show when={selectedGigs().length > 0} fallback={<p>No jobs on this day.</p>}>
             <div class={styles.jobCard}>
               <div class={styles.gridOfGigs}>
