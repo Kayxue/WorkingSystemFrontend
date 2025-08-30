@@ -16,7 +16,6 @@ function NotificationPage() {
   const [offset, setOffset] = createSignal(0);
   const [hasMore, setHasMore] = createSignal(false);
   const [unreadNotifications, setUnreadNotifications] = createSignal(false);
-  const [hoveredNotification, setHoveredNotification] = createSignal<string | null>(null);
   const [showActionsMenu, setShowActionsMenu] = createSignal<string | null>(null);
 
   const limit = 10;
@@ -202,6 +201,7 @@ function NotificationPage() {
             setNotifications([]);
             setOffset(0);
             setHasMore(true);
+            setShowActionsMenu(null);
             fetchNotifications()
           }}
         >
@@ -215,6 +215,7 @@ function NotificationPage() {
             setNotifications([]);
             setOffset(0);
             setHasMore(true);
+            setShowActionsMenu(null);
             fetchNotifications()
           }}
         >
@@ -230,10 +231,10 @@ function NotificationPage() {
         }>
           {(notification) => (
             <div
-              class="relative p-4 cursor-pointer transition-colors rounded-md hover:bg-gray-100"
-              onMouseEnter={() => setHoveredNotification(notification.notificationId)}
-              onMouseLeave={() => setHoveredNotification(null)}
+              class="group relative p-4 cursor-pointer transition-colors rounded-md hover:bg-gray-100"
+              classList={{ 'z-20': showActionsMenu() === notification.notificationId }}
               onClick={() => {
+                if (showActionsMenu()) return;
                 if (notification.type === 'application' && notification.resourceId) {
                   if (!notification.isRead) markAsRead(notification.notificationId);
                   window.location.href = `/job/${notification.resourceId}?section=applications&status=pending`;
@@ -244,51 +245,51 @@ function NotificationPage() {
                 <div class="flex-shrink-0">
                   <div class={`h-3 w-3 rounded-full mt-1.5 ${!notification.isRead ? 'bg-blue-500' : 'bg-gray-300'}`}></div>
                 </div>
-                <div class="ml-3 w-0 flex-1">
+                <div class="ml-3 w-0 flex-1 pr-12 md:pr-2">
                   <p class={`text-sm font-medium ${!notification.isRead ? 'text-gray-900' : 'text-gray-500'}`}>{notification.title}</p>
                   <p class="mt-1 text-sm text-gray-500">{notification.message}</p>
                   <p class="mt-1 text-xs text-gray-400">{formatTimeAgo(notification.createdAt)}</p>
                 </div>
               </div>
-              <Show when={hoveredNotification() === notification.notificationId}>
-                <div class="absolute top-1/2 right-4 -translate-y-1/2">
-                  <button 
-                    class="w-8 h-8 rounded-full bg-gray-200 hover:bg-gray-300 flex items-center justify-center"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setShowActionsMenu(showActionsMenu() === notification.notificationId ? null : notification.notificationId);
-                    }}
-                  >
-                    <svg class="h-5 w-5 text-gray-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="4" d="M6 12H6.01M12 12h.01M18 12h.01" />
-                    </svg>
-                  </button>
-                  <Show when={showActionsMenu() === notification.notificationId}>
-                    <div class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10">
-                      <button 
-                        class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          notification.isRead ? markAsUnread(notification.notificationId) : markAsRead(notification.notificationId);
-                          setShowActionsMenu(null);
-                        }}
-                      >
-                        {notification.isRead ? '標記為未讀' : '標記為已讀'}
-                      </button>
-                      <button 
-                        class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          deleteNotification(notification.notificationId);
-                          setShowActionsMenu(null);
-                        }}
-                      >
-                        刪除
-                      </button>
-                    </div>
-                  </Show>
-                </div>
-              </Show>
+
+              {/* Action Button */}
+              <div class="absolute top-1/2 right-4 -translate-y-1/2 block md:hidden md:group-hover:block md:focus-within:block">
+                <button 
+                  class="w-8 h-8 rounded-full bg-gray-200 hover:bg-gray-300 flex items-center justify-center"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowActionsMenu(showActionsMenu() === notification.notificationId ? null : notification.notificationId);
+                  }}
+                >
+                  <svg class="h-5 w-5 text-gray-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="4" d="M6 12H6.01M12 12h.01M18 12h.01" />
+                  </svg>
+                </button>
+                <Show when={showActionsMenu() === notification.notificationId}>
+                  <div class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-50 border border-gray-200">
+                    <button 
+                      class="block w-full text-left px-4 py-2 text-sm text-gray-700 bg-white hover:bg-gray-100"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        notification.isRead ? markAsUnread(notification.notificationId) : markAsRead(notification.notificationId);
+                        setShowActionsMenu(null);
+                      }}
+                    >
+                      {notification.isRead ? '標記為未讀' : '標記為已讀'}
+                    </button>
+                    <button 
+                      class="block w-full text-left px-4 py-2 text-sm text-gray-700 bg-white hover:bg-gray-100"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        deleteNotification(notification.notificationId);
+                        setShowActionsMenu(null);
+                      }}
+                    >
+                      刪除
+                    </button>
+                  </div>
+                </Show>
+              </div>
             </div>
           )}
         </For>

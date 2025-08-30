@@ -23,9 +23,14 @@ function Navbar(props: NavBarProps) {
   const [unreadNotifications, setUnreadNotifications] = createSignal<boolean>(false); 
   const [latestNotifications, setLatestNotifications] = createSignal<Notification[]>([]);
   const [isLoading, setIsLoading] = createSignal(false);
+  const [showActionsMenu, setShowActionsMenu] = createSignal<string | null>(null);
+  const [onNotificationPage, setOnNotificationPage] = createSignal(false);
   const { loggedIn, username, employerPhotoUrl } = props;
 
 onMount(async () => {
+  if (window.location.pathname === '/notification') {
+    setOnNotificationPage(true);
+  }
   if (loggedIn) {
     await checkHaveUnreadNotifications();
     if (haveUnreadNotifations()) {
@@ -71,15 +76,15 @@ onMount(async () => {
       if (response.ok) {
         const data = await response.json();
         setLatestNotifications(data.data.notifications);
+      } else {
+        console.error("Failed to fetch latest notifications:", response.statusText);
       }
-    } catch (error) {
-      console.error("Failed to fetch latest notifications:", error);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const markNotificationsAsRead = async (notificationIds: string) => {
+  const markAsRead = async (notificationId: string) => {
     try {
       const response = await fetch('/api/notifications/mark-as-read?isRead=true', {
         method: 'PUT',
@@ -87,25 +92,69 @@ onMount(async () => {
           'Content-Type': 'application/json',
           'platform': 'web-employer',
         },
-        body: JSON.stringify({notificationIds: [notificationIds]}),
+        body: JSON.stringify({notificationIds: [notificationId]}),
       });
       
       if (response.ok) {
         setLatestNotifications(latestNotifications().map(n => 
-          n.notificationId === notificationIds ? { ...n, isRead: true } : n
+          n.notificationId === notificationId ? { ...n, isRead: true } : n
         ));
-        setHaveUnreadNotifications(false);
+        const hasUnread = latestNotifications().some(n => !n.isRead);
+        setHaveUnreadNotifications(hasUnread);
       } else {
-        console.error("Failed to mark notifications as read:", response.statusText);
+        console.error("Failed to mark notification as read:", response.statusText);
       }
     } catch (error) {
-      console.error("Error marking notifications as read:", error);
+      console.error("Error marking notification as read:", error);
+    }
+  };
+
+  const markAsUnread = async (notificationId: string) => {
+    try {
+      const response = await fetch('/api/notifications/mark-as-read?isRead=false', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'platform': 'web-employer',
+        },
+        body: JSON.stringify({notificationIds: [notificationId]}),
+      });
+
+      if (response.ok) {
+        setLatestNotifications(latestNotifications().map(n =>
+          n.notificationId === notificationId ? { ...n, isRead: false } : n
+        ));
+        setHaveUnreadNotifications(true);
+      } else {
+        console.error("Failed to mark notification as unread:", response.statusText);
+      }
+    } catch (error) {
+      console.error("Error marking notification as unread:", error);
+    }
+  };
+
+  const deleteNotification = async (notificationId: string) => {
+    try {
+      const response = await fetch(`/api/notifications/${notificationId}`, {
+        method: 'DELETE',
+        headers: {
+          'platform': 'web-employer',
+        },
+      });
+
+      if (response.ok) {
+        setLatestNotifications(latestNotifications().filter(n => n.notificationId !== notificationId));
+      } else {
+        console.error("Failed to delete notification:", response.statusText);
+      }
+    } catch (error) {
+      console.error("Error deleting notification:", error);
     }
   };
 
   const markAllNotificationsAsRead = async () => {
     try {
-      if (latestNotifications().length === 0) return;
+      if (latestNotifications().filter(n => !n.isRead).length === 0) return;
       const response = await fetch('/api/notifications/mark-as-read?isRead=true', {
         method: 'PUT',
         headers: {
@@ -113,12 +162,13 @@ onMount(async () => {
           'platform': 'web-employer',
         },
         body: JSON.stringify({
-          notificationIds: latestNotifications().map(n => n.notificationId),
+          notificationIds: latestNotifications().filter(n => !n.isRead).map(n => n.notificationId),
         }),
       })
 
       if (response.ok) {
         setLatestNotifications(latestNotifications().map(n => ({ ...n, isRead: true })));
+        setHaveUnreadNotifications(false);
       } else {
         console.error("Failed to mark notifications as read:", response.statusText);
       }
@@ -176,9 +226,6 @@ onMount(async () => {
     return "剛剛";
   };
 
-
-
-
   const getInitialsName = (name: string): string => {
     if (!name) return '?';
     const parts = name.split(' ');
@@ -216,9 +263,10 @@ onMount(async () => {
         <div class="relative flex items-center gap-2 sm:gap-3">
           <div class="relative">
             <button 
-              class="p-2 rounded-full hover:bg-gray-100 transition-colors cursor-pointer" 
+              class="p-2 rounded-full hover:bg-gray-100 transition-colors cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
               onClick={() => {setNotificationsOpen(!notificationsOpen()); setDropdownOpen(false);}}
               aria-label="通知"
+              disabled={onNotificationPage()}
             >
               <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
@@ -230,7 +278,7 @@ onMount(async () => {
                 </span>
               </Show>
             </button>
-            <div class={`fixed max-h-max w-[95vw] sm:mx-2 top-14 right-3 sm:top-16 sm:right-0 sm:w-80 bg-white border-t sm:border border-gray-200 sm:rounded-lg shadow-lg py-1 transition-all duration-200 ${notificationsOpen() ? 'opacity-100 translate-y-0 pointer-events-auto' : 'opacity-0 -translate-y-2 pointer-events-none'}`}>
+            <div class={`fixed max-h-max w-[95vw] sm:mx-2 top-14 right-3 sm:top-16 sm:right-0 sm:w-96 bg-white border-t sm:border border-gray-200 sm:rounded-lg shadow-lg py-1 transition-all duration-200 ${notificationsOpen() ? 'opacity-100 translate-y-0 pointer-events-auto' : 'opacity-0 -translate-y-2 pointer-events-none'}`}>
               <div class= "flex flex-row place-content-between">
                 <div class="text-2xl px-4 py-2 font-semibold text-gray-800 ">通知</div>
                 <button 
@@ -246,7 +294,8 @@ onMount(async () => {
                   class={`px-3 py-2.5 text-center me-2 mb-2 rounded-full hover:bg-gray-200 disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer ${!unreadNotifications() ? 'bg-blue-100 text-blue-600' : ''}`} 
                   onClick={() => {
                     if (!unreadNotifications()) return;
-                    setUnreadNotifications(false); 
+                    setUnreadNotifications(false);
+                    setShowActionsMenu(null);
                     fetchLatestNotifications()
                   }}
                 >
@@ -256,38 +305,85 @@ onMount(async () => {
                   class={`px-3 py-2.5 text-center me-2 mb-2 rounded-full hover:bg-gray-200 disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer ${unreadNotifications() ? 'bg-blue-100 text-blue-600' : ''}`}
                   onClick={() => {
                     if (unreadNotifications()) return;
-                    setUnreadNotifications(true); 
+                    setUnreadNotifications(true);
+                    setShowActionsMenu(null);                    
                     fetchLatestNotifications()
                   }}
                 >
                   未讀
                 </button>
               </div>
-              <div class="max-h-max">
+              <div class="max-h-96 overflow-y-auto">
                 <Show when={!isLoading()} fallback={
-                  <div class="flex items-center justify-center h-100">
+                  <div class="flex items-center justify-center h-40">
                     <svg aria-hidden="true" class="w-8 h-8 text-gray-200 animate-spin dark:text-gray-600 fill-blue-600" viewBox="0 0 100 101" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0 78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082 100 22.9766 100 50.5908ZM9.08144 50.5908C9.08144 73.1895 27.4013 91.5094 50 91.5094C72.5987 91.5094 90.9186 73.1895 90.9186 50.5908C90.9186 27.9921 72.5987 9.67226 50 9.67226C27.4013 9.67226 9.08144 27.9921 9.08144 50.5908Z" fill="currentColor"/><path d="M93.9676 39.0409C96.393 38.4038 97.8624 35.9116 97.0079 33.5539C95.2932 28.8227 92.871 24.3692 89.8167 20.348C85.8452 15.1192 80.8826 10.7238 75.2124 7.41289C69.5422 4.10194 63.2754 1.94025 56.7698 1.05124C51.7666 0.367541 46.6976 0.446843 41.7345 1.27873C39.2613 1.69328 37.813 4.19778 38.4501 6.62326C39.0873 9.04874 41.5694 10.4717 44.0505 10.1071C47.8511 9.54855 51.7191 9.52689 55.5402 10.0491C60.8642 10.7766 65.9928 12.5457 70.6331 15.2552C75.2735 17.9648 79.3347 21.5619 82.5849 25.841C84.9175 28.9121 86.7997 32.2913 88.1811 35.8758C89.083 38.2158 91.5421 39.6781 93.9676 39.0409Z" fill="currentFill"/></svg>
                     <span class="sr-only">Loading...</span>
                   </div>
                 }>
                   <For each={latestNotifications()} fallback={<div class="p-4 text-center text-sm text-gray-500">沒有新的通知</div>}>
                     {(notification) => (
-                      <button 
-                        class={`w-full text-left px-4 py-3 hover:bg-gray-50 cursor-pointer ${!notification.isRead ? 'font-bold text-black' : 'text-gray-600'}`}
+                      <div 
+                        class="group relative w-full text-left px-4 py-3 hover:bg-gray-50 cursor-pointer"
+                        classList={{ 'z-20': showActionsMenu() === notification.notificationId }}
                         onClick={() => {
+                          if (showActionsMenu()) return;
                           if (notification.type == 'application') {
-                            if (!notification.isRead)markNotificationsAsRead(notification.notificationId);
+                            if (!notification.isRead) markAsRead(notification.notificationId);
                             window.location.href = `/job/${notification.resourceId}?section=applications&status=pending`;
                           }
                         }}>
-                          <p class="text-sm">{notification.message}</p>
-                          <p class="text-xs text-gray-400 mt-1">{formatTimeAgo(notification.createdAt)}</p>
-                      </button>
+                        <div class="flex items-start">
+                          <div class="flex-shrink-0">
+                            <div class={`h-2.5 w-2.5 rounded-full mt-1 ${!notification.isRead ? 'bg-blue-500' : 'bg-gray-300'}`}></div>
+                          </div>
+                          <div class="ml-3 w-0 flex-1 pr-12 md:pr-2">
+                            <p class={`text-sm ${!notification.isRead ? 'font-bold text-black' : 'text-gray-600'}`}>{notification.message}</p>
+                            <p class="text-xs text-gray-400 mt-1">{formatTimeAgo(notification.createdAt)}</p>
+                          </div>
+                        </div>
+                        <div class="absolute top-1/2 right-4 -translate-y-1/2 block md:hidden md:group-hover:block md:focus-within:block">
+                          <button 
+                            class="w-8 h-8 rounded-full bg-gray-200 hover:bg-gray-300 flex items-center justify-center"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setShowActionsMenu(showActionsMenu() === notification.notificationId ? null : notification.notificationId);
+                            }}
+                          >
+                            <svg class="h-5 w-5 text-gray-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="4" d="M6 12H6.01M12 12h.01M18 12h.01" />
+                            </svg>
+                          </button>
+                          <Show when={showActionsMenu() === notification.notificationId}>
+                            <div class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-100 border border-gray-200">
+                              <button 
+                                class="block w-full text-left px-4 py-2 text-sm text-gray-700 bg-white hover:bg-gray-100"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  notification.isRead ? markAsUnread(notification.notificationId) : markAsRead(notification.notificationId);
+                                  setShowActionsMenu(null);
+                                }}
+                              >
+                                {notification.isRead ? '標記為未讀' : '標記為已讀'}
+                              </button>
+                              <button 
+                                class="block w-full text-left px-4 py-2 text-sm text-gray-700 bg-white hover:bg-gray-100"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  deleteNotification(notification.notificationId);
+                                  setShowActionsMenu(null);
+                                }}
+                              >
+                                刪除
+                              </button>
+                            </div>
+                          </Show>
+                        </div>
+                      </div>
                     )}
                   </For>
                 </Show>
               </div>
-              <a href="/account-settings?section=notifications" class="block w-full text-center px-4 py-2 text-sm text-blue-600 hover:bg-gray-100 font-medium transition-colors">查看所有通知</a>
+              <a href="/notification" class="block w-full text-center px-4 py-2 text-sm text-blue-600 hover:bg-gray-100 font-medium transition-colors">查看所有通知</a>
             </div>
           </div>
           <Show when={employerPhotoUrl} fallback={
