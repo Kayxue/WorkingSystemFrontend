@@ -39,6 +39,7 @@ export default function JobRatingView(props: JobRatingViewProps) {
   const [newRating, setNewRating] = createSignal(0);
   const [newComment, setNewComment] = createSignal('');
   const [submittingRating, setSubmittingRating] = createSignal(false);
+  const [filteredCount, setFilteredCount] = createSignal(0);
   const [error, setError] = createSignal<string>('');
 
   // FIXED: Updated fetch function to use correct API endpoints
@@ -138,20 +139,22 @@ export default function JobRatingView(props: JobRatingViewProps) {
           employerRating: existingRating?.rating,
           employerComment: existingRating?.comment,
           ratedAt: existingRating?.ratedAt || existingRating?.createdAt,
-          workCompletedAt: app.updatedAt || app.completedAt || app.createdAt,
-          workSubmittedAt: app.updatedAt || app.submittedAt || app.createdAt,
+          workCompletedAt: app.appliedAt || app.createdAt,
+          workSubmittedAt: app.appliedAt || app.createdAt,
         };
       });
 
       console.log('Generated rating items:', ratingItems.length);
 
-      // Filter by status if needed
       const filteredData = status === 'all' 
         ? ratingItems 
         : ratingItems.filter(item => item.status === status);
 
+      // Apply pagination to filtered data
+      const paginatedData = filteredData.slice(offset, offset + limit);
+
       return {
-        data: filteredData.slice(offset, offset + limit),
+        data: paginatedData,
         total: filteredData.length,
         hasMore: offset + limit < filteredData.length
       };
@@ -182,6 +185,7 @@ export default function JobRatingView(props: JobRatingViewProps) {
       }
       
       setTotalCount(response.total);
+      setFilteredCount(response.total);
     } catch (error) {
       console.error('Error loading ratings:', error);
       setError('Failed to load ratings. Please try again.');
@@ -197,9 +201,14 @@ export default function JobRatingView(props: JobRatingViewProps) {
   };
 
   const openRatingModal = (employee: RatingItem) => {
+    // Only allow rating modal for unrated employees
+    if (employee.status === 'rated') {
+      return;
+    }
+    
     setSelectedEmployee(employee);
-    setNewRating(employee.employerRating || 0);
-    setNewComment(employee.employerComment || '');
+    setNewRating(0);
+    setNewComment('');
     setError(''); // Clear any previous errors
     setShowRatingModal(true);
   };
@@ -349,7 +358,7 @@ export default function JobRatingView(props: JobRatingViewProps) {
         style={{
           cursor: interactive ? 'pointer' : 'default',
           color: i < rating ? '#FFD700' : '#D3D3D3',
-          fontSize: '1.5em',
+          
           transition: 'color 0.2s ease',
           display: 'inline-block',
           'user-select': 'none'
@@ -417,13 +426,13 @@ export default function JobRatingView(props: JobRatingViewProps) {
             class={`${styles.filterButton} ${status() === 'rated' ? styles.active : ''}`}
             onclick={() => handleStatusChange('rated')}
           >
-            Rated
+            Rated ({status() === 'rated' ? filteredCount() : allRatings().filter(r => r.status === 'rated').length})
           </button>
           <button
             class={`${styles.filterButton} ${status() === 'unrated' ? styles.active : ''}`}
             onclick={() => handleStatusChange('unrated')}
           >
-            Unrated
+            Unrated ({status() === 'unrated' ? filteredCount() : allRatings().filter(r => r.status === 'unrated').length})
           </button>
         </div>
       </div>
@@ -448,7 +457,7 @@ export default function JobRatingView(props: JobRatingViewProps) {
                   <div class={styles.userDetails}>
                     <h4>{rating.userName}</h4>
                     <p class={styles.workDate}>
-                      Application approved: {formatDate(rating.workCompletedAt)}
+                      Application approved: {formatDate(rating.workSubmittedAt)}
                     </p>
                     <Show when={rating.status === 'rated'}>
                       <p class={styles.workDate}>
@@ -487,19 +496,10 @@ export default function JobRatingView(props: JobRatingViewProps) {
                           You rated on {formatDate(rating.ratedAt!)}
                         </p>
                       </Show>
-                      <button 
-                        class={styles.editButton}
-                        onclick={(e) => {
-                          e.preventDefault();
-                          openRatingModal(rating);
-                        }}
-                      >
-                        Edit Rating
-                      </button>
                     </div>
                     <Show when={rating.employerComment}>
                       <div class={styles.comment}>
-                        <p>"{rating.employerComment}"</p>
+                        <p>{rating.employerComment}</p>
                       </div>
                     </Show>
                   </Show>
@@ -528,7 +528,7 @@ export default function JobRatingView(props: JobRatingViewProps) {
         </Show>
       </div>
 
-      {/* Rating Modal */}
+      {/* Rating Modal - Only for unrated employees */}
       <Show when={showRatingModal()}>
         <div class={styles.modalOverlay} onclick={(e) => {
           e.preventDefault();
@@ -550,7 +550,7 @@ export default function JobRatingView(props: JobRatingViewProps) {
               <Show when={selectedEmployee()}>
                 <div class={styles.employeeInfo}>
                   <h4>{selectedEmployee()!.userName}</h4>
-                  <p>Application approved on {formatDate(selectedEmployee()!.workCompletedAt)}</p>
+                  <p>Application approved on {formatDate(selectedEmployee()!.workSubmittedAt)}</p>
                 </div>
 
                 {/* Error display in modal */}
