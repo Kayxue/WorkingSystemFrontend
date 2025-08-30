@@ -2,7 +2,6 @@ import { createSignal, Switch, Match, onMount, onCleanup } from 'solid-js';
 import ProfileSettingsForm from './ProfileSettingsForm.solid.tsx';
 import UpdatePasswordForm from './UpdatePasswordForm.solid.tsx';
 import VerificationForm from './VerificationForm.solid.tsx';
-import Notifications from './Notifications.solid.tsx';
 
 interface NavItem {
   id: string;
@@ -54,7 +53,6 @@ const AccountSettingsPage = (props: AccountSettingsPageProps) => {
     { id: 'profile', name: 'Profile' },
     { id: 'password', name: 'Password' },
     { id: 'verification', name: 'Verification' },
-    { id: 'notifications', name: 'notifications' },
     { id: 'phone-numbers', name: 'Phone Number(s)' },
     { id: 'login', name: 'Login' },
     { id: 'cookie-settings', name: 'Cookie settings' },
@@ -96,9 +94,6 @@ const AccountSettingsPage = (props: AccountSettingsPageProps) => {
             </Match>
             <Match when={currentSection() === 'verification'}>
               <VerificationForm initialData={props.initialEmployerData} />
-            </Match>
-            <Match when={currentSection() === 'notifications'}>
-              <Notifications />
             </Match>
             <Match when={currentSection() === 'phone-numbers'}>
               <section>

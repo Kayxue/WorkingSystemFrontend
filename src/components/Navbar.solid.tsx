@@ -302,6 +302,7 @@ onMount(async () => {
           </button>
           <div class={`fixed top-16 left-0 right-0 sm:absolute sm:top-14 sm:left-auto sm:right-0 bg-white border-t sm:border border-gray-200 sm:rounded-lg shadow-lg py-2 w-full sm:min-w-[160px] sm:w-auto transition-all duration-200 ${dropdownOpen() ? 'opacity-100 translate-y-0 pointer-events-auto' : 'opacity-0 -translate-y-2 pointer-events-none'}`}>
             <button class="block w-full text-left px-4 sm:px-5 py-2 text-gray-800 hover:bg-gray-100 hover:text-blue-600 transition-colors text-sm sm:text-base cursor-pointer" onClick={() => window.location.href = '/account-settings?section=profile'}>個人資料</button>
+            <button class="block w-full text-left px-4 sm:px-5 py-2 text-gray-800 hover:bg-gray-100 hover:text-blue-600 transition-colors text-sm sm:text-base cursor-pointer" onClick={() => window.location.href = '/notification'}>通知</button>
             <button class="block w-full text-left px-4 sm:px-5 py-2 text-gray-800 hover:bg-gray-100 hover:text-blue-600 transition-colors text-sm sm:text-base cursor-pointer" onClick={handleLogout}>登出</button>
           </div>
         </div>

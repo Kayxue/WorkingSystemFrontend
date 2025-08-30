@@ -1,0 +1,20 @@
+---
+import Layout from '../layouts/Layout.astro';
+import NotificationPage from '../components/NotificationPage.solid';
+
+const currentYear = new Date().getFullYear();
+---
+
+<Layout title="Notifications">
+  <main class="flex justify-center min-h-screen px-2 sm:px-4">
+    <div>
+      <NotificationPage client:load />
+    </div>
+  </main>
+
+  <footer class="bg-gray-800 text-white text-center py-6 w-full sm:py-8 text-xs sm:text-sm">
+    <div>
+      <p class="m-0">&copy; {currentYear} WorkNow. 保留所有權利。</p>
+    </div>
+  </footer>
+</Layout>
