@@ -137,14 +137,11 @@ export default function RegisterForm() {
 
 
     try {
-      // 根據您的後端調整 API 端點
       const response = await fetch("/api/user/register/business", {
         method: "POST",
         headers: {
-          // "Content-Type": "multipart/form-data" 會由瀏覽器自動設定
-          "platform": "web-business-register", // 平台標識
+          "platform": "web-business-register",
         },
-        // credentials: "include", // 如果需要傳送 cookies
         body: formData,
       });
 

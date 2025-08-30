@@ -36,8 +36,9 @@ export default function LoginForm() {
       if (response.ok) {
         window.location.href = "/dashboard";
       } else {
-        const result = await response.json().catch(() => ({ message: "登入失敗，請檢查您的憑證。" }));
-        setError(result.message || "登入失敗，請檢查您的憑證。");
+        const result = await response.text();
+        console.log("Login failed:", result);
+        setError( `${result === "Internal Server Error" ? "伺服器錯誤，請稍後再試。" : result || "登入失敗，請檢查您的憑證。"}` );
       }
     } catch (err) {
       console.error("Login error:", err);

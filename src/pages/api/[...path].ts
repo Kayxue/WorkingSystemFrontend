@@ -23,11 +23,29 @@ export async function ALL({ request, params }) {
     requestOptions.body = request.body;
   }
 
-  const backendRes = await fetch(targetUrl.href, requestOptions);
+  try {
+    const backendRes = await fetch(targetUrl.href, requestOptions);
 
-  return new Response(backendRes.body, {
-    status: backendRes.status,
-    headers: backendRes.headers,
-    statusText: backendRes.statusText,
-  });
+    if (!backendRes.ok) {
+      const errorText = await backendRes.text();
+      return new Response(errorText, {
+        status: backendRes.status,
+        headers: backendRes.headers,
+        statusText: backendRes.statusText,
+      });
+    }
+    return new Response(backendRes.body, {
+      status: backendRes.status,
+      headers: backendRes.headers,
+      statusText: backendRes.statusText,
+    });
+  } catch (error) {
+    console.error(`Fetch error: ${error}`);
+    
+    // Fallback for other errors
+    return new Response("Internal Server Error", { 
+      status: 500,
+      headers: { "Content-Type": "text/plain" }
+    });
+  }
 }
