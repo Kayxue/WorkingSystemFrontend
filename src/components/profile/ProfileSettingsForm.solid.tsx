@@ -17,6 +17,10 @@ interface EmployerData {
   } | null;
   email: string;
   employerId: string;
+  ratingStats: {
+    totalRatings: number; // 評價總數
+    averageRating: number; // 平均評分
+  }
 }
 
 interface ProfileSettingsFormProps {
@@ -235,6 +239,7 @@ const ProfileSettingsForm = (props: ProfileSettingsFormProps) => {
         name={formData().employerName}
         avatarUrl={formData().employerPhoto?.url || null}
         onAvatarChange={handleEmployerPhotoChange}
+        averageRating={formData().ratingStats.averageRating}
       />
 
       {/* 姓名 */}

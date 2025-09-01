@@ -2,6 +2,7 @@ import { createSignal, Switch, Match, onMount, onCleanup } from 'solid-js';
 import ProfileSettingsForm from './ProfileSettingsForm.solid.tsx';
 import UpdatePasswordForm from './UpdatePasswordForm.solid.tsx';
 import VerificationForm from './VerificationForm.solid.tsx';
+import RatingPage from './RatingPage.solid.tsx';
 
 interface NavItem {
   id: string;
@@ -30,6 +31,10 @@ interface EmployerDataForPage {
     r2Name: string;
     presignedUrl: string;
   }[];
+  ratingStats: {
+    totalRatings: number; // 評價總數
+    averageRating: number; // 平均評分
+  }
 }
 
 interface AccountSettingsPageProps {
@@ -40,6 +45,20 @@ interface AccountSettingsPageProps {
 const AccountSettingsPage = (props: AccountSettingsPageProps) => {
 
   const [currentSection, setCurrentSection] = createSignal<string>(props.initialSection || 'profile');
+
+  onMount(() => {
+    const handlePopState = () => {
+      const params = new URLSearchParams(window.location.search);
+      const section = params.get('section') || 'profile';
+      setCurrentSection(section);
+    };
+
+    window.addEventListener('popstate', handlePopState);
+
+    onCleanup(() => {
+      window.removeEventListener('popstate', handlePopState);
+    });
+  });
 
   const showSection = (sectionId: string) => {
     setCurrentSection(sectionId);
@@ -53,7 +72,7 @@ const AccountSettingsPage = (props: AccountSettingsPageProps) => {
     { id: 'profile', name: 'Profile' },
     { id: 'password', name: 'Password' },
     { id: 'verification', name: 'Verification' },
-    { id: 'phone-numbers', name: 'Phone Number(s)' },
+    { id: 'rating', name: 'Rating' },
     { id: 'login', name: 'Login' },
     { id: 'cookie-settings', name: 'Cookie settings' },
   ];
@@ -95,10 +114,10 @@ const AccountSettingsPage = (props: AccountSettingsPageProps) => {
             <Match when={currentSection() === 'verification'}>
               <VerificationForm initialData={props.initialEmployerData} />
             </Match>
-            <Match when={currentSection() === 'phone-numbers'}>
+            <Match when={currentSection() === 'rating'}>
               <section>
-                <h2 class="text-xl font-medium mb-4">Phone Number(s)</h2>
-                <p class="text-gray-700">Add or remove phone numbers for notifications.</p>
+                {/* <h2 class="text-xl font-medium mb-4">Rating</h2> */}
+                <RatingPage averageRating={props.initialEmployerData.ratingStats.averageRating} totalRatings={props.initialEmployerData.ratingStats.totalRatings} />
               </section>
             </Match>
             <Match when={currentSection() === 'login'}>

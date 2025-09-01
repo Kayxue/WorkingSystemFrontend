@@ -3,6 +3,7 @@ import { createSignal, createEffect, type Setter, type Accessor } from 'solid-js
 interface AvatarSectionProps {
   name: string;
   avatarUrl?: string | null;
+  averageRating?: number;
   onAvatarChange: (url: string | null) => void; 
 }
 
@@ -157,22 +158,87 @@ return (
         </div>
       )}
 
-      <div class="flex flex-row items-center sm:items-start space-x-2 sm:space-x-0 sm:space-y-2">
-        <button
-          type="button"
-          onClick={handleUpdateAvatar}
-          class="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
-        >
-          Update
-        </button>
-        <button
-          type="button"
-          onClick={handleRemoveAvatar}
-          class="text-gray-600 hover:text-red-500 font-semibold py-2 px-4 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-opacity-50"
-        >
-          Remove
-        </button>
+      <div class="flex flex-col">
+        <div class="flex flex-row items-center sm:items-start space-x-2 sm:space-x-0 sm:space-y-2">
+          <button
+            type="button"
+            onClick={handleUpdateAvatar}
+            class="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
+          >
+            Update
+          </button>
+          <button
+            type="button"
+            onClick={handleRemoveAvatar}
+            class="text-gray-600 hover:text-red-500 font-semibold py-2 px-4 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-opacity-50"
+          >
+            Remove
+          </button>
+        </div>
+        {/* {typeof props.averageRating === 'number' && (
+          <div class="flex items-center mt-2 sm:mt-0 sm:ml-4">
+            <div class="flex items-center">
+              {[...Array(5)].map((_, index) => {
+                const starValue = props.averageRating! - index;
+                let starPercentage = '0%';
+                if (starValue >= 1) {
+                  starPercentage = '100%';
+                } else if (starValue > 0) {
+                  starPercentage = `${starValue * 100}%`;
+                }
+
+                return (
+                  <div class="relative w-5 h-5">
+                    <svg class="w-full h-full text-gray-300" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
+                    </svg>
+                    <div class="absolute top-0 left-0 h-full overflow-hidden" style={{ width: starPercentage }}>
+                      <svg class="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
+                      </svg>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            <span class="ml-2 text-sm font-medium text-gray-600">
+              {props.averageRating.toFixed(1)}
+            </span>
+          </div>
+        )} */}
       </div>
+
+      {typeof props.averageRating === 'number' && (
+        <div class="flex items-center mt-2 sm:mt-0 sm:ml-4">
+          <div class="flex items-center">
+            {[...Array(5)].map((_, index) => {
+              const starValue = props.averageRating! - index;
+              let starPercentage = '0%';
+              if (starValue >= 1) {
+                starPercentage = '100%';
+              } else if (starValue > 0) {
+                starPercentage = `${starValue * 100}%`;
+              }
+
+              return (
+                <div class="relative w-5 h-5">
+                  <svg class="w-full h-full text-gray-300" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
+                  </svg>
+                  <div class="absolute top-0 left-0 h-full overflow-hidden" style={{ width: starPercentage }}>
+                    <svg class="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
+                    </svg>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          <span class="ml-2 text-sm font-medium text-gray-600">
+            {props.averageRating.toFixed(1)}
+          </span>
+        </div>
+      )}
 
       {showUploadModal() && (
         <div class="fixed inset-0 bg-gray-600/50 flex items-center justify-center z-50 p-4">
