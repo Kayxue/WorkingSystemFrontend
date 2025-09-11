@@ -3,38 +3,44 @@ html, body {
   height: 100%;
   margin: 0;
   padding: 0;
-  overflow: hidden !important;
+  overflow: hidden; /* disable global scroll */
 }
 
 * {
-  scrollbar-width: none !important;
-  -ms-overflow-style: none !important;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
 *::-webkit-scrollbar {
-  display: none !important;
-  width: 0 !important;
-  height: 0 !important;
+  display: none;
+  width: 0;
+  height: 0;
 }
 
+/* Layout container */
 .jobLayoutContainer {
   display: flex;
   height: 100vh;
+  overflow: hidden;
 }
 
+/* Sidebar default (desktop) */
 .sidebar {
-  flex-shrink: 1;
-  width: 250px;
+  flex-shrink: 0;
+  width: 250px; /* full width default */
   height: 100vh;
-  overflow: hidden; /* Disabled scrolling */
+  overflow: hidden;
   position: relative;
   background: #1e293b;
+  transition: width 0.3s ease;
 }
 
+/* Manual collapse */
 .sidebar.collapsed {
   width: 70px;
 }
 
+/* Sidebar header */
 .sidebarHeader {
   position: sticky;
   top: 0;
@@ -48,12 +54,6 @@ html, body {
   min-height: 70px;
 }
 
-.sidebarContent {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-}
-
 .sidebarTitle {
   margin: 0;
   font-size: 1.2rem;
@@ -64,6 +64,7 @@ html, body {
   text-overflow: ellipsis;
 }
 
+/* Collapse button */
 .collapseButton {
   background: rgba(255, 255, 255, 0.1);
   border: none;
@@ -84,6 +85,14 @@ html, body {
   background: rgba(255, 255, 255, 0.2);
 }
 
+/* Sidebar content */
+.sidebarContent {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Navigation items */
 .navigation {
   padding: 1rem 0;
   flex: 1;
@@ -128,6 +137,12 @@ html, body {
   text-overflow: ellipsis;
 }
 
+/* Hide labels when sidebar is collapsed */
+.sidebar.collapsed .navLabel {
+  display: none;
+}
+
+/* Back button */
 .backButton {
   position: absolute;
   bottom: 5rem;
@@ -151,18 +166,21 @@ html, body {
   border-color: rgba(231, 76, 60, 0.5);
 }
 
+/* Main content */
 .mainContent {
   flex: 1;
   padding: 2rem;
   padding-bottom: 8rem;
-  overflow: auto; /* Disabled scrolling */
+  overflow-y: auto; /* scrollable */
   background-color: #fff;
   margin: 1rem;
   border-radius: 8px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  max-height: 100vh;
+  height: calc(100vh - 2rem);
+  -webkit-overflow-scrolling: touch; /* smooth scroll on mobile */
 }
 
+/* Content cards */
 .contentCard {
   background: #fff;
   border: 1px solid #e2e8f0;
@@ -180,25 +198,19 @@ html, body {
   margin-bottom: 1.5rem;
 }
 
-.placeholder {
+/* Placeholder / no photos */
+.placeholder,
+.noPhotos {
   color: #a0aec0;
   font-style: italic;
   padding: 1rem;
   border: 1px dashed #e2e8f0;
-  border-radius: 4px;
-  background-color: #f7fafc;
-}
-
-.noPhotos {
-  text-align: center;
-  color: #a0aec0;
-  font-style: italic;
-  padding: 2rem;
-  border: 1px dashed #e2e8f0;
   border-radius: 8px;
   background-color: #f7fafc;
+  text-align: center;
 }
 
+/* Contact info */
 .contactInfoContainer {
   display: flex;
   flex-wrap: wrap;
@@ -226,59 +238,122 @@ html, body {
   color: #2d3748;
 }
 
+/* --------------------------
+   Responsive: Mobile behavior
+--------------------------- */
 @media (max-width: 768px) {
-  .jobLayoutContainer {
-    flex-direction: column;
-  }
-
+  /* Make sidebar overlay on mobile when expanded */
   .sidebar {
-    width: 100%;
-    height: auto;
-    order: 2;
+    position: relative;
+    left: 0;
+    top: 5;
+    z-index: 100;
+    width: 70px; /* default collapsed on mobile */
+    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.15);
   }
-
-  .sidebar.collapsed {
-    width: 100%;
+  
+  /* When expanded on mobile, show full width and overlay */
+  .sidebar:not(.collapsed) {
+    width: 250px;
   }
-
+  
+  /* Make sure main content takes full width on mobile */
   .mainContent {
-    margin: 0;
-    border-radius: 0;
-    order: 1;
-    max-height: none;
-    overflow: hidden; /* Keep scrolling disabled on mobile too */
+    margin: 0.5rem;
+    margin-left: 0.5rem; /* consistent margin */
+    height: calc(100vh - 1rem);
+    overflow-y: auto;
+    width: calc(100% - 1rem);
   }
 
-  .navigation {
-    display: flex;
-    flex-direction: row;
-    overflow: hidden; /* Disabled horizontal scrolling */
-    padding: 0.5rem;
-  }
-
+  /* Mobile navigation adjustments */
   .navItem {
-    min-width: 120px;
-    justify-content: center;
-    flex-direction: column;
-    gap: 0.5rem;
+    font-size: 0.9rem;
     padding: 0.75rem;
+  }
+  
+  /* When collapsed on mobile, center the nav items */
+  .sidebar.collapsed .navItem {
+    justify-content: center;
+  }
+  
+  /* When expanded on mobile, show normal layout */
+  .sidebar:not(.collapsed) .navItem {
+    justify-content: flex-start;
   }
 
   .sidebarHeader {
     padding: 1rem;
   }
+  
+  /* When collapsed on mobile, center header content */
+  .sidebar.collapsed .sidebarHeader {
+    justify-content: center;
+  }
+  
+  /* When expanded on mobile, show normal layout */
+  .sidebar:not(.collapsed) .sidebarHeader {
+    justify-content: space-between;
+  }
+  
+  /* Hide title only when collapsed */
+  .sidebar.collapsed .sidebarTitle {
+    display: none;
+  }
+  
+  /* Show title when expanded */
+  .sidebar:not(.collapsed) .sidebarTitle {
+    display: block;
+  }
 
-  .backButton {
-    position: static;
-    width: 100%;
-    margin: 1rem 0;
-    bottom: auto;
-    left: auto;
+  /* Back button adjustments for mobile */
+  .sidebar.collapsed .backButton {
+    width: 90%;
+    left: 5%;
+    font-size: 0.85rem;
+    padding: 0.75rem;
+    justify-content: center;
+  }
+  
+  .sidebar:not(.collapsed) .backButton {
+    width: calc(100% - 2rem);
+    left: 1rem;
+    justify-content: flex-start;
   }
 }
 
 @media (max-width: 480px) {
+  /* Further adjust for very small screens */
+  .sidebar {
+    width: 180px; /* even smaller for tiny screens */
+  }
+  
+  .sidebar.collapsed {
+    width: 55px;
+  }
+  
   .mainContent {
-    padding: 1rem;
+    padding: 1rem; /* less padding for more space */
+    margin: 1rem;
+  }
+  
+  .navItem {
+    font-size: 0.9rem;
+    padding: 0.75rem 0.85rem;
+  }
+  
+  .sidebarHeader {
+    padding: 1rem 0.85rem;
+    position: relative; /* ensure proper positioning */
+    z-index: 1;
+  }
+  
+  .sidebarTitle {
+    font-size: 1rem;
+  }
+  
+  .backButton {
+    font-size: 0.85rem;
+    padding: 0.75rem 0.85rem;
   }
 }
