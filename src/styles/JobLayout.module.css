@@ -22,6 +22,7 @@ html, body {
   display: flex;
   height: 100vh;
   overflow: hidden;
+  position: relative;
 }
 
 /* Sidebar default (desktop) */
@@ -33,6 +34,7 @@ html, body {
   position: relative;
   background: #1e293b;
   transition: width 0.3s ease;
+  z-index: 10;
 }
 
 /* Manual collapse */
@@ -142,12 +144,16 @@ html, body {
   display: none;
 }
 
+/* Sidebar Footer */
+.sidebarFooter {
+  padding: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  margin-top: auto;
+}
+
 /* Back button */
 .backButton {
-  position: absolute;
-  bottom: 5rem;
-  left: 1rem;
-  width: calc(100% - 2rem);
+  width: 100%;
   background: rgba(231, 76, 60, 0.1);
   border: 1px solid rgba(231, 76, 60, 0.3);
   color: #e74c3c;
@@ -159,6 +165,7 @@ html, body {
   align-items: center;
   gap: 1rem;
   font-size: 1rem;
+  text-decoration: none;
 }
 
 .backButton:hover {
@@ -238,15 +245,32 @@ html, body {
   color: #2d3748;
 }
 
+/* Mobile Overlay - MISSING STYLE YANG DIBUTUHKAN */
+.mobileOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 5;
+  display: none;
+}
+
 /* --------------------------
    Responsive: Mobile behavior
 --------------------------- */
 @media (max-width: 768px) {
+  /* Show mobile overlay when sidebar is open */
+  .mobileOverlay {
+    display: block;
+  }
+
   /* Make sidebar overlay on mobile when expanded */
   .sidebar {
-    position: relative;
+    position: fixed;
     left: 0;
-    top: 5;
+    top: 0;
     z-index: 100;
     width: 70px; /* default collapsed on mobile */
     box-shadow: 2px 0 8px rgba(0, 0, 0, 0.15);
@@ -260,10 +284,17 @@ html, body {
   /* Make sure main content takes full width on mobile */
   .mainContent {
     margin: 0.5rem;
-    margin-left: 0.5rem; /* consistent margin */
+    margin-left: calc(70px + 0.5rem); /* account for collapsed sidebar */
     height: calc(100vh - 1rem);
     overflow-y: auto;
-    width: calc(100% - 1rem);
+    width: calc(100% - 70px - 1rem);
+    transition: margin-left 0.3s ease, width 0.3s ease;
+  }
+
+  /* When sidebar is expanded on mobile, push content */
+  .sidebar:not(.collapsed) ~ .mainContent {
+    margin-left: calc(250px + 0.5rem);
+    width: calc(100% - 250px - 1rem);
   }
 
   /* Mobile navigation adjustments */
@@ -308,24 +339,20 @@ html, body {
 
   /* Back button adjustments for mobile */
   .sidebar.collapsed .backButton {
-    width: 90%;
-    left: 5%;
+    padding: 0.75rem 0.5rem;
     font-size: 0.85rem;
-    padding: 0.75rem;
     justify-content: center;
   }
   
   .sidebar:not(.collapsed) .backButton {
-    width: calc(100% - 2rem);
-    left: 1rem;
     justify-content: flex-start;
   }
 }
 
 @media (max-width: 480px) {
   /* Further adjust for very small screens */
-  .sidebar {
-    width: 180px; /* even smaller for tiny screens */
+  .sidebar:not(.collapsed) {
+    width: 200px; /* smaller for tiny screens */
   }
   
   .sidebar.collapsed {
@@ -334,18 +361,22 @@ html, body {
   
   .mainContent {
     padding: 1rem; /* less padding for more space */
-    margin: 1rem;
+    margin-left: calc(55px + 0.5rem);
+    width: calc(100% - 55px - 1rem);
+  }
+
+  .sidebar:not(.collapsed) ~ .mainContent {
+    margin-left: calc(200px + 0.5rem);
+    width: calc(100% - 200px - 1rem);
   }
   
   .navItem {
     font-size: 0.9rem;
-    padding: 0.75rem 0.85rem;
+    padding: 0.75rem 0.5rem;
   }
   
   .sidebarHeader {
-    padding: 1rem 0.85rem;
-    position: relative; /* ensure proper positioning */
-    z-index: 1;
+    padding: 1rem 0.5rem;
   }
   
   .sidebarTitle {
@@ -354,6 +385,6 @@ html, body {
   
   .backButton {
     font-size: 0.85rem;
-    padding: 0.75rem 0.85rem;
+    padding: 0.75rem 0.5rem;
   }
 }

@@ -1,11 +1,12 @@
 // File: JobLayoutInteractive.solid.tsx
-import { createSignal, Show, Switch, Match, onMount, onCleanup } from "solid-js";
+import { createSignal, Show, Switch, Match, onMount, onCleanup, For } from "solid-js";
 import JobDetailsView from "./JobDetailsView.solid";
 import JobApplicationsView from "./JobApplicationsView.solid";
 import JobRatingView from "./JobRatingView.solid"; // Import the new rating component
+import JobAttendanceView from "./JobAttendanceView.solid"; // Import the new attendance component
 import styles from "../../styles/JobLayout.module.css";
 
-type View = 'details' | 'applications' | 'rating'; // Add 'rating' to View type
+type View = 'details' | 'applications' | 'rating' | 'attendance'; // Add 'attendance' to View type
 
 interface JobLayoutProps {
   gigId: string;
@@ -22,6 +23,7 @@ export default function JobLayout(props: JobLayoutProps) {
     { id: 'details' as View, label: 'Job Details', icon: '📋', shortcut: 'Alt+1' },
     { id: 'applications' as View, label: 'Applications', icon: '👥', shortcut: 'Alt+2' },
     { id: 'rating' as View, label: 'Rating', icon: '⭐', shortcut: 'Alt+3' }, // Add rating item
+    { id: 'attendance' as View, label: 'Attendance', icon: '⏰', shortcut: 'Alt+4' }, // Add attendance item
   ];
 
   const showSection = (sectionId: View) => {
@@ -64,6 +66,9 @@ export default function JobLayout(props: JobLayoutProps) {
     } else if (e.altKey && e.key === '3') { // Add shortcut for rating
       e.preventDefault();
       showSection('rating');
+    } else if (e.altKey && e.key === '4') { // Add shortcut for attendance
+      e.preventDefault();
+      showSection('attendance');
     } else if (e.altKey && e.key === 's') {
       e.preventDefault();
       toggleSidebar();
@@ -102,18 +107,20 @@ export default function JobLayout(props: JobLayoutProps) {
         </div>
 
         <nav class={styles.navigation}>
-          {navigationItems.map(item => (
-            <button
-              class={`${styles.navItem} ${currentView() === item.id ? styles.active : ''}`}
-              onClick={() => showSection(item.id)}
-              title={item.shortcut}
-            >
-              <span class={styles.navIcon}>{item.icon}</span>
-              <Show when={!sidebarCollapsed()}>
-                <span class={styles.navLabel}>{item.label}</span>
-              </Show>
-            </button>
-          ))}
+          <For each={navigationItems}>
+            {(item) => (
+              <button
+                class={`${styles.navItem} ${currentView() === item.id ? styles.active : ''}`}
+                onClick={() => showSection(item.id)}
+                title={item.shortcut}
+              >
+                <span class={styles.navIcon}>{item.icon}</span>
+                <Show when={!sidebarCollapsed()}>
+                  <span class={styles.navLabel}>{item.label}</span>
+                </Show>
+              </button>
+            )}
+          </For>
         </nav>
 
         <div class={styles.sidebarFooter}>
@@ -136,6 +143,9 @@ export default function JobLayout(props: JobLayoutProps) {
           </Match>
           <Match when={currentView() === 'rating'}> {/* Add Match for rating */}
             <JobRatingView gigId={props.gigId} />
+          </Match>
+          <Match when={currentView() === 'attendance'}> {/* Add Match for attendance */}
+            <JobAttendanceView gigId={props.gigId} />
           </Match>
         </Switch>
       </main>
