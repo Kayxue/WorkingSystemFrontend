@@ -5,7 +5,7 @@ import CalendarPage from '../components/CalendarPage.solid.tsx';
 
 <Layout title="WorkNow - Calendar">
   <main class="calendar-page">
-    <CalendarPage client:load />
+    <CalendarPage client:only="solid-js"/>
     <a href="/post-job" class="floating-button" title="Add new job" aria-label="Add new job">＋</a>
   </main>
 </Layout>
