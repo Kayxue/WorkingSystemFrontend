@@ -17,6 +17,11 @@ html, body {
   height: 0;
 }
 
+/* CSS Variable for header height - only used on mobile */
+:root {
+  --header-height: 60px;
+}
+
 /* Layout container */
 .jobLayoutContainer {
   display: flex;
@@ -28,7 +33,7 @@ html, body {
 /* Sidebar default (desktop) */
 .sidebar {
   flex-shrink: 0;
-  width: 250px; /* full width default */
+  width: 250px;
   height: 100vh;
   overflow: hidden;
   position: relative;
@@ -178,13 +183,13 @@ html, body {
   flex: 1;
   padding: 2rem;
   padding-bottom: 8rem;
-  overflow-y: auto; /* scrollable */
+  overflow-y: auto;
   background-color: #fff;
   margin: 1rem;
   border-radius: 8px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
   height: calc(100vh - 2rem);
-  -webkit-overflow-scrolling: touch; /* smooth scroll on mobile */
+  -webkit-overflow-scrolling: touch;
 }
 
 /* Content cards */
@@ -245,7 +250,7 @@ html, body {
   color: #2d3748;
 }
 
-/* Mobile Overlay - MISSING STYLE YANG DIBUTUHKAN */
+/* Mobile Overlay */
 .mobileOverlay {
   position: fixed;
   top: 0;
@@ -253,138 +258,196 @@ html, body {
   width: 100vw;
   height: 100vh;
   background: rgba(0, 0, 0, 0.5);
-  z-index: 5;
+  z-index: 99;
   display: none;
 }
 
 /* --------------------------
-   Responsive: Mobile behavior
+   Responsive Design - All Desktop Sizes
 --------------------------- */
-@media (max-width: 768px) {
-  /* Show mobile overlay when sidebar is open */
-  .mobileOverlay {
-    display: block;
+
+/* Tablet Landscape - Desktop Sizes */
+@media (max-width: 1024px) {
+  .sidebar {
+    width: 250px;
+    height: 100vh;
+  }
+  
+  .sidebar.collapsed {
+    width: 70px;
   }
 
-  /* Make sidebar overlay on mobile when expanded */
+  .mainContent {
+    margin: 1rem;
+    height: calc(100vh - 2rem);
+    padding: 2rem;
+    padding-bottom: 8rem;
+  }
+
+  .sidebarHeader {
+    padding: 1.5rem 1rem;
+    min-height: 70px;
+  }
+
+  .navItem {
+    padding: 1rem;
+    font-size: 1rem;
+  }
+
+  .backButton {
+    padding: 1rem;
+    font-size: 1rem;
+  }
+}
+
+/* Tablet Portrait & Large Mobile - Mobile Adjustments */
+@media (max-width: 768px) {
+  .jobLayoutContainer {
+    position: relative;
+    height: calc(100vh - var(--header-height));
+    margin-top: var(--header-height);
+  }
+
   .sidebar {
     position: fixed;
     left: 0;
-    top: 0;
+    top: var(--header-height); /* Position below header */
+    width: 70px; /* Desktop collapsed size */
+    height: calc(100vh - var(--header-height));
     z-index: 100;
-    width: 70px; /* default collapsed on mobile */
-    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.15);
+    transform: translateX(0);
+    transition: width 0.3s ease, transform 0.3s ease;
   }
-  
-  /* When expanded on mobile, show full width and overlay */
+
+  /* When expanded on mobile - Desktop expanded size */
   .sidebar:not(.collapsed) {
     width: 250px;
   }
-  
-  /* Make sure main content takes full width on mobile */
+
+  /* Mobile overlay active when sidebar expanded */
+  .sidebar:not(.collapsed) ~ .mobileOverlay {
+    display: block;
+    top: var(--header-height);
+    height: calc(100vh - var(--header-height));
+  }
+
   .mainContent {
-    margin: 0.5rem;
-    margin-left: calc(70px + 0.5rem); /* account for collapsed sidebar */
-    height: calc(100vh - 1rem);
-    overflow-y: auto;
-    width: calc(100% - 70px - 1rem);
+    margin: 1rem;
+    margin-left: calc(70px + 1rem); /* Desktop collapsed width + margin */
+    width: calc(100% - 70px - 2rem);
+    height: calc(100vh - var(--header-height) - 2rem);
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    padding: 2rem;
+    padding-bottom: 8rem;
     transition: margin-left 0.3s ease, width 0.3s ease;
   }
 
-  /* When sidebar is expanded on mobile, push content */
+  /* When sidebar expanded, adjust main content - Desktop sizes */
   .sidebar:not(.collapsed) ~ .mainContent {
-    margin-left: calc(250px + 0.5rem);
-    width: calc(100% - 250px - 1rem);
+    margin-left: calc(250px + 1rem);
+    width: calc(100% - 250px - 2rem);
   }
 
-  /* Mobile navigation adjustments */
-  .navItem {
-    font-size: 0.9rem;
-    padding: 0.75rem;
+  /* Mobile navigation styling - Desktop sizes */
+  .sidebarHeader {
+    padding: 1.5rem 1rem;
+    min-height: 70px;
   }
-  
-  /* When collapsed on mobile, center the nav items */
+
+  .sidebar.collapsed .sidebarHeader {
+    justify-content: center;
+  }
+
+  .sidebar:not(.collapsed) .sidebarHeader {
+    justify-content: space-between;
+  }
+
+  .sidebar.collapsed .sidebarTitle {
+    display: none;
+  }
+
+  .navItem {
+    padding: 1rem;
+    font-size: 1rem;
+  }
+
   .sidebar.collapsed .navItem {
     justify-content: center;
   }
-  
-  /* When expanded on mobile, show normal layout */
+
   .sidebar:not(.collapsed) .navItem {
     justify-content: flex-start;
   }
 
-  .sidebarHeader {
+  .sidebar.collapsed .backButton {
+    justify-content: center;
     padding: 1rem;
   }
-  
-  /* When collapsed on mobile, center header content */
-  .sidebar.collapsed .sidebarHeader {
-    justify-content: center;
-  }
-  
-  /* When expanded on mobile, show normal layout */
-  .sidebar:not(.collapsed) .sidebarHeader {
-    justify-content: space-between;
-  }
-  
-  /* Hide title only when collapsed */
-  .sidebar.collapsed .sidebarTitle {
-    display: none;
-  }
-  
-  /* Show title when expanded */
-  .sidebar:not(.collapsed) .sidebarTitle {
-    display: block;
-  }
 
-  /* Back button adjustments for mobile */
-  .sidebar.collapsed .backButton {
-    padding: 0.75rem 0.5rem;
-    font-size: 0.85rem;
-    justify-content: center;
-  }
-  
   .sidebar:not(.collapsed) .backButton {
     justify-content: flex-start;
+    padding: 1rem;
+    font-size: 1rem;
   }
 }
 
+/* Mobile Small - Desktop Sizes */
 @media (max-width: 480px) {
-  /* Further adjust for very small screens */
+  .sidebar {
+    width: 70px; /* Desktop collapsed size */
+    top: var(--header-height);
+    height: calc(100vh - var(--header-height));
+  }
+
   .sidebar:not(.collapsed) {
-    width: 200px; /* smaller for tiny screens */
+    width: 250px; /* Desktop expanded size */
   }
-  
-  .sidebar.collapsed {
-    width: 55px;
-  }
-  
+
   .mainContent {
-    padding: 1rem; /* less padding for more space */
-    margin-left: calc(55px + 0.5rem);
-    width: calc(100% - 55px - 1rem);
+    margin: 1rem;
+    margin-left: calc(70px + 1rem);
+    width: calc(100% - 70px - 2rem);
+    height: calc(100vh - var(--header-height) - 2rem);
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    padding: 2rem;
+    padding-bottom: 8rem;
   }
 
   .sidebar:not(.collapsed) ~ .mainContent {
-    margin-left: calc(200px + 0.5rem);
-    width: calc(100% - 200px - 1rem);
+    margin-left: calc(250px + 1rem);
+    width: calc(100% - 250px - 2rem);
   }
-  
-  .navItem {
-    font-size: 0.9rem;
-    padding: 0.75rem 0.5rem;
-  }
-  
+
   .sidebarHeader {
-    padding: 1rem 0.5rem;
+    padding: 1.5rem 1rem;
+    min-height: 70px;
   }
-  
+
   .sidebarTitle {
+    font-size: 1.2rem;
+  }
+
+  .navItem {
+    padding: 1rem;
     font-size: 1rem;
   }
-  
+
   .backButton {
-    font-size: 0.85rem;
-    padding: 0.75rem 0.5rem;
+    font-size: 1rem;
+    padding: 1rem;
   }
+}
+
+/* Mobile Extra Small - Desktop Sizes */
+@media (max-width: 480px) {
+  .sidebarTitle {
+    font-size: 1.2rem;
+  }
+}
+
+/* Very Small Mobile - Desktop Sizes */
+@media (max-width: 360px) {
+  /* All styling inherited from 480px breakpoint */
 }
