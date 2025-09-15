@@ -181,7 +181,7 @@
 }
 
 .pageButton {
-  padding: 0.4rem 0.8rem;
+  padding: 0.4rem;
   background-color: white;
   border: 1px solid #ddd;
   color: #333;
@@ -215,14 +215,49 @@
   margin: 2rem auto;
 }
 
+.footerContent {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 10px;
+  margin-bottom: 30px;
+}
+
 @keyframes spin {
   to {
     transform: rotate(360deg);
   }
 }
 
-@media (max-width: 900px) {
+@media (max-width: 600px) {
   .dashboardContainer {
     width: 90%;
+  }
+  .btn {
+    font-size: 12px;
+  }
+  form {
+    font-size: medium;
+  }
+  .paginationContainer {
+    align-items: center;
+    gap: 5px;
+  }
+  .pageButton {
+    font-size: 12px;
+    padding: 3px;
+    font-weight: normal;
+  }
+  .jobCardWrapper {
+    font-size: smaller;
+  }
+  .jobStatus {
+    width: 80px;
+  }
+  .actionButton {
+    width: 100px;
+  }
+  .jobTitle {
+    font-size: 20px;
   }
 }

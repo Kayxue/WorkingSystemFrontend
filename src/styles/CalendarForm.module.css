@@ -1,4 +1,4 @@
-.calendar {
+.calendarContainer {
   margin-top: 1rem;
   width: 70%;
   overflow: visible !important;
@@ -268,7 +268,7 @@
 .pagination button {
   background: white;
   border: 1px solid #ccc;
-  padding: 6px 12px;
+  padding: 0.4rem;
   border-radius: 5px;
   cursor: pointer;
   color: black;
@@ -320,33 +320,73 @@ button:disabled {
   margin: 2rem auto;
 }
 
+.footerContent {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 10px;
+  margin-bottom: 30px;
+}
+
 @keyframes spin {
   to {
     transform: rotate(360deg);
   }
 }
 
-@media (max-width: 900px) {
-  .calendar {
+@media (max-width: 600px) {
+  .calendarContainer {
     width: 90%;
   }
 
   .grid {
     gap: 5px;
+    padding: 10px;
+  }
+
+  .dayHeader {
+    font-size: smaller;
+    font-weight: normal;
   }
 
   .day {
-    padding: 5px;
-    height: 70px;
+    padding: 0;
+    height: 60px;
+  }
+
+  .day span {
+    font-size: 18px;
   }
   
+  .gigCount {
+    gap: 2px;
+    font-size: 12px;
+  }
+
+  .gigCount svg {
+    width: 10px;
+    height: 10px;
+  }
+
   .jobsHeader {
-    flex-direction: column;
+    flex-direction: row;
     gap: 8px;
     text-align: center;
   }
+
+  .jobsHeader svg {
+    height: 14px;
+    width: 14px;
+  }
   
-  .calendarToggleButton {
-    align-self: center;
+  .pagination {
+    align-items: center;
+    gap: 5px;
+  }
+
+  .pagination button {
+    font-size: 12px;
+    padding: 3px;
+    font-weight: normal;
   }
 }
