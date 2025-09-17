@@ -27,20 +27,78 @@ export default function JobAttendanceView(props: JobAttendanceProps) {
   const [selectedDate, setSelectedDate] = createSignal("");
   const [filterStatus, setFilterStatus] = createSignal<string>("all");
 
-  const [attendanceRecords] = createResource(
+  // store notes edits locally (recordId -> notes)
+  const [notesEdits, setNotesEdits] = createSignal<Record<string, string>>({});
+
+  const [attendanceRecords, { refetch }] = createResource(
     () => ({ gigId: props.gigId, date: selectedDate(), status: filterStatus() }),
     async ({ gigId, date, status }) => {
-      let url = `/api/gigs/${gigId}/attendance-records`;
-      const params = new URLSearchParams();
-      if (date) params.append("date", date);
-      if (status !== "all") params.append("status", status);
-      if (params.toString()) url += `?${params.toString()}`;
+      let url = `/api/attendance/records?gigId=${gigId}`;
+      if (date) url += `&dateStart=${date}&dateEnd=${date}`;
+      if (status !== "all") url += `&status=${status}`;
 
       const response = await fetch(url);
       if (!response.ok) throw new Error("Failed to fetch attendance records");
-      return response.json() as AttendanceRecord[];
+
+      const data = await response.json();
+      console.log("API response:", data);
+      return data.records ?? [];
     }
   );
+
+  // auto update status when dropdown changes
+const updateStatus = async (record: AttendanceRecord, newStatus: string) => {
+  const payload = { 
+    recordId: record.recordId, 
+    status: newStatus, 
+    notes: String(record.notes)
+  };
+
+  const response = await fetch("/api/attendance/record", {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    alert("更新狀態失敗");
+    return;
+  }
+
+  console.log("Status updated:", await response.json());
+  refetch();
+};
+
+// batch save notes
+const saveNotes = async () => {
+  const edits = notesEdits();
+  for (const recordId in edits) {
+    const record = attendanceRecords()?.find(r => r.recordId === recordId);
+    if (!record) continue;
+
+    const payload = { 
+      recordId, 
+      notes: String(edits[recordId] ?? ""), 
+      status: record.status // 🔑 must include status 
+    };
+
+    const response = await fetch("/api/attendance/record", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      alert(`更新筆記失敗 (recordId: ${recordId})`);
+      return;
+    }
+    console.log("Notes updated:", await response.json());
+  }
+
+  alert("所有筆記已更新！");
+  setNotesEdits({});
+  refetch();
+};
 
   const formatTime = (dateString: string) => {
     return new Date(dateString).toLocaleTimeString("zh-TW", {
@@ -87,7 +145,7 @@ export default function JobAttendanceView(props: JobAttendanceProps) {
   return (
     <div class={styles.attendanceContainer}>
       <div class={styles.contentCard}>
-        {/* Header + Filters (kanan) */}
+        {/* Header + Filters */}
         <div class={styles.headerRow}>
           <h3>Attendance Records</h3>
           <div class={styles.filters}>
@@ -130,6 +188,7 @@ export default function JobAttendanceView(props: JobAttendanceProps) {
               <For each={attendanceRecords()}>
                 {(record) => (
                   <div class={styles.tableRow}>
+                    {/* Worker */}
                     <div class={styles.cell}>
                       <div class={styles.workerInfo}>
                         <div class={styles.workerName}>
@@ -138,24 +197,71 @@ export default function JobAttendanceView(props: JobAttendanceProps) {
                         <div class={styles.workerEmail}>{record.worker?.email}</div>
                       </div>
                     </div>
+
+                    {/* Type */}
                     <div class={styles.cell}>
                       <span class={`${styles.checkType} ${styles[record.checkType]}`}>
                         {getCheckTypeText(record.checkType)}
                       </span>
                     </div>
+
+                    {/* Time */}
                     <div class={styles.cell}>{formatTime(record.createdAt)}</div>
+
+                    {/* Status -> auto updates */}
                     <div class={styles.cell}>
-                      <span
-                        class={styles.status}
+                      <select
+                        value={record.status}
                         style={`color: ${getStatusColor(record.status)}`}
+                        onChange={(e) => updateStatus(record, e.currentTarget.value)}
                       >
-                        {getStatusText(record.status)}
-                      </span>
+                        <option value="on_time">準時</option>
+                        <option value="late">遲到</option>
+                        <option value="early">早退</option>
+                      </select>
                     </div>
-                    <div class={styles.cell}>{record.notes || "-"}</div>
+
+                    {/* Notes -> local edit only */}
+                    <div class={styles.cell}>
+                      <input
+                        type="text"
+                        value={notesEdits()[record.recordId] ?? record.notes ?? ""}
+                        onInput={(e) =>
+                          setNotesEdits({
+                            ...notesEdits(),
+                            [record.recordId]: e.currentTarget.value,
+                          })
+                        }
+                        onBlur={async (e) => {
+                          const newNotes = e.currentTarget.value;
+                          const payload = {
+                            recordId: record.recordId,
+                            status: record.status,
+                            notes: String(newNotes ?? ""),
+                          };
+
+                          const response = await fetch("/api/attendance/record", {
+                            method: "PUT",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify(payload),
+                          });
+
+                          if (!response.ok) {
+                            const errorText = await response.text();
+                            console.error("更新筆記失敗:", errorText);
+                            alert("更新筆記失敗");
+                            return;
+                          }
+
+                          console.log("Notes auto-saved:", await response.json());
+                          refetch();
+                        }}
+                      />
+                    </div>
                   </div>
                 )}
               </For>
+
             </Show>
           </Show>
         </div>

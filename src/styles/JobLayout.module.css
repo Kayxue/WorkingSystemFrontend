@@ -303,21 +303,21 @@ html, body {
 /* Tablet Portrait & Large Mobile - Mobile Adjustments */
 @media (max-width: 768px) {
   .jobLayoutContainer {
-    position: relative;
-    height: calc(100vh - var(--header-height));
-    margin-top: var(--header-height);
-  }
+  position: relative;
+  height: calc(100vh - var(--header-height));
+  margin-top: 0; /* ✅ remove gap */
+}
 
-  .sidebar {
-    position: fixed;
-    left: 0;
-    top: var(--header-height); /* Position below header */
-    width: 70px; /* Desktop collapsed size */
-    height: calc(100vh - var(--header-height));
-    z-index: 100;
-    transform: translateX(0);
-    transition: width 0.3s ease, transform 0.3s ease;
-  }
+.sidebar {
+  position: fixed;
+  left: 0;
+  top: var(--header-height); /* ✅ ensures it starts below banner */
+  width: 70px;
+  height: calc(100vh - var(--header-height)); /* ✅ fills below banner */
+  z-index: 100;
+  transform: translateX(0);
+  transition: width 0.3s ease, transform 0.3s ease;
+}
 
   /* When expanded on mobile - Desktop expanded size */
   .sidebar:not(.collapsed) {
@@ -338,7 +338,7 @@ html, body {
     height: calc(100vh - var(--header-height) - 2rem);
     border-radius: 8px;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-    padding: 2rem;
+    padding: 1rem;
     padding-bottom: 8rem;
     transition: margin-left 0.3s ease, width 0.3s ease;
   }

@@ -193,7 +193,7 @@ const JobDetailsView: Component<JobDetailsViewProps> = (props) => {
                     )}`)
                   }
                 >
-                  ✎ Edit Job
+                  ✎ Edit
                 </button>
               </div>
 
@@ -346,26 +346,33 @@ const JobDetailsView: Component<JobDetailsViewProps> = (props) => {
               {/* Contact info */}
               <section class={styles.section}>
                 <h2>Contact Information</h2>
-                <div class={styles.infoGrid}>
-                  <div class={styles.infoItem}>
-                    <span class={styles.label}>Contact Person:</span> {jobInfo.contactPerson || "Not specified"}
-                  </div>
-                  <div class={styles.infoItem}>
-                    <span class={styles.label}>Phone:</span>
+                
+                <div class={styles.contentBox}>
+                  <span class={styles.label}>Contact Person:</span>
+                  <div>{jobInfo.contactPerson || "Not specified"}</div>
+                </div>
+
+                <div class={styles.contentBox}>
+                  <span class={styles.label}>Phone:</span>
+                  <div>
                     <Show when={jobInfo.contactPhone} fallback="Not provided">
                       <a href={`tel:${jobInfo.contactPhone}`}>{jobInfo.contactPhone}</a>
                     </Show>
                   </div>
-                  <div class={styles.infoItem}>
-                    <span class={styles.label}>Email:</span>
+                </div>
+
+                <div class={styles.contentBox}>
+                  <span class={styles.label}>Email:</span>
+                  <div>
                     <Show when={jobInfo.contactEmail} fallback="Not provided">
                       <a href={`mailto:${jobInfo.contactEmail}`}>{jobInfo.contactEmail}</a>
                     </Show>
                   </div>
-                  <div class={styles.infoItem}>
-                    <span class={styles.label}>Posted on:</span>{" "}
-                    {formatDateToDDMMYYYY(jobInfo.publishedAt) || "Date not available"}
-                  </div>
+                </div>
+
+                <div class={styles.contentBox}>
+                  <span class={styles.label}>Posted on:</span>
+                  <div>{formatDateToDDMMYYYY(jobInfo.publishedAt) || "Date not available"}</div>
                 </div>
               </section>
 
