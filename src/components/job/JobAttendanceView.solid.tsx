@@ -42,23 +42,66 @@ export default function JobAttendanceView(props: JobAttendanceProps) {
   );
 
   const updateStatus = async (record: AttendanceRecord, newStatus: string) => {
-    const payload = { recordId: record.recordId, status: newStatus, notes: String(record.notes) };
+    const payload = {
+      recordId: record.recordId,
+      status: newStatus,
+      notes: String(record.notes ?? notesEdits()[record.recordId] ?? "")
+    };
     const response = await fetch("/api/attendance/record", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
     if (!response.ok) {
-      alert("更新狀態失敗");
+      alert("Failed to update status");
       return;
     }
+    refetch();
+  };
+
+  const saveNotes = async () => {
+    const edits = notesEdits();
+    for (const recordId in edits) {
+      const record = attendanceRecords()?.find(r => r.recordId === recordId);
+      if (!record) continue;
+
+      const payload = {
+        recordId,
+        notes: String(edits[recordId] ?? ""),
+        status: record.status
+      };
+
+      const response = await fetch("/api/attendance/record", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        alert(`Failed to save notes (recordId: ${recordId})`);
+        return;
+      }
+    }
+
+    alert("All notes updated!");
+    setNotesEdits({});
     refetch();
   };
 
   const formatTime = (dateString: string) =>
     new Date(dateString).toLocaleTimeString("zh-TW", { hour: "2-digit", minute: "2-digit" });
 
-  const getCheckTypeText = (checkType: string) => (checkType === "check_in" ? "上班打卡" : "下班打卡");
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "on_time": return "#10b981"; // green
+      case "late": return "#f59e0b"; // orange
+      case "early": return "#ef4444"; // red
+      default: return "#6b7280"; // gray
+    }
+  };
+
+  const getCheckTypeText = (checkType: string) =>
+    checkType === "check_in" ? "上班打卡" : "下班打卡";
 
   onMount(() => {
     const today = new Date().toISOString().split("T")[0];
@@ -76,12 +119,18 @@ export default function JobAttendanceView(props: JobAttendanceProps) {
               type="date"
               class={styles.formInput}
               value={selectedDate()}
-              onInput={(e) => setSelectedDate(e.currentTarget.value)}
+              onInput={(e) => {
+                setSelectedDate(e.currentTarget.value);
+                refetch();
+              }}
             />
             <select
               class={styles.formInput}
               value={filterStatus()}
-              onInput={(e) => setFilterStatus(e.currentTarget.value)}
+              onInput={(e) => {
+                setFilterStatus(e.currentTarget.value);
+                refetch();
+              }}
             >
               <option value="all">All</option>
               <option value="on_time">On Time</option>
@@ -124,14 +173,13 @@ export default function JobAttendanceView(props: JobAttendanceProps) {
                     </div>
 
                     {/* Time */}
-                    <div class={styles.cell} data-label="Time">
-                      {formatTime(record.createdAt)}
-                    </div>
+                    <div class={styles.cell} data-label="Time">{formatTime(record.createdAt)}</div>
 
                     {/* Status */}
                     <div class={styles.cell} data-label="Status">
                       <select
                         value={record.status}
+                        style={{ color: getStatusColor(record.status) }}
                         onChange={(e) => updateStatus(record, e.currentTarget.value)}
                       >
                         <option value="on_time">準時</option>
@@ -146,16 +194,13 @@ export default function JobAttendanceView(props: JobAttendanceProps) {
                         type="text"
                         value={notesEdits()[record.recordId] ?? record.notes ?? ""}
                         onInput={(e) =>
-                          setNotesEdits({
-                            ...notesEdits(),
-                            [record.recordId]: e.currentTarget.value,
-                          })
+                          setNotesEdits({ ...notesEdits(), [record.recordId]: e.currentTarget.value })
                         }
                         onBlur={async (e) => {
                           const payload = {
                             recordId: record.recordId,
                             status: record.status,
-                            notes: String(e.currentTarget.value ?? ""),
+                            notes: String(e.currentTarget.value ?? "")
                           };
                           const response = await fetch("/api/attendance/record", {
                             method: "PUT",
@@ -163,7 +208,7 @@ export default function JobAttendanceView(props: JobAttendanceProps) {
                             body: JSON.stringify(payload),
                           });
                           if (!response.ok) {
-                            alert("更新筆記失敗");
+                            alert("Failed to update note");
                             return;
                           }
                           refetch();
