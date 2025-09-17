@@ -10,16 +10,15 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 24px;
-  padding-bottom: 16px;
-  border-bottom: 1px solid #e5e7eb;
 }
 
 .header h2 {
-  margin: 0;
-  color: #1f2937;
-  font-size: 24px;
-  font-weight: 600;
+  margin-top: 0;
+  margin-bottom: 1.5rem;
+  color: #333;
+  font-size: 1.8rem;
+  border-bottom: 2px solid #007acc;
+  padding-bottom: 0.5rem;
 }
 
 .stats {
