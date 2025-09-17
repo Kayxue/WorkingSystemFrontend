@@ -26,8 +26,6 @@ interface JobAttendanceProps {
 export default function JobAttendanceView(props: JobAttendanceProps) {
   const [selectedDate, setSelectedDate] = createSignal("");
   const [filterStatus, setFilterStatus] = createSignal<string>("all");
-
-  // store notes edits locally (recordId -> notes)
   const [notesEdits, setNotesEdits] = createSignal<Record<string, string>>({});
 
   const [attendanceRecords, { refetch }] = createResource(
@@ -36,106 +34,31 @@ export default function JobAttendanceView(props: JobAttendanceProps) {
       let url = `/api/attendance/records?gigId=${gigId}`;
       if (date) url += `&dateStart=${date}&dateEnd=${date}`;
       if (status !== "all") url += `&status=${status}`;
-
       const response = await fetch(url);
       if (!response.ok) throw new Error("Failed to fetch attendance records");
-
       const data = await response.json();
-      console.log("API response:", data);
       return data.records ?? [];
     }
   );
 
-  // auto update status when dropdown changes
-const updateStatus = async (record: AttendanceRecord, newStatus: string) => {
-  const payload = { 
-    recordId: record.recordId, 
-    status: newStatus, 
-    notes: String(record.notes)
-  };
-
-  const response = await fetch("/api/attendance/record", {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  });
-
-  if (!response.ok) {
-    alert("更新狀態失敗");
-    return;
-  }
-
-  console.log("Status updated:", await response.json());
-  refetch();
-};
-
-// batch save notes
-const saveNotes = async () => {
-  const edits = notesEdits();
-  for (const recordId in edits) {
-    const record = attendanceRecords()?.find(r => r.recordId === recordId);
-    if (!record) continue;
-
-    const payload = { 
-      recordId, 
-      notes: String(edits[recordId] ?? ""), 
-      status: record.status // 🔑 must include status 
-    };
-
+  const updateStatus = async (record: AttendanceRecord, newStatus: string) => {
+    const payload = { recordId: record.recordId, status: newStatus, notes: String(record.notes) };
     const response = await fetch("/api/attendance/record", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
-
     if (!response.ok) {
-      alert(`更新筆記失敗 (recordId: ${recordId})`);
+      alert("更新狀態失敗");
       return;
     }
-    console.log("Notes updated:", await response.json());
-  }
-
-  alert("所有筆記已更新！");
-  setNotesEdits({});
-  refetch();
-};
-
-  const formatTime = (dateString: string) => {
-    return new Date(dateString).toLocaleTimeString("zh-TW", {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
+    refetch();
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "on_time":
-        return "#10b981";
-      case "late":
-        return "#f59e0b";
-      case "early":
-        return "#ef4444";
-      default:
-        return "#6b7280";
-    }
-  };
+  const formatTime = (dateString: string) =>
+    new Date(dateString).toLocaleTimeString("zh-TW", { hour: "2-digit", minute: "2-digit" });
 
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case "on_time":
-        return "準時";
-      case "late":
-        return "遲到";
-      case "early":
-        return "早退";
-      default:
-        return status;
-    }
-  };
-
-  const getCheckTypeText = (checkType: string) => {
-    return checkType === "check_in" ? "上班打卡" : "下班打卡";
-  };
+  const getCheckTypeText = (checkType: string) => (checkType === "check_in" ? "上班打卡" : "下班打卡");
 
   onMount(() => {
     const today = new Date().toISOString().split("T")[0];
@@ -168,16 +91,10 @@ const saveNotes = async () => {
           </div>
         </div>
 
-        {/* Records Table */}
+        {/* Records Table / Cards */}
         <div class={styles.recordsTable}>
-          <Show
-            when={!attendanceRecords.loading}
-            fallback={<div class={styles.placeholder}>Loading records...</div>}
-          >
-            <Show
-              when={attendanceRecords()?.length > 0}
-              fallback={<div class={styles.noRecords}>No records found.</div>}
-            >
+          <Show when={!attendanceRecords.loading} fallback={<div class={styles.placeholder}>Loading records...</div>}>
+            <Show when={attendanceRecords()?.length > 0} fallback={<div class={styles.noRecords}>No records found.</div>}>
               <div class={styles.tableHeader}>
                 <div class={styles.headerCell}>Worker</div>
                 <div class={styles.headerCell}>Type</div>
@@ -185,11 +102,12 @@ const saveNotes = async () => {
                 <div class={styles.headerCell}>Status</div>
                 <div class={styles.headerCell}>Notes</div>
               </div>
+
               <For each={attendanceRecords()}>
                 {(record) => (
                   <div class={styles.tableRow}>
                     {/* Worker */}
-                    <div class={styles.cell}>
+                    <div class={styles.cell} data-label="Worker">
                       <div class={styles.workerInfo}>
                         <div class={styles.workerName}>
                           {record.worker?.firstName} {record.worker?.lastName}
@@ -199,20 +117,21 @@ const saveNotes = async () => {
                     </div>
 
                     {/* Type */}
-                    <div class={styles.cell}>
+                    <div class={styles.cell} data-label="Type">
                       <span class={`${styles.checkType} ${styles[record.checkType]}`}>
                         {getCheckTypeText(record.checkType)}
                       </span>
                     </div>
 
                     {/* Time */}
-                    <div class={styles.cell}>{formatTime(record.createdAt)}</div>
+                    <div class={styles.cell} data-label="Time">
+                      {formatTime(record.createdAt)}
+                    </div>
 
-                    {/* Status -> auto updates */}
-                    <div class={styles.cell}>
+                    {/* Status */}
+                    <div class={styles.cell} data-label="Status">
                       <select
                         value={record.status}
-                        style={`color: ${getStatusColor(record.status)}`}
                         onChange={(e) => updateStatus(record, e.currentTarget.value)}
                       >
                         <option value="on_time">準時</option>
@@ -221,8 +140,8 @@ const saveNotes = async () => {
                       </select>
                     </div>
 
-                    {/* Notes -> local edit only */}
-                    <div class={styles.cell}>
+                    {/* Notes */}
+                    <div class={styles.cell} data-label="Notes">
                       <input
                         type="text"
                         value={notesEdits()[record.recordId] ?? record.notes ?? ""}
@@ -233,27 +152,20 @@ const saveNotes = async () => {
                           })
                         }
                         onBlur={async (e) => {
-                          const newNotes = e.currentTarget.value;
                           const payload = {
                             recordId: record.recordId,
                             status: record.status,
-                            notes: String(newNotes ?? ""),
+                            notes: String(e.currentTarget.value ?? ""),
                           };
-
                           const response = await fetch("/api/attendance/record", {
                             method: "PUT",
                             headers: { "Content-Type": "application/json" },
                             body: JSON.stringify(payload),
                           });
-
                           if (!response.ok) {
-                            const errorText = await response.text();
-                            console.error("更新筆記失敗:", errorText);
                             alert("更新筆記失敗");
                             return;
                           }
-
-                          console.log("Notes auto-saved:", await response.json());
                           refetch();
                         }}
                       />
@@ -261,7 +173,6 @@ const saveNotes = async () => {
                   </div>
                 )}
               </For>
-
             </Show>
           </Show>
         </div>

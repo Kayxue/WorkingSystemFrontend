@@ -9,9 +9,7 @@
   box-sizing: border-box;
 }
 
-
-
-/* Header row (title + Right filters) */
+/* Header row (title + right-side filters) */
 .headerRow {
   display: flex;
   align-items: center;
@@ -27,11 +25,13 @@
   padding-bottom: 0.5rem;
 }
 
-/* Right Filters */
+/* Right-side filters */
 .filters {
   display: flex;
+  flex-wrap: wrap;
   gap: 0.5rem;
   align-items: center;
+  justify-content: flex-end;
 }
 
 .formInput {
@@ -49,7 +49,8 @@
   border-top: 1px solid #e5e7eb;
 }
 
-.tableHeader, .tableRow {
+.tableHeader,
+.tableRow {
   display: grid;
   grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
   padding: 0.75rem 0.5rem;
@@ -111,17 +112,95 @@
   font-weight: 600;
 }
 
-/* Notes */
+/* Notes column */
 .cell:last-child {
   font-style: italic;
   color: #6b7280;
 }
 
-/* Placeholders */
+/* Placeholders for empty content */
 .placeholder,
 .noRecords {
   text-align: center;
   padding: 1rem;
   font-size: 0.95rem;
   color: #6b7280;
+}
+
+/* --------------------------
+   Responsive Adjustments
+--------------------------- */
+
+@media (max-width: 768px) {
+  .headerRow {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .filters {
+    justify-content: flex-start;
+    width: 100%;
+  }
+
+  .formInput {
+    flex: 1;
+    min-width: 140px;
+  }
+}
+
+/* ✅ Convert table to list-style cards on small screens */
+@media (max-width: 600px) {
+  .tableHeader {
+    display: none; /* hide table header */
+  }
+
+  .tableRow {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    padding: 0.75rem;
+    margin-bottom: 1rem;
+    background: #fff;
+  }
+
+  .cell {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    padding: 0.25rem 0;
+    border-bottom: 1px solid #f3f4f6;
+    font-size: 0.85rem;
+  }
+
+  .cell:last-child {
+    border-bottom: none;
+  }
+
+  /* Add labels before values */
+  .cell::before {
+    content: attr(data-label);
+    font-weight: 600;
+    color: #374151;
+    margin-right: 0.5rem;
+  }
+
+  /* Notes column alignment */
+  .cell[data-label="Notes"] {
+    flex-direction: column;   /* label on top, value below */
+    align-items: flex-end;    /* value right-aligned */
+  }
+
+  .cell[data-label="Notes"] input {
+    text-align: right;        /* input text right-aligned */
+    width: 100%;              /* full card width */
+    box-sizing: border-box;
+  }
+
+  .cell[data-label="Notes"]::before {
+    align-self: flex-start;   /* label top-left */
+    margin-bottom: 0.25rem;
+  }
 }
