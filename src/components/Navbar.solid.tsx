@@ -1,4 +1,4 @@
-import { createSignal, Show, onMount, For } from 'solid-js';
+import { createSignal, Show, onMount, For, createEffect, onCleanup } from 'solid-js';
 
 interface NavBarProps {
   loggedIn: boolean;
@@ -26,6 +26,39 @@ function Navbar(props: NavBarProps) {
   const [showActionsMenu, setShowActionsMenu] = createSignal<string | null>(null);
   const [onNotificationPage, setOnNotificationPage] = createSignal(false);
   const { loggedIn, username, employerPhotoUrl } = props;
+
+  let notificationPanelRef: HTMLDivElement | undefined;
+  let notificationButtonRef: HTMLButtonElement | undefined;
+  let dropdownPanelRef: HTMLDivElement | undefined;
+  let dropdownButtonRef: HTMLButtonElement | undefined;
+
+  createEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (notificationsOpen() && 
+          notificationPanelRef && 
+          !notificationPanelRef.contains(event.target as Node) &&
+          notificationButtonRef &&
+          !notificationButtonRef.contains(event.target as Node)) {
+        setNotificationsOpen(false);
+      }
+
+      if (dropdownOpen() &&
+          dropdownPanelRef &&
+          !dropdownPanelRef.contains(event.target as Node) &&
+          dropdownButtonRef &&
+          !dropdownButtonRef.contains(event.target as Node)) {
+        setDropdownOpen(false);
+      }
+    };
+
+    if (notificationsOpen() || dropdownOpen()) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    onCleanup(() => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    });
+  });
 
 onMount(async () => {
   if (window.location.pathname === '/notification') {
@@ -263,6 +296,7 @@ onMount(async () => {
         <div class="relative flex items-center gap-2 sm:gap-3">
           <div class="relative">
             <button 
+              ref={notificationButtonRef}
               class="p-2 rounded-full hover:bg-gray-100 transition-colors cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
               onClick={() => {setNotificationsOpen(!notificationsOpen()); setDropdownOpen(false);}}
               aria-label="通知"
@@ -278,7 +312,7 @@ onMount(async () => {
                 </span>
               </Show>
             </button>
-            <div class={`fixed max-h-max w-[95vw] sm:mx-2 top-14 right-3 sm:top-16 sm:right-0 sm:w-96 bg-white border-t sm:border border-gray-200 sm:rounded-lg shadow-lg py-1 transition-all duration-200 ${notificationsOpen() ? 'opacity-100 translate-y-0 pointer-events-auto' : 'opacity-0 -translate-y-2 pointer-events-none'}`}>
+            <div ref={notificationPanelRef} class={`fixed max-h-max w-[95vw] sm:mx-2 top-14 right-3 sm:top-16 sm:right-0 sm:w-96 bg-white border-t sm:border border-gray-200 sm:rounded-lg shadow-lg py-1 transition-all duration-200 ${notificationsOpen() ? 'opacity-100 translate-y-0 pointer-events-auto' : 'opacity-0 -translate-y-2 pointer-events-none'}`}>
               <div class= "flex flex-row place-content-between">
                 <div class="text-2xl px-4 py-2 font-semibold text-gray-800 ">通知</div>
                 <button 
@@ -393,10 +427,10 @@ onMount(async () => {
           }>
             <img src={employerPhotoUrl!} alt="使用者頭像" class="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover border-2 border-blue-600 shadow-sm" />
           </Show>
-          <button class="flex items-center gap-1 bg-gray-100 text-gray-800 border border-gray-200 px-3 sm:px-4 py-2 rounded-full font-semibold hover:bg-gray-200 transition-colors text-sm sm:text-base cursor-pointer" onClick={() => {setDropdownOpen(!dropdownOpen()); setNotificationsOpen(false);}}>
+          <button ref={dropdownButtonRef} class="flex items-center gap-1 bg-gray-100 text-gray-800 border border-gray-200 px-3 sm:px-4 py-2 rounded-full font-semibold hover:bg-gray-200 transition-colors text-sm sm:text-base cursor-pointer" onClick={() => {setDropdownOpen(!dropdownOpen()); setNotificationsOpen(false);}}>
             {username} <span class="text-xs">▼</span>
           </button>
-          <div class={`fixed top-16 left-0 right-0 sm:absolute sm:top-14 sm:left-auto sm:right-0 bg-white border-t sm:border border-gray-200 sm:rounded-lg shadow-lg py-2 w-full sm:min-w-[160px] sm:w-auto transition-all duration-200 ${dropdownOpen() ? 'opacity-100 translate-y-0 pointer-events-auto' : 'opacity-0 -translate-y-2 pointer-events-none'}`}>
+          <div ref={dropdownPanelRef} class={`fixed top-16 left-0 right-0 sm:absolute sm:top-14 sm:left-auto sm:right-0 bg-white border-t sm:border border-gray-200 sm:rounded-lg shadow-lg py-2 w-full sm:min-w-[160px] sm:w-auto transition-all duration-200 ${dropdownOpen() ? 'opacity-100 translate-y-0 pointer-events-auto' : 'opacity-0 -translate-y-2 pointer-events-none'}`}>
             <button class="block w-full text-left px-4 sm:px-5 py-2 text-gray-800 hover:bg-gray-100 hover:text-blue-600 transition-colors text-sm sm:text-base cursor-pointer" onClick={() => window.location.href = '/account-settings?section=profile'}>個人資料</button>
             <button class="block w-full text-left px-4 sm:px-5 py-2 text-gray-800 hover:bg-gray-100 hover:text-blue-600 transition-colors text-sm sm:text-base cursor-pointer" onClick={() => window.location.href = '/notification'}>通知</button>
             <button class="block w-full text-left px-4 sm:px-5 py-2 text-gray-800 hover:bg-gray-100 hover:text-blue-600 transition-colors text-sm sm:text-base cursor-pointer" onClick={handleLogout}>登出</button>
