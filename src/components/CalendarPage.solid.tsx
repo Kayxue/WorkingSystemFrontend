@@ -361,7 +361,7 @@ export default function CalendarPage() {
                 </svg>
               </button>
               <div class={styles.jobsLoadedText}>
-                Jobs of {month()+1}/{selectedDay()}loaded! ({selectedGigs().length} jobs)
+                Jobs of {month()+1}/{selectedDay()} loaded! ({selectedGigs().length} jobs)
               </div>
             </div>
             

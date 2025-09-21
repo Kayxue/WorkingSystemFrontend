@@ -51,6 +51,9 @@ export default function EditJobForm() {
   const [areaData, setAreaData] = createSignal<Record<string, string[]>>({});
   const [districtList, setDistrictList] = createSignal<string[]>([]);
   const [existingPhotos, setExistingPhotos] = createSignal<ExistingPhoto[]>([]);
+  
+  // Track deleted existing photos
+  const [deletedPhotoIds, setDeletedPhotoIds] = createSignal<string[]>([]);
 
   // For handling skills as tags
   const [skillInput, setSkillInput] = createSignal("");
@@ -167,13 +170,29 @@ export default function EditJobForm() {
       setContactPhone(data.contactPhone || "");
       setContactEmail(data.contactEmail || "");
 
-      // Set existing photos if available
-      if (data.photos && Array.isArray(data.photos)) {
-        setExistingPhotos(data.photos.map((photo: any) => ({
-          id: photo.id || photo._id || Math.random().toString(),
-          url: photo.url || photo.path,
-          filename: photo.filename || photo.name || 'photo.jpg'
-        })));
+      // Set existing photos if available - check both possible property names
+      const photosArray = data.photos || data.environmentPhotos;
+      if (photosArray && Array.isArray(photosArray)) {
+        const photoArray = photosArray.map((photo: any, index: number) => {
+          // Handle different possible photo object structures
+          const photoId = photo.id || photo._id || photo.photoId || `photo_${index}`;
+          const photoUrl = photo.url || photo.path || photo.src;
+          const photoName = photo.filename || photo.name || photo.originalName || `photo_${index}.jpg`;
+          
+          console.log("Processing photo:", photo); // Debug log
+          
+          return {
+            id: photoId,
+            url: photoUrl,
+            filename: photoName
+          };
+        }).filter(photo => photo.url); // Only include photos with valid URLs
+        
+        console.log("Setting existing photos:", photoArray); // Debug log
+        setExistingPhotos(photoArray);
+      } else {
+        console.log("No photos found in response. Checked data.photos:", data.photos, "and data.environmentPhotos:", data.environmentPhotos); // Debug log
+        setExistingPhotos([]);
       }
 
     } catch (e) {
@@ -184,7 +203,7 @@ export default function EditJobForm() {
     }
   });
 
-    // Handle requirements updates
+  // Handle requirements updates
   const updateRequirementExperience = (experience: string) => {
     setRequirements(prev => ({ ...prev, experience }));
   };
@@ -256,6 +275,9 @@ export default function EditJobForm() {
   };
 
   const handleExistingPhotoDelete = (photoId: string) => {
+    // Add to deleted photos list
+    setDeletedPhotoIds(current => [...current, photoId]);
+    // Remove from existing photos display
     setExistingPhotos(current => current.filter(photo => photo.id !== photoId));
   };
   
@@ -270,6 +292,7 @@ export default function EditJobForm() {
     
     const today = getTodayDate();
 
+    // Validation
     if (dateEnd() < today) {
       setError("End date cannot be in the past. Please select today or a future date.");
       return;
@@ -280,7 +303,6 @@ export default function EditJobForm() {
       return;
     }
 
-    // Validate requirements
     if (!requirements().experience.trim()) {
       setError("Experience is required.");
       return;
@@ -288,6 +310,19 @@ export default function EditJobForm() {
 
     if (requirements().skills.length === 0) {
       setError("At least one skill is required.");
+      return;
+    }
+
+    // Validate required fields
+    if (!title().trim() || !dateStart() || !dateEnd() || !timeStart() || !timeEnd() || 
+        !city() || !district() || !address().trim() || !description().trim() || 
+        !contactPerson().trim() || !contactPhone().trim() || !contactEmail().trim()) {
+      setError("Please fill in all required fields.");
+      return;
+    }
+
+    if (hourlyRate() <= 0) {
+      setError("Hourly rate must be greater than 0.");
       return;
     }
 
@@ -301,52 +336,48 @@ export default function EditJobForm() {
     }
 
     try {
-      const payload = {
-        title: title(),
-        dateStart: dateStart(),
-        dateEnd: dateEnd(),
-        timeStart: timeStart(),
-        timeEnd: timeEnd(),
-        hourlyRate: hourlyRate(),
-        city: city(),
-        district: district(),
-        address: address(),
-        description: description(),
-        requirements: requirements(),
-        contactPerson: contactPerson(),
-        contactPhone: contactPhone(),
-        contactEmail: contactEmail(),
-        publishedAt: new Date().toISOString(),
-        existingPhotos: existingPhotos().map(photo => photo.id),
-      };
+      const formData = new FormData();
+      formData.append("title", title().trim());
+      formData.append("dateStart", dateStart());
+      formData.append("dateEnd", dateEnd());
+      formData.append("timeStart", timeStart());
+      formData.append("timeEnd", timeEnd());
+      formData.append("hourlyRate", hourlyRate().toString());
+      formData.append("city", city());
+      formData.append("district", district());
+      formData.append("address", address().trim());
+      formData.append("description", description().trim());
+      
+      // Send requirements as JSON string
+      formData.append("requirements", JSON.stringify(requirements()));
+      
+      formData.append("contactPerson", contactPerson().trim());
+      formData.append("contactPhone", contactPhone().trim());
+      formData.append("contactEmail", contactEmail().trim());
+      formData.append("publishedAt", new Date().toISOString());
 
-      // Create FormData if there are new files to upload
-      let body: string | FormData;
-      let headers: Record<string, string>;
+      // Add new photos
+      files().forEach(filePreview => {
+        formData.append('environmentPhotos', filePreview.file);
+      });
 
-      if (files().length > 0) {
-        const formData = new FormData();
-        formData.append('data', JSON.stringify(payload));
-        files().forEach(filePreview => {
-          formData.append('photos', filePreview.file);
-        });
-        body = formData;
-        headers = {
-          "platform": "web-employer",
-        };
-      } else {
-        body = JSON.stringify(payload);
-        headers = {
-          "Content-Type": "application/json",
-          "platform": "web-employer",
-        };
+      // Include photo management info for existing photos
+      if (deletedPhotoIds().length > 0) {
+        formData.append("deletedPhotoIds", JSON.stringify(deletedPhotoIds()));
       }
+      if (existingPhotos().length > 0) {
+        formData.append("keepPhotoIds", JSON.stringify(existingPhotos().map(photo => photo.id)));
+      }
+
+      console.log("Submitting FormData for update");
 
       const response = await fetch(`/api/gig/${id}`, {
         method: "PUT",
-        headers,
+        headers: {
+          "platform": "web-employer",
+        },
         credentials: "include",
-        body,
+        body: formData,
       });
 
       if (response.ok) {
@@ -355,8 +386,43 @@ export default function EditJobForm() {
         window.location.href = "/dashboard";
       } else {
         const result = await response.json().catch(() => ({}));
-        setError(result.message || "更新失敗，請稍後再試。");
+        console.error("API Error Details:", {
+          status: response.status,
+          statusText: response.statusText,
+          body: result
+        });
+        setError(result.message || result.error || `Update failed (${response.status}): ${response.statusText}`);
       }
+
+      // If there are new files to upload, handle them separately
+      if (files().length > 0) {
+        const formData = new FormData();
+        files().forEach(filePreview => {
+          formData.append('environmentPhotos', filePreview.file);
+        });
+
+        const fileResponse = await fetch(`/api/gig/${id}/photos`, {
+          method: "POST",
+          headers: {
+            "platform": "web-employer",
+          },
+          credentials: "include",
+          body: formData,
+        });
+
+        if (!fileResponse.ok) {
+          const fileResult = await fileResponse.json().catch(() => ({}));
+          console.warn("Photo upload failed:", fileResult);
+          // Don't fail the entire update if photos fail
+          setError("Job updated but photo upload failed. Please try uploading photos again.");
+          return;
+        }
+      }
+
+      setSuccess(true);
+      alert("Changes saved successfully!");
+      window.location.href = "/dashboard";
+
     } catch (err) {
       console.error("Submit error:", err);
       setError("發生錯誤，請檢查網路或稍後再試。");
@@ -687,7 +753,8 @@ export default function EditJobForm() {
                 <span>Workplace Photos <span class={styles.fileHint}>(Max: {MAX_FILES} photos, {MAX_SIZE_MB}MB each)</span></span>
               </label>
               
-              {totalPhotos() < MAX_FILES && (
+              {/* Show upload area only if we haven't reached the limit */}
+              <Show when={totalPhotos() < MAX_FILES}>
                 <div class={styles.uploadArea}>
                   <label for="file-upload" class={styles.uploadBox}>
                     <div class={styles.uploadContent}>
@@ -707,52 +774,48 @@ export default function EditJobForm() {
                     />
                   </label>
                 </div>
-              )}
+              </Show>
 
-              <div class={styles.fileGrid}>
-                {/* Display existing photos */}
-                <For each={existingPhotos()}>
-                  {(photo) => (
-                    <div class={styles.filePreview}>
-                      <img src={photo.url} alt="Existing photo" class={styles.previewImage} />
-                      <p class={styles.fileName} title={photo.filename}>{photo.filename}</p>
-                      <button 
-                        onClick={() => handleExistingPhotoDelete(photo.id)} 
-                        type="button" 
-                        class={styles.deleteButton}
-                      >
-                        &times;
-                      </button>
-                    </div>
-                  )}
-                </For>
+              {/* Photo grid showing existing and new photos */}
+              <Show when={totalPhotos() > 0}>
+                <div class={styles.fileGrid}>
+                  {/* Display existing photos first */}
+                  <For each={existingPhotos()}>
+                    {(photo) => (
+                      <div class={styles.filePreview}>
+                        <img src={photo.url} alt="Existing workplace photo" class={styles.previewImage} />
+                        <p class={styles.fileName} title={photo.filename}>{photo.filename}</p>
+                        <button 
+                          onClick={() => handleExistingPhotoDelete(photo.id)} 
+                          type="button" 
+                          class={styles.deleteButton}
+                          title="Remove photo"
+                        >
+                          &times;
+                        </button>
+                      </div>
+                    )}
+                  </For>
 
-                {/* Display new files */}
-                <For each={files()}>
-                  {(filePreview, index) => (
-                    <div class={styles.filePreview}>
-                      {filePreview.file.type.startsWith('image/') ? (
-                        <img src={filePreview.url} alt="Preview" class={styles.previewImage} />
-                      ) : (
-                        <div class={styles.previewDocument}>
-                          <svg class={styles.documentIcon} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                          </svg>
-                          <span class={styles.documentLabel}>Document</span>
-                        </div>
-                      )}
-                      <p class={styles.fileName} title={filePreview.file.name}>{filePreview.file.name}</p>
-                      <button 
-                        onClick={() => handleFileDelete(index())} 
-                        type="button" 
-                        class={styles.deleteButton}
-                      >
-                        &times;
-                      </button>
-                    </div>
-                  )}
-                </For>
-              </div>
+                  {/* Display new files */}
+                  <For each={files()}>
+                    {(filePreview, index) => (
+                      <div class={styles.filePreview}>
+                        <img src={filePreview.url} alt="New workplace photo" class={styles.previewImage} />
+                        <p class={styles.fileName} title={filePreview.file.name}>{filePreview.file.name}</p>
+                        <button 
+                          onClick={() => handleFileDelete(index())} 
+                          type="button" 
+                          class={styles.deleteButton}
+                          title="Remove photo"
+                        >
+                          &times;
+                        </button>
+                      </div>
+                    )}
+                  </For>
+                </div>
+              </Show>
             </div>
           </div>
 
@@ -799,6 +862,7 @@ export default function EditJobForm() {
             </label>
           </div>
 
+          {/* Error and Success Messages */}
           <Show when={error()}>
             <div class={styles.errorMessage}>{error()}</div>
           </Show>
@@ -806,6 +870,7 @@ export default function EditJobForm() {
             <div class={styles.successMessage}>更新成功！</div>
           </Show>
 
+          {/* Submit Button */}
           <button class={styles.postjobBtn} type="submit" disabled={isLoading()}>
             {isLoading() ? "更新中..." : "Update Job"}
           </button>
