@@ -462,7 +462,6 @@ export default function PostJobForm() {
                 type="text"
                 value={requirements().experience}
                 onInput={(e) => updateRequirementExperience(e.currentTarget.value)}
-                placeholder="e.g., 2年工作經驗, 無經驗可, 3-5年相關經驗"
                 required
               />
             </label>
@@ -487,7 +486,7 @@ export default function PostJobForm() {
                         value={skillInput()}
                         onInput={(e) => setSkillInput(e.currentTarget.value)}
                         onKeyPress={handleSkillInputKeyPress}
-                        placeholder="Add a skill requirement..."
+                        placeholder="Add a skill"
                       />
                     </div>
                     <button

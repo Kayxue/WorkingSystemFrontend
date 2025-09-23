@@ -671,12 +671,6 @@
     padding: 1rem;
   }
 
-  .postjobFormWrapper {
-    padding: 1.5rem;
-    margin: 1rem;
-    gap: 1.5rem;
-  }
-
   .formSection {
     padding: 1rem 0;
   }
@@ -693,7 +687,11 @@
   .skillInputBox {
     width: 100%;
   }
-  
+
+  .skillInput {
+    font-size: smaller;
+  }
+ 
   .addSkillButton {
     width: 100%;
     justify-content: center;
