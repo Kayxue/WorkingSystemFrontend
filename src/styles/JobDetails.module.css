@@ -1,3 +1,6 @@
+/* ---------------------------------------------
+   Global / Reset Styles
+--------------------------------------------- */
 html, body {
   font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   line-height: 1.65;
@@ -10,16 +13,20 @@ html, body {
   box-sizing: border-box;
 }
 
+/* ---------------------------------------------
+   Job Details Container
+--------------------------------------------- */
 .jobDetailsContainer {
   position: relative;
   width: 100%;
   max-width: 2000px;
-  margin: 0px;
-  padding: 2rem 0rem;
+  margin: 0 auto;
+  padding: 2rem 0;
   overflow-x: hidden;
   background-color: #ffffff;
 }
 
+/* Loading & Error States */
 .loading {
   text-align: center;
   padding: 3rem;
@@ -45,6 +52,9 @@ html, body {
   font-weight: 600;
 }
 
+/* ---------------------------------------------
+   Job Title Header
+--------------------------------------------- */
 .jobTitle {
   margin-top: 0;
   margin-bottom: 0;
@@ -64,6 +74,7 @@ html, body {
   padding-bottom: 1rem;
 }
 
+/* Paragraphs and labels */
 .jobDetailsContainer > p {
   margin-bottom: 0.8rem;
   font-size: 1.05rem;
@@ -71,12 +82,13 @@ html, body {
 
 .label {
   font-weight: 700;
-  margin-right: 1rem;
+  margin-right: 0rem;
   color: #34495e; 
-  min-width: 100px;
+  min-width: 40px;
   display: inline-block;
 }
 
+/* Status labels */
 .status {
   display: inline-block;
   padding: 0.4rem 1rem;
@@ -112,6 +124,7 @@ html, body {
   border-color: #adb5bd;
 }
 
+/* Sections */
 .section {
   margin: 3rem 0;
   padding: 0; 
@@ -159,8 +172,13 @@ html, body {
   border-left: 5px solid #007acc;
 }
 
+/* ---------------------------------------------
+   Environment Photo Gallery (Square Tiles)
+--------------------------------------------- */
 .photoGallery {
-  gap: 1.5rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 10px;
   margin: 1.5rem 0;
 }
 
@@ -168,8 +186,10 @@ html, body {
   position: relative;
   border-radius: 8px;
   overflow: hidden;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1); 
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  padding-top: 100%; /* maintains square aspect ratio */
   transition: transform 0.3s ease, box-shadow 0.3s ease;
+  cursor: pointer;
 }
 
 .photoItem:hover {
@@ -178,10 +198,12 @@ html, body {
 }
 
 .photoItem img {
+  position: absolute;
+  top: 0;
+  left: 0;
   width: 100%;
-  height: 220px;
+  height: 100%;
   object-fit: cover;
-  cursor: pointer;
   transition: opacity 0.2s ease;
   border-radius: 8px;
 }
@@ -191,8 +213,11 @@ html, body {
 }
 
 .photoError {
+  position: absolute;
+  top: 0;
+  left: 0;
   width: 100%;
-  height: 220px;
+  height: 100%;
   background: #eef4f8;
   display: flex;
   align-items: center;
@@ -212,6 +237,9 @@ html, body {
   border: 3px dashed #b0c4de;
 }
 
+/* ---------------------------------------------
+   Buttons
+--------------------------------------------- */
 .backButton {
   background: #6c757d;
   color: white;
@@ -230,8 +258,8 @@ html, body {
 }
 
 .editButton {
-  position: absolute; /* add this */
-  top: 45px;          /* distance from top */
+  position: absolute;
+  top: 45px;
   right: 0px;
   background-color: #007acc;
   color: white;
@@ -241,7 +269,6 @@ html, body {
   font-weight: 600;
   border-radius: 6px;
   cursor: pointer;
-  display: inline-block;
   transition: background-color 0.3s ease, transform 0.1s ease;
 }
 
@@ -250,6 +277,9 @@ html, body {
   transform: translateY(-1px);
 }
 
+/* ---------------------------------------------
+   Photo Modal
+--------------------------------------------- */
 .photoModal {
   position: fixed;
   top: 0;
@@ -296,6 +326,9 @@ html, body {
   opacity: 0.7;
 }
 
+/* ---------------------------------------------
+   Google Maps Container
+--------------------------------------------- */
 .mapContainer {
   width: 100%;
   height: 300px;
@@ -304,6 +337,7 @@ html, body {
   overflow: hidden;
   box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
+
 .mapContainer iframe {
   width: 100%;
   height: 100%;

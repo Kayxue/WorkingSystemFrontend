@@ -177,6 +177,13 @@ export default function JobLayout(props: JobLayoutProps) {
 					<JobAttendanceView gigId={props.gigId} />
 				</section>
 			</div>
+      <footer class={styles.footer}>
+        <div class={styles.footerContent}>
+          <p>&copy; 2025 WorkNow. All rights reserved.</p>
+        </div>
+      </footer>
 		</div>
+    
 	);
+  
 }

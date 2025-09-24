@@ -112,12 +112,12 @@ const JobDetailsView: Component<JobDetailsViewProps> = (props) => {
                 <button class={styles.editButton} onClick={() => window.location.href=`/edit-job?gigId=${encodeURIComponent(jobInfo.gigId)}`}>✎ Edit</button>
               </div> 
 
-              <p><span class={styles.label}>Date:</span> {formatDateToDDMMYYYY(jobInfo.dateStart)} – {formatDateToDDMMYYYY(jobInfo.dateEnd)}</p>
-              <p><span class={styles.label}>Time:</span> {jobInfo.timeStart || "-"} – {jobInfo.timeEnd || "-"}</p>
-              <p><span class={styles.label}>Rate:</span> {jobInfo.hourlyRate || "-"} NTD/hour</p>
-              <p><span class={styles.label}>Status:</span> <span class={`${styles.status} ${status.className}`}>{status.text}</span></p>
-              <p><span class={styles.label}>Active:</span> <span class={`${styles.status} ${jobInfo.isActive ? styles.active : styles.inactive}`}>{jobInfo.isActive ? "Yes" : "No"}</span></p>
-              <p><span class={styles.label}>Location:</span> {location}</p>
+              <p><span class={styles.label}>Date :</span> {formatDateToDDMMYYYY(jobInfo.dateStart)} – {formatDateToDDMMYYYY(jobInfo.dateEnd)}</p>
+              <p><span class={styles.label}>Time :</span> {jobInfo.timeStart || "-"} – {jobInfo.timeEnd || "-"}</p>
+              <p><span class={styles.label}>Rate :</span> {jobInfo.hourlyRate || "-"} NTD/hour</p>
+              <p><span class={styles.label}>Status :</span> <span class={`${styles.status} ${status.className}`}>{status.text}</span></p>
+              <p><span class={styles.label}>Active :</span> <span class={`${styles.status} ${jobInfo.isActive ? styles.active : styles.inactive}`}>{jobInfo.isActive ? "Yes" : "No"}</span></p>
+              <p><span class={styles.label}>Location  :</span> {location}</p>
 
               {/* Google Maps */}
               <Show when={location !== "Location not specified"}>

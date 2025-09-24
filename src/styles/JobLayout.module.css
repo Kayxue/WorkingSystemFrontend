@@ -133,6 +133,14 @@ html, body {
   margin-bottom: 2rem;
 }
 
+.footerContent {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+
 /* Responsive adjustments */
 @media (max-width: 1024px) {
   :root { --header-height: 70px; }
