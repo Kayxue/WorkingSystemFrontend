@@ -9,7 +9,8 @@
   box-sizing: border-box;
 }
 
-/* Header row (title + right-side filters) */
+
+/* Header row  */
 .headerRow {
   display: flex;
   align-items: center;
@@ -22,57 +23,88 @@
   margin-bottom: 1.5rem;
   color: #333;
   font-size: 1.8rem;
-  border-bottom: 2px solid #007acc;
+  border-bottom: 3px solid #007acc;
   padding-bottom: 0.5rem;
-}
-
-/* Right-side filters */
-.filters {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  align-items: center;
-  justify-content: flex-end;
 }
 
 .formInput {
   padding: 0.4rem 0.6rem;
   border: 1px solid #d1d5db;
   border-radius: 6px;
-  font-size: 0.9rem;
-  color: #374151;
+  font-size: 1rem;
+  color: inherit; /* allow inline color for status dropdown */
   background-color: #fff;
 }
 
-/* Table styling */
+.statusDropdown {
+  font-weight: 600;
+}
+
+.statusDropdown option[value="on_time"] {
+  color: #10b981; /* green */
+}
+
+.statusDropdown option[value="late"] {
+  color: #f59e0b; /* orange */
+}
+
+.statusDropdown option[value="early"] {
+  color: #ef4444; /* red */
+}
+
+/* ============================
+   Beautified Table Styling
+============================ */
 .recordsTable {
   width: 100%;
-  border-top: 1px solid #e5e7eb;
+  border-collapse: separate;
+  border-spacing: 0;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
 }
 
-.tableHeader,
-.tableRow {
+/* Header */
+.tableHeader {
   display: grid;
   grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
-  padding: 0.75rem 0.5rem;
+  padding: 0.9rem 0.6rem;
   align-items: center;
-}
-
-.tableHeader {
-  font-size: 0.85rem;
+  font-size: 1.2rem;
   font-weight: 600;
-  color: #6b7280;
-  border-bottom: 1px solid #e5e7eb;
+  color: #374151;
+  background: #f9fafb;
+  border-bottom: 2px solid #e5e7eb;
 }
 
+/* Rows */
 .tableRow {
-  font-size: 0.9rem;
+  display: grid;
+  grid-template-columns: 1.9fr 1fr 1.1fr 1.025fr 1fr;
+  padding: 0.9rem 0.6rem;
+  align-items: center;
+  font-size: 1rem;
   color: #111827;
-  border-bottom: 1px solid #f3f4f6;
+  transition: background 0.2s ease;
 }
 
+/* Striped effect */
+.tableRow:nth-child(even) {
+  background: #fdfdfd;
+}
+
+.tableRow:nth-child(odd) {
+  background: #ffffff;
+}
+
+/* Hover highlight */
+.tableRow:hover {
+  background: #f3f4f6;
+}
+
+/* Cells */
 .cell {
-  padding: 0.25rem 0.5rem;
+  padding: 0.4rem 0.6rem;
 }
 
 /* Worker info */
@@ -94,7 +126,7 @@
 .checkType {
   padding: 0.2rem 0.5rem;
   border-radius: 6px;
-  font-size: 0.75rem;
+  font-size: 1rem;
   font-weight: 500;
 }
 
@@ -108,11 +140,6 @@
   color: #2563eb;
 }
 
-/* Status */
-.status {
-  font-weight: 600;
-}
-
 /* Notes column */
 .cell:last-child {
   font-style: italic;
@@ -124,7 +151,7 @@
 .noRecords {
   text-align: center;
   padding: 1rem;
-  font-size: 0.95rem;
+  font-size: 1rem;
   color: #6b7280;
 }
 
@@ -137,11 +164,6 @@
     flex-direction: column;
     align-items: flex-start;
     gap: 1rem;
-  }
-
-  .filters {
-    justify-content: flex-start;
-    width: 100%;
   }
 
   .formInput {

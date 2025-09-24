@@ -28,6 +28,10 @@ export default function JobAttendanceView(props: JobAttendanceProps) {
   const [filterStatus, setFilterStatus] = createSignal<string>("all");
   const [notesEdits, setNotesEdits] = createSignal<Record<string, string>>({});
 
+  // optimistic statuses & updating flags
+  const [optimisticStatuses, setOptimisticStatuses] = createSignal<Record<string, string>>({});
+  const [updatingStatuses, setUpdatingStatuses] = createSignal<Record<string, boolean>>({});
+
   const [attendanceRecords, { refetch }] = createResource(
     () => ({ gigId: props.gigId, date: selectedDate(), status: filterStatus() }),
     async ({ gigId, date, status }) => {
@@ -41,51 +45,41 @@ export default function JobAttendanceView(props: JobAttendanceProps) {
     }
   );
 
+  // update status with optimistic UI
   const updateStatus = async (record: AttendanceRecord, newStatus: string) => {
+    const id = record.recordId;
+    const prev = optimisticStatuses()[id] ?? record.status;
+
+    // optimistic update (UI)
+    setOptimisticStatuses({ ...optimisticStatuses(), [id]: newStatus });
+    setUpdatingStatuses({ ...updatingStatuses(), [id]: true });
+
     const payload = {
-      recordId: record.recordId,
+      recordId: id,
       status: newStatus,
-      notes: String(record.notes ?? notesEdits()[record.recordId] ?? "")
+      notes: String(notesEdits()[id] ?? record.notes ?? "")
     };
-    const response = await fetch("/api/attendance/record", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-    if (!response.ok) {
-      alert("Failed to update status");
-      return;
-    }
-    refetch();
-  };
 
-  const saveNotes = async () => {
-    const edits = notesEdits();
-    for (const recordId in edits) {
-      const record = attendanceRecords()?.find(r => r.recordId === recordId);
-      if (!record) continue;
-
-      const payload = {
-        recordId,
-        notes: String(edits[recordId] ?? ""),
-        status: record.status
-      };
-
+    try {
       const response = await fetch("/api/attendance/record", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
-
       if (!response.ok) {
-        alert(`Failed to save notes (recordId: ${recordId})`);
-        return;
+        throw new Error("Failed to update status");
       }
+      // refresh data from server to keep everything in sync
+      await refetch();
+      // clear optimistic map entry (optional)
+      setOptimisticStatuses(({ [id]: _omit, ...rest }) => rest as Record<string, string>);
+    } catch (err) {
+      // revert on error
+      alert("Failed to update status. Reverting change.");
+      setOptimisticStatuses({ ...optimisticStatuses(), [id]: prev });
+    } finally {
+      setUpdatingStatuses({ ...updatingStatuses(), [id]: false });
     }
-
-    alert("All notes updated!");
-    setNotesEdits({});
-    refetch();
   };
 
   const formatTime = (dateString: string) =>
@@ -94,9 +88,9 @@ export default function JobAttendanceView(props: JobAttendanceProps) {
   const getStatusColor = (status: string) => {
     switch (status) {
       case "on_time": return "#10b981"; // green
-      case "late": return "#f59e0b"; // orange
-      case "early": return "#ef4444"; // red
-      default: return "#6b7280"; // gray
+      case "late": return "#f59e0b";    // orange
+      case "early": return "#ef4444";   // red
+      default: return "#6b7280";        // gray
     }
   };
 
@@ -124,19 +118,7 @@ export default function JobAttendanceView(props: JobAttendanceProps) {
                 refetch();
               }}
             />
-            <select
-              class={styles.formInput}
-              value={filterStatus()}
-              onInput={(e) => {
-                setFilterStatus(e.currentTarget.value);
-                refetch();
-              }}
-            >
-              <option value="all">All</option>
-              <option value="on_time">On Time</option>
-              <option value="late">Late</option>
-              <option value="early">Early</option>
-            </select>
+            
           </div>
         </div>
 
@@ -153,70 +135,78 @@ export default function JobAttendanceView(props: JobAttendanceProps) {
               </div>
 
               <For each={attendanceRecords()}>
-                {(record) => (
-                  <div class={styles.tableRow}>
-                    {/* Worker */}
-                    <div class={styles.cell} data-label="Worker">
-                      <div class={styles.workerInfo}>
-                        <div class={styles.workerName}>
-                          {record.worker?.firstName} {record.worker?.lastName}
+                {(record) => {
+                  const currentStatus = optimisticStatuses()[record.recordId] ?? record.status;
+                  const isUpdating = updatingStatuses()[record.recordId] ?? false;
+
+                  return (
+                    <div class={styles.tableRow}>
+                      {/* Worker */}
+                      <div class={styles.cell} data-label="Worker">
+                        <div class={styles.workerInfo}>
+                          <div class={styles.workerName}>
+                            {record.worker?.firstName} {record.worker?.lastName}
+                          </div>
+                          <div class={styles.workerEmail}>{record.worker?.email}</div>
                         </div>
-                        <div class={styles.workerEmail}>{record.worker?.email}</div>
+                      </div>
+
+                      {/* Type */}
+                      <div class={styles.cell} data-label="Type">
+                        <span class={`${styles.checkType} ${styles[record.checkType]}`}>
+                          {getCheckTypeText(record.checkType)}
+                        </span>
+                      </div>
+
+                      {/* Time */}
+                      <div class={styles.cell} data-label="Time">{formatTime(record.createdAt)}</div>
+
+                      {/* Status */}
+                      <div class={styles.cell} data-label="Status">
+                        <select
+                          value={currentStatus}
+                          style={{ color: getStatusColor(currentStatus) }}
+                          onInput={(e) => updateStatus(record, e.currentTarget.value)}
+                          class={styles.statusDropdown}
+                          disabled={isUpdating}
+                        >
+                          <option value="on_time">準時</option>
+                          <option value="late">遲到</option>
+                          <option value="early">早退</option>
+                        </select>
+                      </div>
+
+                      {/* Notes */}
+                      <div class={styles.cell} data-label="Notes">
+                        <input
+                          type="text"
+                          value={notesEdits()[record.recordId] ?? record.notes ?? ""}
+                          onInput={(e) =>
+                            setNotesEdits({ ...notesEdits(), [record.recordId]: e.currentTarget.value })
+                          }
+                          onBlur={async (e) => {
+                            // update notes on blur
+                            const payload = {
+                              recordId: record.recordId,
+                              status: optimisticStatuses()[record.recordId] ?? record.status,
+                              notes: String(e.currentTarget.value ?? "")
+                            };
+                            const response = await fetch("/api/attendance/record", {
+                              method: "PUT",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify(payload),
+                            });
+                            if (!response.ok) {
+                              alert("Failed to update note");
+                              return;
+                            }
+                            refetch();
+                          }}
+                        />
                       </div>
                     </div>
-
-                    {/* Type */}
-                    <div class={styles.cell} data-label="Type">
-                      <span class={`${styles.checkType} ${styles[record.checkType]}`}>
-                        {getCheckTypeText(record.checkType)}
-                      </span>
-                    </div>
-
-                    {/* Time */}
-                    <div class={styles.cell} data-label="Time">{formatTime(record.createdAt)}</div>
-
-                    {/* Status */}
-                    <div class={styles.cell} data-label="Status">
-                      <select
-                        value={record.status}
-                        style={{ color: getStatusColor(record.status) }}
-                        onChange={(e) => updateStatus(record, e.currentTarget.value)}
-                      >
-                        <option value="on_time">準時</option>
-                        <option value="late">遲到</option>
-                        <option value="early">早退</option>
-                      </select>
-                    </div>
-
-                    {/* Notes */}
-                    <div class={styles.cell} data-label="Notes">
-                      <input
-                        type="text"
-                        value={notesEdits()[record.recordId] ?? record.notes ?? ""}
-                        onInput={(e) =>
-                          setNotesEdits({ ...notesEdits(), [record.recordId]: e.currentTarget.value })
-                        }
-                        onBlur={async (e) => {
-                          const payload = {
-                            recordId: record.recordId,
-                            status: record.status,
-                            notes: String(e.currentTarget.value ?? "")
-                          };
-                          const response = await fetch("/api/attendance/record", {
-                            method: "PUT",
-                            headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify(payload),
-                          });
-                          if (!response.ok) {
-                            alert("Failed to update note");
-                            return;
-                          }
-                          refetch();
-                        }}
-                      />
-                    </div>
-                  </div>
-                )}
+                  );
+                }}
               </For>
             </Show>
           </Show>
