@@ -100,6 +100,11 @@ const JobDetailsView: Component<JobDetailsViewProps> = (props) => {
           const location = [jobInfo.address, jobInfo.district, jobInfo.city].filter(Boolean).join(", ") || "Location not specified";
           const status = getJobStatus(jobInfo.publishedAt, jobInfo.unlistedAt);
 
+          // Google Maps Embed URL
+          const mapsQuery = encodeURIComponent(location);
+          const mapsSrc = `https://www.google.com/maps?q=${mapsQuery}&output=embed`;
+
+
           return (
             <>
               <div class={styles.headerRow}>
@@ -113,6 +118,21 @@ const JobDetailsView: Component<JobDetailsViewProps> = (props) => {
               <p><span class={styles.label}>Status:</span> <span class={`${styles.status} ${status.className}`}>{status.text}</span></p>
               <p><span class={styles.label}>Active:</span> <span class={`${styles.status} ${jobInfo.isActive ? styles.active : styles.inactive}`}>{jobInfo.isActive ? "Yes" : "No"}</span></p>
               <p><span class={styles.label}>Location:</span> {location}</p>
+
+              {/* Google Maps */}
+              <Show when={location !== "Location not specified"}>
+                <div class={styles.mapContainer}>
+                  <iframe
+                    src={mapsSrc}
+                    width="100%"
+                    height="300"
+                    style={{ border: 0 }}
+                    allowfullscreen
+                    loading="lazy"
+                    referrerPolicy="no-referrer-when-downgrade"
+                  ></iframe>
+                </div>
+              </Show>
 
               <section class={styles.section}>
                 <h2>Job Description</h2>
@@ -166,10 +186,7 @@ const JobDetailsView: Component<JobDetailsViewProps> = (props) => {
                         const photoUrl = getPhotoUrl(photo);
                         const hasError = () => imageErrors().has(index());
 
-                        if (!photoUrl) {
-                          console.warn(`Photo ${index() + 1} has no URL:`, photo);
-                          return null;
-                        }
+                        if (!photoUrl) return null;
 
                         return (
                           <div class={styles.photoItem}>
