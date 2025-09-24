@@ -1,140 +1,224 @@
+/*
+  ==========================================
+  Global Styling & Keterbacaan
+  ==========================================
+*/
 html, body {
-  overflow: none;
+  /* Margin tidak diubah */
+  font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  line-height: 1.65; /* Spasi baris lebih lega */
+  background-color: #f8f9fa; /* Latar belakang halaman sangat terang */
+  color: #343a40;
+  overflow: hidden; 
 }
 
-.jobDetailsContainer {
-  width: 100%;
-  overflow-x: hidden;
-  /*padding: 1rem 2rem;*/
+/* Memastikan model box yang konsisten */
+*, *::before, *::after {
   box-sizing: border-box;
 }
 
+/*
+  ==========================================
+  Container Utama & Tata Letak
+  ==========================================
+*/
+.jobDetailsContainer {
+  width: 100%;
+  max-width: 1000px;
+  margin: 0 auto; /* Tengah-kan kontainer di halaman */
+  padding: 3rem 2rem;
+  overflow-x: hidden;
+  background-color: #ffffff; /* Latar belakang putih bersih */
+  /* Tanpa box-shadow/card style di sini */
+}
+
+/*
+  ==========================================
+  Pesan Loading & Error
+  ==========================================
+*/
 .loading {
   text-align: center;
-  padding: 2rem;
-  font-size: 1.1rem;
-  color: #666;
+  padding: 3rem;
+  font-size: 1.2rem;
+  color: #6c757d;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #dee2e6;
 }
 
 .errorContainer {
   text-align: center;
-  padding: 2rem;
+  padding: 3rem;
+  background-color: #fff0f3;
+  border-radius: 8px;
+  border: 1px solid #f5c6cb;
 }
 
 .error {
   color: #dc3545;
   margin: 1rem 0;
+  font-size: 1.1rem;
+  font-weight: 600;
 }
 
+/*
+  ==========================================
+  Judul & Header
+  ==========================================
+*/
 .jobTitle {
   margin-top: 0;
-  margin-bottom: 1.5rem;
-  color: #333;
-  font-size: 1.8rem;
-  border-bottom: 2px solid #007acc;
-  padding-bottom: 0.5rem;
+  margin-bottom: 2rem;
+  color: #1c2a38;
+  font-size: 2.2rem;
+  font-weight: 700;
+  border-bottom: 4px solid #007acc;
+  padding-bottom: 0.8rem;
+  letter-spacing: -0.5px;
 }
 
 .headerRow {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1.5rem;
+  margin-bottom: 2.5rem; /* Jarak lebih lega */
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #e9ecef; /* Garis pemisah yang halus */
 }
 
-.section {
-  margin: 2rem 0;
-}
-
-.section h2 {
-  color: #555;
-  margin-bottom: 1rem;
-  font-size: 1.4rem;
+/*
+  ==========================================
+  Informasi Dasar
+  ==========================================
+*/
+/* Style untuk elemen <p> info dasar */
+.jobDetailsContainer > p {
+    margin-bottom: 0.8rem;
+    font-size: 1.05rem;
 }
 
 .label {
-  font-weight: 600;
-  margin-right: 0.5rem;
-  color: #007acc;
+  font-weight: 700; /* Label lebih tebal */
+  margin-right: 1rem;
+  color: #34495e; 
+  min-width: 100px; /* Lebar minimum agar sejajar */
+  display: inline-block;
 }
 
-.infoGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 1rem;
-  margin: 1.5rem 0;
-}
-
-.infoItem {
-  background: #f8f9fa;
-  padding: 1rem;
-  border-radius: 4px;
-  border-left: 3px solid #007acc;
-}
-
-.locationItem {
-  background: #f8f9fa;
-  padding: 1rem;
-  border-radius: 4px;
-  border-left: 3px solid #007acc;
-  margin: 1.5rem 0;
-}
-
+/*
+  ==========================================
+  Status Badges
+  ==========================================
+*/
 .status {
   display: inline-block;
-  padding: 0.25rem 0.75rem;
-  border-radius: 20px;
-  font-size: 0.875rem;
-  font-weight: 600;
+  padding: 0.4rem 1rem;
+  border-radius: 25px; 
+  font-size: 0.9rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border: 1px solid transparent; 
 }
 
-/* For Active/Inactive */
-.status.active {
-  background: #d4edda;
-  color: #155724;
+/* Warna Status yang Kontras */
+.status.active, .status.published {
+  background: #e6f7ea;
+  color: #28a745; 
+  border-color: #28a745;
 }
 
-.status.inactive {
-  background: #f8d7da;
-  color: #721c24;
-}
-
-/* For Published/Unpublished/Unlisted */
-.status.published {
-  background: #d4edda;
-  color: #155724;
+.status.inactive, .status.unlisted {
+  background: #fde8e9;
+  color: #dc3545;
+  border-color: #dc3545;
 }
 
 .status.unpublished {
   background: #fff3cd;
   color: #856404;
-}
-
-.status.unlisted {
-  background: #f8d7da;
-  color: #721c24;
+  border-color: #ffc107;
 }
 
 .status.unknown {
-  background: #e2e3e5;
-  color: #495057;
+  background: #f0f2f5;
+  color: #6c757d;
+  border-color: #adb5bd;
 }
 
+/*
+  ==========================================
+  Bagian Konten & Hierarki
+  ==========================================
+*/
+.section {
+  margin: 3rem 0; /* Jarak yang sangat lega antar bagian utama */
+  padding: 0; 
+}
+
+.section h2 {
+  color: #1c2a38;
+  margin-bottom: 1.5rem;
+  font-size: 1.7rem;
+  font-weight: 600;
+  border-left: 5px solid #007acc; /* Penekanan visual tanpa card */
+  padding-left: 1rem;
+}
+
+/*
+  ==========================================
+  Kotak Konten (Deskripsi/Persyaratan)
+  ==========================================
+*/
 .contentBox {
   background: #f8f9fa;
   padding: 1.5rem;
-  border-radius: 4px;
-  border-left: 3px solid #007acc;
+  border-radius: 6px;
+  border-left: 5px solid #007acc;
   white-space: pre-wrap;
   word-wrap: break-word;
-  line-height: 1.6;
-  margin-bottom: 16px;
+  line-height: 1.7;
+  font-size: 1.05rem;
+  margin-bottom: 2rem;
+  /* Tanpa box-shadow */
 }
 
+/* Style untuk list */
+.section ul {
+    padding-left: 1.5rem;
+    list-style: square; 
+}
+
+.section li {
+    margin-bottom: 0.6rem;
+}
+
+/*
+  ==========================================
+  Grid & Item Informasi
+  ==========================================
+*/
+.infoGrid {
+  gap: 1.5rem;
+  margin: 2rem 0;
+}
+
+.infoItem, .locationItem {
+  background: #f8f9fa;
+  padding: 1.2rem;
+  border-radius: 6px;
+  border-left: 5px solid #007acc;
+  /* Tanpa box-shadow */
+}
+
+/*
+  ==========================================
+  Galeri Foto
+  ==========================================
+*/
 .photoGallery {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 1rem;
+  gap: 1.5rem;
   margin: 1.5rem 0;
 }
 
@@ -142,65 +226,95 @@ html, body {
   position: relative;
   border-radius: 8px;
   overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-  transition: transform 0.2s ease;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1); /* Bayangan halus HANYA untuk item foto */
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 .photoItem:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 15px rgba(0,0,0,0.15);
 }
 
 .photoItem img {
   width: 100%;
-  height: 200px;
+  height: 220px; /* Sedikit lebih tinggi */
   object-fit: cover;
   cursor: pointer;
   transition: opacity 0.2s ease;
+  border-radius: 8px; /* Sudut foto */
 }
 
 .photoItem img:hover {
-  opacity: 0.9;
+  opacity: 0.85;
 }
 
 .photoError {
   width: 100%;
-  height: 200px;
-  background: #f8f9fa;
+  height: 220px;
+  background: #eef4f8;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #666;
-  border: 2px dashed #ddd;
+  color: #6c757d;
+  border: 3px dashed #b0c4de;
   font-size: 0.9rem;
+  border-radius: 8px;
 }
 
 .noPhotos {
   text-align: center;
   padding: 2rem;
-  color: #666;
-  background: #f8f9fa;
-  border-radius: 4px;
-  border: 2px dashed #ddd;
+  color: #6c757d;
+  background: #eef4f8;
+  border-radius: 8px;
+  border: 3px dashed #b0c4de;
 }
 
+/*
+  ==========================================
+  Tombol
+  ==========================================
+*/
 .backButton {
-  background: #007bff;
+  background: #6c757d; /* Abu-abu netral */
   color: white;
   border: none;
-  padding: 1rem 2rem;
-  border-radius: 4px;
+  padding: 0.75rem 1.5rem;
+  border-radius: 6px;
   cursor: pointer;
   font-size: 1rem;
-  margin-top: 2rem;
+  font-weight: 600;
+  margin-top: 3rem;
   transition: background-color 0.3s ease;
 }
 
 .backButton:hover {
-  background: #0056b3;
+  background: #5a6268;
 }
 
-/* Photo Modal */
+.editButton {
+  background-color: #007acc;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: 6px;
+  cursor: pointer;
+  display: inline-block;
+  transition: background-color 0.3s ease, transform 0.1s ease;
+}
+
+.editButton:hover {
+  background-color: #005fa3;
+  transform: translateY(-1px);
+}
+
+/*
+  ==========================================
+  Modal Foto
+  ==========================================
+*/
 .photoModal {
   position: fixed;
   top: 0;
@@ -230,34 +344,19 @@ html, body {
 
 .modalClose {
   position: absolute;
-  top: -40px;
-  right: 0;
+  top: -45px;
+  right: -5px;
   background: none;
   border: none;
   color: white;
-  font-size: 2rem;
+  font-size: 2.5rem;
   cursor: pointer;
   padding: 0.5rem;
   line-height: 1;
   font-weight: bold;
+  text-shadow: 0 0 5px rgba(0, 0, 0, 0.8);
 }
 
 .modalClose:hover {
   opacity: 0.7;
-}
-
-.editButton {
-  background-color: #0077cc;
-  color: white;
-  border: none;
-  padding: 10px 20px;
-  font-size: 14px;
-  border-radius: 6px;
-  cursor: pointer;
-  display: inline-block;
-  transition: background-color 0.2s ease;
-}
-
-.editButton:hover {
-  background-color: #005fa3;
 }

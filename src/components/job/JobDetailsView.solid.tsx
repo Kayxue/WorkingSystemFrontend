@@ -1,4 +1,3 @@
-// src/pages/job/[gigId].tsx (or .tsx component wrapped by your routing/astro layer)
 import { createResource, createSignal, For, Show, onMount, onCleanup } from "solid-js";
 import type { Component } from "solid-js";
 import styles from "../../styles/JobDetails.module.css";
@@ -15,13 +14,13 @@ type JobData = {
   address: string;
   district: string;
   city: string;
-  description: any; // can be string / array / object
-  requirements: any; // same flexibility
+  description: any;
+  requirements: any;
   contactPerson: string;
   contactPhone?: string;
   contactEmail?: string;
   publishedAt: string;
-  unlistedAt?: string; // Added for new status logic
+  unlistedAt?: string;
   environmentPhotos?: (string | { url: string })[];
 };
 
@@ -29,273 +28,124 @@ interface JobDetailsViewProps {
   gigId: string;
 }
 
-// Fetch job data from API
 async function fetchJobData(gigId: string): Promise<JobData> {
-  try {
-    const response = await fetch(`/api/gig/${encodeURIComponent(gigId)}`, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        "platform": "web-employer",
-      },
-      credentials: "include",
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error("API Error:", response.status, errorText);
-      throw new Error(`Failed to fetch job: ${response.status} ${errorText}`);
-    }
-
-    const job = await response.json();
-    return job;
-  } catch (err: any) {
-    console.error("Fetch error:", err);
-    throw new Error(`Network error: ${err?.message || "Unknown error"}`);
-  }
+  const res = await fetch(`/api/gig/${encodeURIComponent(gigId)}`, {
+    method: "GET",
+    headers: { "Content-Type": "application/json", platform: "web-employer" },
+    credentials: "include",
+  });
+  if (!res.ok) throw new Error(`Failed to fetch job: ${res.status}`);
+  return await res.json();
 }
 
-// Utility: format ISO date to DD-MM-YYYY
 function formatDateToDDMMYYYY(dateStr: string | null): string {
   if (!dateStr) return "";
-  const date = new Date(dateStr);
-  if (isNaN(date.getTime())) return dateStr;
-  const dd = String(date.getDate()).padStart(2, "0");
-  const mm = String(date.getMonth() + 1).padStart(2, "0");
-  const yyyy = date.getFullYear();
-  return `${dd}-${mm}-${yyyy}`;
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return dateStr;
+  return `${String(d.getDate()).padStart(2,"0")}-${String(d.getMonth()+1).padStart(2,"0")}-${d.getFullYear()}`;
 }
 
-// Utility: strip surrounding quotes if present
-function stripQuotes(str: any): string {
+function stripQuotes(str: any) {
   if (!str) return "";
   if (typeof str !== "string") return String(str);
-  if (str.startsWith('"') && str.endsWith('"')) {
-    return str.slice(1, -1);
-  }
+  if (str.startsWith('"') && str.endsWith('"')) return str.slice(1, -1);
   return str;
 }
 
-// Utility: determine job status based on unlistedAt and publishedAt
-function getJobStatus(publishedAt: string, unlistedAt?: string): { text: string; className: string } {
-  const today = new Date();
-  const publishDate = new Date(publishedAt);
-  
-  // Reset time to start of day for accurate comparison
-  today.setHours(0, 0, 0, 0);
-  publishDate.setHours(0, 0, 0, 0);
-  
-  if (unlistedAt) {
-    return { text: "Unlisted", className: styles.unlisted };
-  }
-  
-  if (!unlistedAt && publishDate <= today) {
-    return { text: "Published", className: styles.published };
-  }
-  
-  if (!unlistedAt && publishDate > today) {
-    return { text: "Unpublished", className: styles.unpublished };
-  }
-  
-  // Fallback (shouldn't reach here with proper data)
+function getJobStatus(publishedAt: string, unlistedAt?: string) {
+  const today = new Date(); today.setHours(0,0,0,0);
+  const publishDate = new Date(publishedAt); publishDate.setHours(0,0,0,0);
+
+  if (unlistedAt) return { text: "Unlisted", className: styles.unlisted };
+  if (publishDate <= today) return { text: "Published", className: styles.published };
+  if (publishDate > today) return { text: "Unpublished", className: styles.unpublished };
   return { text: "Unknown", className: styles.unknown };
 }
 
-// Component
 const JobDetailsView: Component<JobDetailsViewProps> = (props) => {
-  // Resource for job data
   const [jobData] = createResource(() => props.gigId, fetchJobData);
-
-  // Modal and image error state
   const [selectedPhoto, setSelectedPhoto] = createSignal<string | null>(null);
   const [imageErrors, setImageErrors] = createSignal<Set<number>>(new Set());
 
-  const handleImageError = (index: number) => {
-    setImageErrors(prev => new Set([...prev, index]));
-  };
+  const handleImageError = (i: number) => setImageErrors(prev => new Set([...prev, i]));
+  const openPhotoModal = (url: string) => { setSelectedPhoto(url); document.body.style.overflow = "hidden"; };
+  const closePhotoModal = () => { setSelectedPhoto(null); document.body.style.overflow = "auto"; };
+  const getPhotoUrl = (photo: string | { url: string }) => typeof photo === "string" ? photo : photo.url || "";
+  const goBack = () => window.history.back();
 
-  const openPhotoModal = (photoUrl: string) => {
-    setSelectedPhoto(photoUrl);
-    document.body.style.overflow = "hidden";
-  };
+  const handleKeyDown = (e: KeyboardEvent) => { if (e.key === "Escape") closePhotoModal(); };
 
-  const closePhotoModal = () => {
-    setSelectedPhoto(null);
-    document.body.style.overflow = "auto";
-  };
-
-  const getPhotoUrl = (photo: string | { url: string }): string => {
-    return typeof photo === "string" ? photo : photo.url || "";
-  };
-
-  const goBack = () => {
-    window.history.back();
-  };
-
-  // Escape key closes modal; set up listener properly
-  const handleKeyDown = (e: KeyboardEvent) => {
-    if (e.key === "Escape") {
-      closePhotoModal();
-    }
-  };
-
-  onMount(() => {
-    document.addEventListener("keydown", handleKeyDown);
-  });
-
-  onCleanup(() => {
-    document.removeEventListener("keydown", handleKeyDown);
-    // ensure body overflow restored
-    document.body.style.overflow = "auto";
-  });
+  onMount(() => document.addEventListener("keydown", handleKeyDown));
+  onCleanup(() => { document.removeEventListener("keydown", handleKeyDown); document.body.style.overflow = "auto"; });
 
   return (
     <div class={styles.jobDetailsContainer}>
-      {/* Loading state */}
-      <Show when={jobData.loading}>
-        <p class={styles.loading}>Loading job details...</p>
-      </Show>
 
-      {/* Error state */}
+      <Show when={jobData.loading}><p class={styles.loading}>Loading job details...</p></Show>
+
       <Show when={jobData.error}>
         {(err) => (
           <div class={styles.errorContainer}>
             <h1>Job Not Found</h1>
-            <p class={styles.error}>Error: {(err() as Error).message}</p>
+            <p class={styles.error}>{(err() as Error).message}</p>
             <p>Job ID: {props.gigId}</p>
-            <button class={styles.backButton} onClick={goBack}>
-              ← Back to Dashboard
-            </button>
+            <button class={styles.backButton} onClick={goBack}>← Back</button>
           </div>
         )}
       </Show>
 
-      {/* Main content */}
       <Show when={jobData()}>
         {(job) => {
           const jobInfo = job();
-          const location = [jobInfo.address, jobInfo.district, jobInfo.city]
-            .filter(Boolean)
-            .join(", ") || "Location not specified";
-          
+          const location = [jobInfo.address, jobInfo.district, jobInfo.city].filter(Boolean).join(", ") || "Location not specified";
           const status = getJobStatus(jobInfo.publishedAt, jobInfo.unlistedAt);
 
           return (
             <>
-              {/* Header with title + edit button */}
               <div class={styles.headerRow}>
-                <h1 class={styles.jobTitle}>{jobInfo.title}</h1>
-                <button
-                  class={styles.editButton}
-                  onClick={() =>
-                    (window.location.href = `/edit-job?gigId=${encodeURIComponent(
-                      jobInfo.gigId
-                    )}`)
-                  }
-                >
-                  ✎ Edit
-                </button>
+                <h1 class={styles.jobTitle}>Job Info</h1>
+                <button class={styles.editButton} onClick={() => window.location.href=`/edit-job?gigId=${encodeURIComponent(jobInfo.gigId)}`}>✎ Edit</button>
               </div>
 
-              {/* Basic info grid */}
-              <div class={styles.infoGrid}>
-                <div class={styles.infoItem}>
-                  <span class={styles.label}>Date:</span>
-                  {formatDateToDDMMYYYY(jobInfo.dateStart)} – {formatDateToDDMMYYYY(jobInfo.dateEnd)}
-                </div>
-                <div class={styles.infoItem}>
-                  <span class={styles.label}>Time:</span>
-                  {jobInfo.timeStart || "Not specified"} – {jobInfo.timeEnd || "Not specified"}
-                </div>
-                <div class={styles.infoItem}>
-                  <span class={styles.label}>Rate:</span>
-                  {jobInfo.hourlyRate || "Not specified"} NTD/hour
-                </div>
-                <div class={styles.infoItem}>
-                  <span class={styles.label}>Status:</span>
-                  <span class={`${styles.status} ${status.className}`}>
-                    {status.text}
-                  </span>
-                </div>
-                <div class={styles.infoItem}>
-                  <span class={styles.label}>Active:</span>
-                  <span class={`${styles.status} ${jobInfo.isActive ? styles.active : styles.inactive}`}>
-                    {jobInfo.isActive ? "Yes" : "No"}
-                  </span>
-                </div>
-              </div>
+              <p><span class={styles.label}>Date:</span> {formatDateToDDMMYYYY(jobInfo.dateStart)} – {formatDateToDDMMYYYY(jobInfo.dateEnd)}</p>
+              <p><span class={styles.label}>Time:</span> {jobInfo.timeStart || "-"} – {jobInfo.timeEnd || "-"}</p>
+              <p><span class={styles.label}>Rate:</span> {jobInfo.hourlyRate || "-"} NTD/hour</p>
+              <p><span class={styles.label}>Status:</span> <span class={`${styles.status} ${status.className}`}>{status.text}</span></p>
+              <p><span class={styles.label}>Active:</span> <span class={`${styles.status} ${jobInfo.isActive ? styles.active : styles.inactive}`}>{jobInfo.isActive ? "Yes" : "No"}</span></p>
+              <p><span class={styles.label}>Location:</span> {location}</p>
 
-              {/* Location */}
-              <div class={styles.locationItem}>
-                <span class={styles.label}>Location:</span> {location}
-              </div>
-
-              {/* Description */}
               <section class={styles.section}>
                 <h2>Job Description</h2>
-                <div class={styles.contentBox}>
-                  {typeof jobInfo.description === "string" ? (
-                    stripQuotes(jobInfo.description)
-                  ) : Array.isArray(jobInfo.description) ? (
-                    <ul>
-                      {jobInfo.description.map((item: any, i: number) => (
-                        <li>{String(item)}</li>
-                      ))}
-                    </ul>
+                <Show when={typeof jobInfo.description === "string"} fallback={
+                  Array.isArray(jobInfo.description) ? (
+                    <ul>{jobInfo.description.map((i:any) => <li>{i}</li>)}</ul>
                   ) : jobInfo.description && typeof jobInfo.description === "object" ? (
                     <div>
-                      {"details" in jobInfo.description && (
-                        <p>
-                          <strong>Details:</strong> {String(jobInfo.description.details)}
-                        </p>
-                      )}
-                      {"responsibilities" in jobInfo.description && (
-                        <p>
-                          <strong>Responsibilities:</strong> {String(jobInfo.description.responsibilities)}
-                        </p>
-                      )}
+                      {"details" in jobInfo.description && <p><strong>Details:</strong> {jobInfo.description.details}</p>}
+                      {"responsibilities" in jobInfo.description && <p><strong>Responsibilities:</strong> {jobInfo.description.responsibilities}</p>}
                     </div>
-                  ) : (
-                    "No description provided"
-                  )}
-                </div>
+                  ) : "No description provided"
+                }>
+                  {stripQuotes(jobInfo.description)}
+                </Show>
               </section>
 
-              {/* Requirements */}
               <section class={styles.section}>
                 <h2>Requirements</h2>
-                <div class={styles.contentBox}>
-                  {typeof jobInfo.requirements === "string" ? (
-                    stripQuotes(jobInfo.requirements)
-                  ) : Array.isArray(jobInfo.requirements) ? (
-                    <ul>
-                      {jobInfo.requirements.map((item: any, i: number) => (
-                        <li>{String(item)}</li>
-                      ))}
-                    </ul>
+                <Show when={typeof jobInfo.requirements === "string"} fallback={
+                  Array.isArray(jobInfo.requirements) ? (
+                    <ul>{jobInfo.requirements.map((i:any) => <li>{i}</li>)}</ul>
                   ) : jobInfo.requirements && typeof jobInfo.requirements === "object" ? (
                     <div>
-                      {"experience" in jobInfo.requirements && (
-                        <p>
-                          <strong>Experience:</strong> {String(jobInfo.requirements.experience)}
-                        </p>
+                      {"experience" in jobInfo.requirements && <p><strong>Experience:</strong> {jobInfo.requirements.experience}</p>}
+                      {"skills" in jobInfo.requirements && Array.isArray(jobInfo.requirements.skills) && (
+                        <><strong>Skills:</strong><ul>{jobInfo.requirements.skills.map((s:any) => <li>{s}</li>)}</ul></>
                       )}
-                      {"skills" in jobInfo.requirements &&
-                        Array.isArray(jobInfo.requirements.skills) && (
-                          <>
-                            <strong>Skills:</strong>
-                            <ul>
-                              {jobInfo.requirements.skills.map((skill: any, i: number) => (
-                                <li>{String(skill)}</li>
-                              ))}
-                            </ul>
-                          </>
-                        )}
                     </div>
-                  ) : (
-                    "No specific requirements listed"
-                  )}
-                </div>
+                  ) : "No requirements listed"
+                }>
+                  {stripQuotes(jobInfo.requirements)}
+                </Show>
               </section>
 
               {/* Environment photos */}
@@ -337,58 +187,29 @@ const JobDetailsView: Component<JobDetailsViewProps> = (props) => {
                             </Show>
                           </div>
                         );
-                      }}
-                    </For>
+                      }}</For>
                   </div>
                 </Show>
               </section>
 
-              {/* Contact info */}
               <section class={styles.section}>
                 <h2>Contact Information</h2>
-                
-                <div class={styles.contentBox}>
-                  <span class={styles.label}>Contact Person:</span>
-                  <div>{jobInfo.contactPerson || "Not specified"}</div>
-                </div>
-
-                <div class={styles.contentBox}>
-                  <span class={styles.label}>Phone:</span>
-                  <div>
-                    <Show when={jobInfo.contactPhone} fallback="Not provided">
-                      <a href={`tel:${jobInfo.contactPhone}`}>{jobInfo.contactPhone}</a>
-                    </Show>
-                  </div>
-                </div>
-
-                <div class={styles.contentBox}>
-                  <span class={styles.label}>Email:</span>
-                  <div>
-                    <Show when={jobInfo.contactEmail} fallback="Not provided">
-                      <a href={`mailto:${jobInfo.contactEmail}`}>{jobInfo.contactEmail}</a>
-                    </Show>
-                  </div>
-                </div>
-
-                <div class={styles.contentBox}>
-                  <span class={styles.label}>Posted on:</span>
-                  <div>{formatDateToDDMMYYYY(jobInfo.publishedAt) || "Date not available"}</div>
-                </div>
+                <p><span class={styles.label}>Contact Person:</span> {jobInfo.contactPerson || "-"}</p>
+                <p><span class={styles.label}>Phone:</span> <Show when={jobInfo.contactPhone} fallback="-"><a href={`tel:${jobInfo.contactPhone}`}>{jobInfo.contactPhone}</a></Show></p>
+                <p><span class={styles.label}>Email:</span> <Show when={jobInfo.contactEmail} fallback="-"><a href={`mailto:${jobInfo.contactEmail}`}>{jobInfo.contactEmail}</a></Show></p>
+                <p><span class={styles.label}>Posted on:</span> {formatDateToDDMMYYYY(jobInfo.publishedAt)}</p>
               </section>
 
-              {/* Photo modal */}
               <Show when={selectedPhoto()}>
                 <div class={styles.photoModal} onClick={closePhotoModal}>
-                  <div class={styles.modalContent} onClick={(e) => e.stopPropagation()}>
-                    <button class={styles.modalClose} onClick={closePhotoModal}>
-                      ×
-                    </button>
-                    <img src={selectedPhoto()!} alt="Full size photo" />
+                  <div class={styles.modalContent} onClick={(e)=>e.stopPropagation()}>
+                    <button class={styles.modalClose} onClick={closePhotoModal}>×</button>
+                    <img src={selectedPhoto()!} alt="Full photo" />
                   </div>
                 </div>
               </Show>
             </>
-          );
+          )
         }}
       </Show>
     </div>

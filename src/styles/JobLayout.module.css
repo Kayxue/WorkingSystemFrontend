@@ -1,454 +1,195 @@
-/* JobLayout.module.css */
 html, body {
   height: 100%;
   margin: 0;
   padding: 0;
-  overflow: hidden; /* disable global scroll */
+  overflow: hidden;
 }
 
-* {
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-}
-
-*::-webkit-scrollbar {
-  display: none;
-  width: 0;
-  height: 0;
-}
-
-/* CSS Variable for header height - only used on mobile */
 :root {
-  --header-height: 60px;
+  --tab-height: 56px;
 }
 
 /* Layout container */
 .jobLayoutContainer {
   display: flex;
-  height: 100vh;
-  overflow: hidden;
-  position: relative;
-}
-
-/* Sidebar default (desktop) */
-.sidebar {
-  flex-shrink: 0;
-  width: 250px;
-  height: 100vh;
-  overflow: hidden;
-  position: relative;
-  background: #1e293b;
-  transition: width 0.3s ease;
-  z-index: 30;
-}
-
-/* Manual collapse */
-.sidebar.collapsed {
-  width: 70px;
-}
-
-/* Sidebar header */
-.sidebarHeader {
-  position: sticky;
-  top: 0;
-  z-index: 10;
-  background: #1e293b;
-  padding: 1.5rem 1rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  min-height: 70px;
-}
-
-.sidebarTitle {
-  margin: 0;
-  font-size: 1.2rem;
-  font-weight: 600;
-  color: #ecf0f1;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-/* Collapse button */
-.collapseButton {
-  background: rgba(255, 255, 255, 0.1);
-  border: none;
-  color: white;
-  padding: 0.5rem;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 1.2rem;
-  transition: background-color 0.2s ease;
-  min-width: 36px;
-  height: 36px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.collapseButton:hover {
-  background: rgba(255, 255, 255, 0.2);
-}
-
-/* Sidebar content */
-.sidebarContent {
-  flex: 1;
-  display: flex;
   flex-direction: column;
-}
-
-/* Navigation items */
-.navigation {
-  padding: 1rem 0;
-  flex: 1;
-}
-
-.navItem {
-  width: 100%;
-  background: none;
-  border: none;
-  color: #bdc3c7;
-  padding: 1rem;
-  text-align: left;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  font-size: 1rem;
-  border-left: 3px solid transparent;
-}
-
-.navItem:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: #ecf0f1;
-}
-
-.navItem.active {
-  background: rgba(52, 152, 219, 0.2);
-  color: #3498db;
-  border-left-color: #3498db;
-}
-
-.navIcon {
-  font-size: 1.2rem;
-  min-width: 24px;
-  text-align: center;
-}
-
-.navLabel {
-  white-space: nowrap;
+  height: 100vh;
   overflow: hidden;
-  text-overflow: ellipsis;
+  background-color: #f8fafc;
 }
 
-/* Hide labels when sidebar is collapsed */
-.sidebar.collapsed .navLabel {
-  display: none;
-}
-
-/* Sidebar Footer */
-.sidebarFooter {
-  padding: 1rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-  margin-top: auto;
-}
-
-/* Back button */
-.backButton {
-  width: 100%;
-  background: rgba(231, 76, 60, 0.1);
-  border: 1px solid rgba(231, 76, 60, 0.3);
-  color: #e74c3c;
-  padding: 1rem;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 0.2s ease;
+/* Job Title Header (title left, back button right) */
+.jobTitleHeader {
   display: flex;
+  justify-content: space-between;
   align-items: center;
-  gap: 1rem;
-  font-size: 1rem;
+  background: #fff;
+  padding: 1.5rem 2rem 1rem 2rem; /* internal padding */
+  border-bottom: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  margin-bottom: 0; /* remove space below */
+}
+
+.jobTitle {
+  margin: 0;
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #111827;
+  line-height: 1.2;
+}
+
+.backButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #ef4444;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
   text-decoration: none;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
 }
 
 .backButton:hover {
-  background: rgba(231, 76, 60, 0.2);
-  border-color: rgba(231, 76, 60, 0.5);
+  background: rgba(239, 68, 68, 0.2);
+  border-color: rgba(239, 68, 68, 0.5);
 }
 
-/* Main content */
-.mainContent {
-  flex: 1;
-  padding: 2rem;
-  padding-bottom: 8rem;
-  overflow-y: auto;
-  background-color: #fff;
-  margin: 1rem;
-  border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  height: calc(100vh - 2rem);
-  -webkit-overflow-scrolling: touch;
-  z-index: 1;
+.backIcon {
+  font-size: 1rem;
 }
 
-/* Content cards */
-.contentCard {
+/* Tab Navigation immediately below job title */
+.tabNavigation {
   background: #fff;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  padding: 1.5rem;
+  border-bottom: 1px solid #e2e8f0;
+  position: sticky;
+  top: 60px; /* adjust according to header height if needed */
+  z-index: 15;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  margin-top: 0; /* remove space above */
+}
+
+.tabContainer {
+  display: flex;
+  justify-content: flex-start;
+  padding: 0 1rem;
+  overflow-x: auto;
+}
+
+.tabButton {
+  background: transparent;
+  border: none;
+  color: #6b7280;
+  padding: 1rem 1.5rem;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-bottom: 2px solid transparent;
+}
+
+.tabButton:hover {
+  color: #374151;
+  background: rgba(59, 130, 246, 0.05);
+}
+
+.tabButton.activeTab {
+  color: #3b82f6;
+  border-bottom-color: #3b82f6;
+  background: rgba(59, 130, 246, 0.05);
+}
+
+.tabIcon {
+  font-size: 1rem;
+}
+
+.tabLabel {
+  font-weight: 500;
+}
+
+/* Content Wrapper */
+.contentWrapper {
+  flex: 1;
+  overflow-y: auto;
+  background-color: #f8fafc;
+  padding: 2rem;
+}
+
+/* Section block - plain white, no card styling */
+.sectionBlock {
+  background: #fff;
+  padding: 2rem;
   margin-bottom: 2rem;
 }
 
-.contentCard h3 {
-  margin-top: 0;
-  font-size: 1.2rem;
-  color: #4a5568;
-  border-bottom: 1px solid #e2e8f0;
-  padding-bottom: 0.75rem;
-  margin-bottom: 1.5rem;
-}
-
-/* Placeholder / no photos */
-.placeholder,
-.noPhotos {
-  color: #a0aec0;
-  font-style: italic;
-  padding: 1rem;
-  border: 1px dashed #e2e8f0;
-  border-radius: 8px;
-  background-color: #f7fafc;
-  text-align: center;
-}
-
-/* Contact info */
-.contactInfoContainer {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1rem;
-}
-
-.contactInfoItem {
-  flex: 1;
-  min-width: 200px;
-  background: #f7fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 6px;
-  padding: 1rem;
-}
-
-.contactInfoItem h4 {
-  margin: 0 0 0.5rem 0;
-  font-size: 0.9rem;
-  color: #718096;
-}
-
-.contactInfoItem p {
-  margin: 0;
-  font-size: 1rem;
-  color: #2d3748;
-}
-
-/* Mobile Overlay */
-.mobileOverlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background: rgba(0, 0, 0, 0.5);
-  z-index: 5;
-  display: none;
-}
-
-/* --------------------------
-   Responsive Design - All Desktop Sizes
---------------------------- */
-
-/* Tablet Landscape - Desktop Sizes */
+/* Responsive adjustments */
 @media (max-width: 1024px) {
-  .sidebar {
-    width: 250px;
-    height: 100vh;
+  .jobTitleHeader {
+    padding: 1.2rem 1.5rem 0.8rem 1.5rem;
   }
-  
-  .sidebar.collapsed {
-    width: 70px;
+  .tabContainer {
+    padding: 0 0.5rem;
   }
-
-  .mainContent {
-    margin: 1rem;
-    height: calc(100vh - 2rem);
-    padding: 2rem;
-    padding-bottom: 8rem;
+  .tabButton {
+    padding: 0.9rem 1rem;
   }
-
-  .sidebarHeader {
-    padding: 1.5rem 1rem;
-    min-height: 70px;
-  }
-
-  .navItem {
-    padding: 1rem;
-    font-size: 1rem;
-  }
-
-  .backButton {
-    padding: 1rem;
-    font-size: 1rem;
+  .contentWrapper {
+    padding: 1.5rem;
   }
 }
 
-/* Tablet Portrait & Large Mobile - Mobile Adjustments */
 @media (max-width: 768px) {
-  .jobLayoutContainer {
-  position: relative;
-  height: calc(100vh - var(--header-height));
-  margin-top: 0; /* ✅ remove gap */
-}
-
-.sidebar {
-  position: fixed;
-  left: 0;
-  top: var(--header-height); /* ✅ ensures it starts below banner */
-  width: 70px;
-  height: calc(100vh - var(--header-height)); /* ✅ fills below banner */
-  z-index: 10;
-  transform: translateX(0);
-  transition: width 0.3s ease, transform 0.3s ease;
-}
-
-  /* When expanded on mobile - Desktop expanded size */
-  .sidebar:not(.collapsed) {
-    width: 250px;
+  :root {
+    --tab-height: 50px;
   }
-
-  /* Mobile overlay active when sidebar expanded */
-  .sidebar:not(.collapsed) ~ .mobileOverlay {
-    display: block;
-    top: var(--header-height);
-    height: calc(100vh - var(--header-height));
+  .jobTitleHeader {
+    padding: 1rem 1rem 0.5rem 1rem;
   }
-
-  .mainContent {
-    margin: 1rem;
-    margin-left: calc(70px + 1rem); /* Desktop collapsed width + margin */
-    width: calc(100% - 70px - 2rem);
-    height: calc(100vh - var(--header-height) - 2rem);
-    border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  .tabButton {
+    padding: 0.75rem 0.9rem;
+    font-size: 0.85rem;
+  }
+  .tabLabel {
+    display: none; /* hide labels on small screens */
+  }
+  .contentWrapper {
     padding: 1rem;
-    padding-bottom: 8rem;
-    transition: margin-left 0.3s ease, width 0.3s ease;
-  }
-
-  /* When sidebar expanded, adjust main content - Desktop sizes */
-  .sidebar:not(.collapsed) ~ .mainContent {
-    margin-left: calc(250px + 1rem);
-    width: calc(100% - 250px - 2rem);
-  }
-
-  /* Mobile navigation styling - Desktop sizes */
-  .sidebarHeader {
-    padding: 1.5rem 1rem;
-    min-height: 70px;
-  }
-
-  .sidebar.collapsed .sidebarHeader {
-    justify-content: center;
-  }
-
-  .sidebar:not(.collapsed) .sidebarHeader {
-    justify-content: space-between;
-  }
-
-  .sidebar.collapsed .sidebarTitle {
-    display: none;
-  }
-
-  .navItem {
-    padding: 1rem;
-    font-size: 1rem;
-  }
-
-  .sidebar.collapsed .navItem {
-    justify-content: center;
-  }
-
-  .sidebar:not(.collapsed) .navItem {
-    justify-content: flex-start;
-  }
-
-  .sidebar.collapsed .backButton {
-    justify-content: center;
-    padding: 1rem;
-  }
-
-  .sidebar:not(.collapsed) .backButton {
-    justify-content: flex-start;
-    padding: 1rem;
-    font-size: 1rem;
   }
 }
 
-/* Mobile Small - Desktop Sizes */
 @media (max-width: 480px) {
-  .sidebar {
-    width: 70px; /* Desktop collapsed size */
-    top: var(--header-height);
-    height: calc(100vh - var(--header-height));
+  :root {
+    --tab-height: 48px;
   }
-
-  .sidebar:not(.collapsed) {
-    width: 250px; /* Desktop expanded size */
+  .jobTitleHeader {
+    padding: 0.75rem 0.75rem 0.5rem 0.75rem;
   }
-
-  .mainContent {
-    margin: 1rem;
-    margin-left: calc(70px + 1rem);
-    width: calc(100% - 70px - 2rem);
-    height: calc(100vh - var(--header-height) - 2rem);
-    border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-    padding: 2rem;
-    padding-bottom: 8rem;
+  .tabButton {
+    padding: 0.6rem 0.8rem;
+    gap: 0.25rem;
   }
-
-  .sidebar:not(.collapsed) ~ .mainContent {
-    margin-left: calc(250px + 1rem);
-    width: calc(100% - 250px - 2rem);
-  }
-
-  .sidebarHeader {
-    padding: 1.5rem 1rem;
-    min-height: 70px;
-  }
-
-  .sidebarTitle {
-    font-size: 1.2rem;
-  }
-
-  .navItem {
-    padding: 1rem;
-    font-size: 1rem;
-  }
-
   .backButton {
-    font-size: 1rem;
-    padding: 1rem;
+    padding: 0.4rem 0.6rem;
+    font-size: 0.8rem;
+  }
+  .jobTitle {
+    font-size: 1.4rem;
+  }
+  .contentWrapper {
+    padding: 0.75rem;
   }
 }
 
-/* Mobile Extra Small - Desktop Sizes */
-@media (max-width: 480px) {
-  .sidebarTitle {
-    font-size: 1.2rem;
-  }
-}
-
-/* Very Small Mobile - Desktop Sizes */
 @media (max-width: 360px) {
-  /* All styling inherited from 480px breakpoint */
+  .tabButton {
+    padding: 0.5rem 0.6rem;
+  }
 }
