@@ -32,7 +32,6 @@ export default function EditJobForm() {
   const [address, setAddress] = createSignal("");
   const [description, setDescription] = createSignal("");
   
-  // Changed to handle requirements as JSON object
   const [requirements, setRequirements] = createSignal<Requirements>({
     experience: "",
     skills: []
@@ -52,11 +51,13 @@ export default function EditJobForm() {
   const [districtList, setDistrictList] = createSignal<string[]>([]);
   const [existingPhotos, setExistingPhotos] = createSignal<ExistingPhoto[]>([]);
   
-  // Track deleted existing photos
   const [deletedPhotoIds, setDeletedPhotoIds] = createSignal<string[]>([]);
 
   // For handling skills as tags
   const [skillInput, setSkillInput] = createSignal("");
+
+  // Store original values to track changes
+  const [originalData, setOriginalData] = createSignal<any>({});
 
   const MAX_FILES = 3;
   const MAX_SIZE_MB = 2;
@@ -70,12 +71,75 @@ export default function EditJobForm() {
     return today.toISOString().split('T')[0];
   };
 
+  // Helper function to deep compare objects
+  const deepEqual = (obj1: any, obj2: any): boolean => {
+    if (obj1 === obj2) return true;
+    if (obj1 == null || obj2 == null) return false;
+    if (typeof obj1 !== typeof obj2) return false;
+    
+    if (typeof obj1 === 'object') {
+      if (Array.isArray(obj1) !== Array.isArray(obj2)) return false;
+      
+      if (Array.isArray(obj1)) {
+        if (obj1.length !== obj2.length) return false;
+        return obj1.every((item, index) => deepEqual(item, obj2[index]));
+      }
+      
+      const keys1 = Object.keys(obj1);
+      const keys2 = Object.keys(obj2);
+      if (keys1.length !== keys2.length) return false;
+      
+      return keys1.every(key => deepEqual(obj1[key], obj2[key]));
+    }
+    
+    return false;
+  };
+
+  // Get only changed fields
+  const getChangedFields = () => {
+    const current = {
+      title: title().trim(),
+      dateStart: dateStart(),
+      dateEnd: dateEnd(),
+      timeStart: timeStart(),
+      timeEnd: timeEnd(),
+      hourlyRate: hourlyRate(),
+      city: city(),
+      district: district(),
+      address: address().trim(),
+      description: description().trim(),
+      requirements: requirements(),
+      contactPerson: contactPerson().trim(),
+      contactPhone: contactPhone().trim(),
+      contactEmail: contactEmail().trim()
+    };
+
+    const original = originalData();
+    const changedFields: any = {};
+
+    // Check each field for changes
+    Object.keys(current).forEach(key => {
+      if (!deepEqual(current[key], original[key])) {
+        changedFields[key] = current[key];
+      }
+    });
+
+    return changedFields;
+  };
+
+  // Check if there are any changes
+  const hasChanges = () => {
+    const changedFields = getChangedFields();
+    const hasFieldChanges = Object.keys(changedFields).length > 0;
+    const hasPhotoChanges = files().length > 0 || deletedPhotoIds().length > 0;
+    return hasFieldChanges || hasPhotoChanges;
+  };
+
   // Validate date selection
   const handleDateStartChange = (value: string) => {
     setError("");
     setDateStart(value);
     
-    // If end date is before the new start date, reset it
     if (dateEnd() && dateEnd() < value) {
       setDateEnd("");
     }
@@ -170,28 +234,44 @@ export default function EditJobForm() {
       setContactPhone(data.contactPhone || "");
       setContactEmail(data.contactEmail || "");
 
-      // Set existing photos if available - check both possible property names
+      // Store original data for comparison
+      setOriginalData({
+        title: data.title || "",
+        dateStart: data.dateStart ? data.dateStart.slice(0, 10) : "",
+        dateEnd: data.dateEnd ? data.dateEnd.slice(0, 10) : "",
+        timeStart: data.timeStart || "",
+        timeEnd: data.timeEnd || "",
+        hourlyRate: data.hourlyRate || 0,
+        city: data.city || "",
+        district: data.district || "",
+        address: data.address || "",
+        description: data.description || "",
+        requirements: {
+          experience: data.requirements?.experience || "",
+          skills: data.requirements?.skills || []
+        },
+        contactPerson: data.contactPerson || "",
+        contactPhone: data.contactPhone || "",
+        contactEmail: data.contactEmail || ""
+      });
+
+      // Set existing photos
       const photosArray = data.photos || data.environmentPhotos;
       if (photosArray && Array.isArray(photosArray)) {
         const photoArray = photosArray.map((photo: any, index: number) => {
-          // Handle different possible photo object structures
           const photoId = photo.id || photo._id || photo.photoId || `photo_${index}`;
           const photoUrl = photo.url || photo.path || photo.src;
           const photoName = photo.filename || photo.name || photo.originalName || `photo_${index}.jpg`;
-          
-          console.log("Processing photo:", photo); // Debug log
           
           return {
             id: photoId,
             url: photoUrl,
             filename: photoName
           };
-        }).filter(photo => photo.url); // Only include photos with valid URLs
+        }).filter(photo => photo.url);
         
-        console.log("Setting existing photos:", photoArray); // Debug log
         setExistingPhotos(photoArray);
       } else {
-        console.log("No photos found in response. Checked data.photos:", data.photos, "and data.environmentPhotos:", data.environmentPhotos); // Debug log
         setExistingPhotos([]);
       }
 
@@ -275,9 +355,7 @@ export default function EditJobForm() {
   };
 
   const handleExistingPhotoDelete = (photoId: string) => {
-    // Add to deleted photos list
     setDeletedPhotoIds(current => [...current, photoId]);
-    // Remove from existing photos display
     setExistingPhotos(current => current.filter(photo => photo.id !== photoId));
   };
   
@@ -326,6 +404,12 @@ export default function EditJobForm() {
       return;
     }
 
+    // Check if there are any changes to submit
+    if (!hasChanges()) {
+      setError("No changes detected. Please modify at least one field before updating.");
+      return;
+    }
+
     setIsLoading(true);
 
     const id = gigId();
@@ -336,73 +420,27 @@ export default function EditJobForm() {
     }
 
     try {
-      const formData = new FormData();
-      formData.append("title", title().trim());
-      formData.append("dateStart", dateStart());
-      formData.append("dateEnd", dateEnd());
-      formData.append("timeStart", timeStart());
-      formData.append("timeEnd", timeEnd());
-      formData.append("hourlyRate", hourlyRate().toString());
-      formData.append("city", city());
-      formData.append("district", district());
-      formData.append("address", address().trim());
-      formData.append("description", description().trim());
-      
-      // Send requirements as JSON string
-      formData.append("requirements", JSON.stringify(requirements()));
-      
-      formData.append("contactPerson", contactPerson().trim());
-      formData.append("contactPhone", contactPhone().trim());
-      formData.append("contactEmail", contactEmail().trim());
-      formData.append("publishedAt", new Date().toISOString());
+      const changedFields = getChangedFields();
+      const hasFieldChanges = Object.keys(changedFields).length > 0;
+      const hasPhotoChanges = files().length > 0 || deletedPhotoIds().length > 0;
 
-      // Add new photos
-      files().forEach(filePreview => {
-        formData.append('environmentPhotos', filePreview.file);
-      });
-
-      // Include photo management info for existing photos
-      if (deletedPhotoIds().length > 0) {
-        formData.append("deletedPhotoIds", JSON.stringify(deletedPhotoIds()));
-      }
-      if (existingPhotos().length > 0) {
-        formData.append("keepPhotoIds", JSON.stringify(existingPhotos().map(photo => photo.id)));
-      }
-
-      console.log("Submitting FormData for update");
-
-      const response = await fetch(`/api/gig/${id}`, {
-        method: "PUT",
-        headers: {
-          "platform": "web-employer",
-        },
-        credentials: "include",
-        body: formData,
-      });
-
-      if (response.ok) {
-        setSuccess(true);
-        alert("Changes saved successfully!");
-        window.location.href = "/dashboard";
-      } else {
-        const result = await response.json().catch(() => ({}));
-        console.error("API Error Details:", {
-          status: response.status,
-          statusText: response.statusText,
-          body: result
-        });
-        setError(result.message || result.error || `Update failed (${response.status}): ${response.statusText}`);
-      }
-
-      // If there are new files to upload, handle them separately
-      if (files().length > 0) {
+      // Only update basic fields if there are changes
+      if (hasFieldChanges) {
         const formData = new FormData();
-        files().forEach(filePreview => {
-          formData.append('environmentPhotos', filePreview.file);
+        
+        // Only append changed fields
+        Object.entries(changedFields).forEach(([key, value]) => {
+          if (key === 'requirements') {
+            formData.append(key, JSON.stringify(value));
+          } else {
+            formData.append(key, String(value));
+          }
         });
 
-        const fileResponse = await fetch(`/api/gig/${id}/photos`, {
-          method: "POST",
+        console.log("Submitting changed fields:", Object.keys(changedFields));
+
+        const response = await fetch(`/api/gig/${id}`, {
+          method: "PUT", // Using PUT as required by backend
           headers: {
             "platform": "web-employer",
           },
@@ -410,11 +448,54 @@ export default function EditJobForm() {
           body: formData,
         });
 
-        if (!fileResponse.ok) {
-          const fileResult = await fileResponse.json().catch(() => ({}));
-          console.warn("Photo upload failed:", fileResult);
-          // Don't fail the entire update if photos fail
-          setError("Job updated but photo upload failed. Please try uploading photos again.");
+        if (!response.ok) {
+          const result = await response.json().catch(() => ({}));
+          console.error("API Error Details:", {
+            status: response.status,
+            statusText: response.statusText,
+            body: result
+          });
+          setError(result.message || result.error || `Update failed (${response.status}): ${response.statusText}`);
+          setIsLoading(false);
+          return;
+        }
+      }
+
+      // Handle photo changes separately
+      if (hasPhotoChanges) {
+        const photoFormData = new FormData();
+
+        // Add new photos
+        if (files().length > 0) {
+          files().forEach(filePreview => {
+            photoFormData.append('environmentPhotos', filePreview.file);
+          });
+        }
+
+        // Include photo management info
+        if (deletedPhotoIds().length > 0) {
+          photoFormData.append("deletedPhotoIds", JSON.stringify(deletedPhotoIds()));
+        }
+        if (existingPhotos().length > 0) {
+          photoFormData.append("keepPhotoIds", JSON.stringify(existingPhotos().map(photo => photo.id)));
+        }
+
+        console.log("Submitting photo changes");
+
+        const photoResponse = await fetch(`/api/gig/${id}/photos`, {
+          method: "PUT", // Using PUT as required by backend
+          headers: {
+            "platform": "web-employer",
+          },
+          credentials: "include",
+          body: photoFormData,
+        });
+
+        if (!photoResponse.ok) {
+          const photoResult = await photoResponse.json().catch(() => ({}));
+          console.warn("Photo update failed:", photoResult);
+          setError("Job updated but photo changes failed. Please try updating photos again.");
+          setIsLoading(false);
           return;
         }
       }
@@ -454,6 +535,17 @@ export default function EditJobForm() {
 
       <Show when={!isFetching()}>
         <form class={styles.postjobFormWrapper} onSubmit={handleSubmit}>
+          {/* Show changes indicator */}
+          <Show when={hasChanges()}>
+            <div class={styles.changesIndicator || "changes-indicator"} style="background: #e3f2fd; border: 1px solid #2196f3; border-radius: 8px; padding: 12px; margin-bottom: 16px; color: #1976d2;">
+              <svg style="width: 16px; height: 16px; display: inline-block; margin-right: 8px;" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+              </svg>
+              You have unsaved changes
+            </div>
+          </Show>
+
+          {/* Rest of your existing form sections remain the same */}
           {/* 1. Title Section */}
           <div class={styles.formSection}>
             <h3 class={styles.sectionTitle}>
@@ -624,7 +716,7 @@ export default function EditJobForm() {
             </label>
           </div>
 
-          {/* 6. Job Requirements Section - JSON */}
+          {/* 6. Job Requirements Section */}
           <div class={styles.formSection}>
             <h3 class={styles.sectionTitle}>
               <svg class={styles.sectionIcon} fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -633,7 +725,6 @@ export default function EditJobForm() {
               Job Requirements
             </h3>
             
-            {/* Experience Field */}
             <div class={styles.requirementField}>
               <label class={styles.postjobLabel}>
                 <span>Experience <span class={styles.required}>*</span></span>
@@ -647,13 +738,11 @@ export default function EditJobForm() {
               </label>
             </div>
 
-            {/* Skills Field */}
             <div class={styles.requirementField}>
               <label class={styles.postjobLabel}>
                 <span>Required Skills <span class={styles.required}>*</span></span>
                 
                 <div class={styles.skillsContainer}>
-                  {/* Skill Input */}
                   <div class={styles.skillInputSection}>
                     <div class={styles.skillInputWrapper}>
                       <div class={styles.skillInputBox}>
@@ -687,7 +776,6 @@ export default function EditJobForm() {
                     </div>
                   </div>
 
-                  {/* Skills Display */}
                   <Show when={requirements().skills.length > 0}>
                     <div class={styles.skillsDisplay}>
                       <div class={styles.skillsHeader}>
@@ -721,7 +809,6 @@ export default function EditJobForm() {
                     </div>
                   </Show>
                   
-                  {/* Empty State */}
                   <Show when={requirements().skills.length === 0}>
                     <div class={styles.skillsEmptyState}>
                       <div class={styles.emptyStateIcon}>
@@ -752,7 +839,6 @@ export default function EditJobForm() {
                 <span>Workplace Photos <span class={styles.fileHint}>(Max: {MAX_FILES} photos, {MAX_SIZE_MB}MB each)</span></span>
               </label>
               
-              {/* Show upload area only if we haven't reached the limit */}
               <Show when={totalPhotos() < MAX_FILES}>
                 <div class={styles.uploadArea}>
                   <label for="file-upload" class={styles.uploadBox}>
@@ -775,10 +861,8 @@ export default function EditJobForm() {
                 </div>
               </Show>
 
-              {/* Photo grid showing existing and new photos */}
               <Show when={totalPhotos() > 0}>
                 <div class={styles.fileGrid}>
-                  {/* Display existing photos first */}
                   <For each={existingPhotos()}>
                     {(photo) => (
                       <div class={styles.filePreview}>
@@ -796,7 +880,6 @@ export default function EditJobForm() {
                     )}
                   </For>
 
-                  {/* Display new files */}
                   <For each={files()}>
                     {(filePreview, index) => (
                       <div class={styles.filePreview}>
@@ -870,8 +953,12 @@ export default function EditJobForm() {
           </Show>
 
           {/* Submit Button */}
-          <button class={styles.postjobBtn} type="submit" disabled={isLoading()}>
-            {isLoading() ? "更新中..." : "Update Job"}
+          <button 
+            class={`${styles.postjobBtn} ${!hasChanges() ? styles.postjobBtnDisabled || 'opacity-50 cursor-not-allowed' : ''}`} 
+            type="submit" 
+            disabled={isLoading() || !hasChanges()}
+          >
+            {isLoading() ? "更新中..." : hasChanges() ? "Update Job" : "No Changes to Save"}
           </button>
         </form>
       </Show>

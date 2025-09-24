@@ -331,9 +331,6 @@ export default function DashboardPage() {
                     <p class={styles.jobTime}>
                       Time: {job.timeStart} - {job.timeEnd}
                     </p>
-                    <p class={styles.jobPostedAt}>
-                      Posted on: {formatDateToDDMMYYYY(job.publishedAt)}
-                    </p>
                     <div class={styles.jobStatusContainer}>
                       Status: 
                       <p
