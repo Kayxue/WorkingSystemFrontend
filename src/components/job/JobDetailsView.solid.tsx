@@ -105,7 +105,7 @@ const JobDetailsView: Component<JobDetailsViewProps> = (props) => {
               <div class={styles.headerRow}>
                 <h1 class={styles.jobTitle}>Job Info</h1>
                 <button class={styles.editButton} onClick={() => window.location.href=`/edit-job?gigId=${encodeURIComponent(jobInfo.gigId)}`}>✎ Edit</button>
-              </div>
+              </div> 
 
               <p><span class={styles.label}>Date:</span> {formatDateToDDMMYYYY(jobInfo.dateStart)} – {formatDateToDDMMYYYY(jobInfo.dateEnd)}</p>
               <p><span class={styles.label}>Time:</span> {jobInfo.timeStart || "-"} – {jobInfo.timeEnd || "-"}</p>

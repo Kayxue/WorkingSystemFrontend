@@ -1,42 +1,25 @@
-/*
-  ==========================================
-  Global Styling & Keterbacaan
-  ==========================================
-*/
 html, body {
-  /* Margin tidak diubah */
   font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  line-height: 1.65; /* Spasi baris lebih lega */
-  background-color: #f8f9fa; /* Latar belakang halaman sangat terang */
+  line-height: 1.65;
+  background-color: #f8f9fa;
   color: #343a40;
   overflow: hidden; 
 }
 
-/* Memastikan model box yang konsisten */
 *, *::before, *::after {
   box-sizing: border-box;
 }
 
-/*
-  ==========================================
-  Container Utama & Tata Letak
-  ==========================================
-*/
 .jobDetailsContainer {
+  position: relative;
   width: 100%;
-  max-width: 1000px;
-  margin: 0 auto; /* Tengah-kan kontainer di halaman */
-  padding: 3rem 2rem;
+  max-width: 2000px;
+  margin: 0px;
+  padding: 2rem 0rem;
   overflow-x: hidden;
-  background-color: #ffffff; /* Latar belakang putih bersih */
-  /* Tanpa box-shadow/card style di sini */
+  background-color: #ffffff;
 }
 
-/*
-  ==========================================
-  Pesan Loading & Error
-  ==========================================
-*/
 .loading {
   text-align: center;
   padding: 3rem;
@@ -62,14 +45,9 @@ html, body {
   font-weight: 600;
 }
 
-/*
-  ==========================================
-  Judul & Header
-  ==========================================
-*/
 .jobTitle {
   margin-top: 0;
-  margin-bottom: 2rem;
+  margin-bottom: 0;
   color: #1c2a38;
   font-size: 2.2rem;
   font-weight: 700;
@@ -82,35 +60,23 @@ html, body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 2.5rem; /* Jarak lebih lega */
+  margin-bottom: 2.5rem;
   padding-bottom: 1rem;
-  border-bottom: 1px solid #e9ecef; /* Garis pemisah yang halus */
 }
 
-/*
-  ==========================================
-  Informasi Dasar
-  ==========================================
-*/
-/* Style untuk elemen <p> info dasar */
 .jobDetailsContainer > p {
-    margin-bottom: 0.8rem;
-    font-size: 1.05rem;
+  margin-bottom: 0.8rem;
+  font-size: 1.05rem;
 }
 
 .label {
-  font-weight: 700; /* Label lebih tebal */
+  font-weight: 700;
   margin-right: 1rem;
   color: #34495e; 
-  min-width: 100px; /* Lebar minimum agar sejajar */
+  min-width: 100px;
   display: inline-block;
 }
 
-/*
-  ==========================================
-  Status Badges
-  ==========================================
-*/
 .status {
   display: inline-block;
   padding: 0.4rem 1rem;
@@ -122,7 +88,6 @@ html, body {
   border: 1px solid transparent; 
 }
 
-/* Warna Status yang Kontras */
 .status.active, .status.published {
   background: #e6f7ea;
   color: #28a745; 
@@ -147,13 +112,8 @@ html, body {
   border-color: #adb5bd;
 }
 
-/*
-  ==========================================
-  Bagian Konten & Hierarki
-  ==========================================
-*/
 .section {
-  margin: 3rem 0; /* Jarak yang sangat lega antar bagian utama */
+  margin: 3rem 0;
   padding: 0; 
 }
 
@@ -162,15 +122,10 @@ html, body {
   margin-bottom: 1.5rem;
   font-size: 1.7rem;
   font-weight: 600;
-  border-left: 5px solid #007acc; /* Penekanan visual tanpa card */
+  border-left: 5px solid #007acc;
   padding-left: 1rem;
 }
 
-/*
-  ==========================================
-  Kotak Konten (Deskripsi/Persyaratan)
-  ==========================================
-*/
 .contentBox {
   background: #f8f9fa;
   padding: 1.5rem;
@@ -181,24 +136,17 @@ html, body {
   line-height: 1.7;
   font-size: 1.05rem;
   margin-bottom: 2rem;
-  /* Tanpa box-shadow */
 }
 
-/* Style untuk list */
 .section ul {
-    padding-left: 1.5rem;
-    list-style: square; 
+  padding-left: 1.5rem;
+  list-style: square; 
 }
 
 .section li {
-    margin-bottom: 0.6rem;
+  margin-bottom: 0.6rem;
 }
 
-/*
-  ==========================================
-  Grid & Item Informasi
-  ==========================================
-*/
 .infoGrid {
   gap: 1.5rem;
   margin: 2rem 0;
@@ -209,14 +157,8 @@ html, body {
   padding: 1.2rem;
   border-radius: 6px;
   border-left: 5px solid #007acc;
-  /* Tanpa box-shadow */
 }
 
-/*
-  ==========================================
-  Galeri Foto
-  ==========================================
-*/
 .photoGallery {
   gap: 1.5rem;
   margin: 1.5rem 0;
@@ -226,7 +168,7 @@ html, body {
   position: relative;
   border-radius: 8px;
   overflow: hidden;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1); /* Bayangan halus HANYA untuk item foto */
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1); 
   transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
@@ -237,11 +179,11 @@ html, body {
 
 .photoItem img {
   width: 100%;
-  height: 220px; /* Sedikit lebih tinggi */
+  height: 220px;
   object-fit: cover;
   cursor: pointer;
   transition: opacity 0.2s ease;
-  border-radius: 8px; /* Sudut foto */
+  border-radius: 8px;
 }
 
 .photoItem img:hover {
@@ -270,13 +212,8 @@ html, body {
   border: 3px dashed #b0c4de;
 }
 
-/*
-  ==========================================
-  Tombol
-  ==========================================
-*/
 .backButton {
-  background: #6c757d; /* Abu-abu netral */
+  background: #6c757d;
   color: white;
   border: none;
   padding: 0.75rem 1.5rem;
@@ -293,6 +230,9 @@ html, body {
 }
 
 .editButton {
+  position: absolute; /* add this */
+  top: 45px;          /* distance from top */
+  right: 0px;
   background-color: #007acc;
   color: white;
   border: none;
@@ -310,11 +250,6 @@ html, body {
   transform: translateY(-1px);
 }
 
-/*
-  ==========================================
-  Modal Foto
-  ==========================================
-*/
 .photoModal {
   position: fixed;
   top: 0;

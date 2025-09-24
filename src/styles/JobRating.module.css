@@ -3,13 +3,14 @@
 .ratingViewContainer {
   padding: 24px;
   background: #fff;
-  min-height: 100vh;
+  min-height: 10vh;
 }
 
 .header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  font-weight: bold;
 }
 
 .header h2 {

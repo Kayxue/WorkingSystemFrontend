@@ -1,195 +1,243 @@
-html, body {
-  height: 100%;
-  margin: 0;
-  padding: 0;
-  overflow: hidden;
+/*
+|--------------------------------------------------------------------------
+| Global / Reset Styles
+|--------------------------------------------------------------------------
+*/
+html,
+body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    font-family: 'Inter', sans-serif;
+    background-color: #f8fafc;
+    color: #111827;
 }
 
 :root {
-  --tab-height: 56px;
+    --tab-height: 56px;
 }
 
-/* Layout container */
+/*
+|--------------------------------------------------------------------------
+| Layout Containers
+|--------------------------------------------------------------------------
+*/
+
+/* Main Application Layout Container */
 .jobLayoutContainer {
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
-  overflow: hidden;
-  background-color: #f8fafc;
+    display: flex;
+    flex-direction: column;
+    height: 100vh; /* full viewport height */
+    background-color: #f8fafc;
 }
 
-/* Job Title Header (title left, back button right) */
+/* Scrollable Content Area */
+.contentWrapper {
+    flex: 1;
+    overflow-y: auto;
+    background-color: #f8fafc;
+    padding: 2rem;
+}
+
+/* Section Block within Content */
+.sectionBlock {
+    background: #fff;
+    padding: 2rem;
+    margin-bottom: 2rem;
+}
+
+/*
+|--------------------------------------------------------------------------
+| Header Section
+|--------------------------------------------------------------------------
+*/
+
+/* Job Title Header Bar */
 .jobTitleHeader {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background: #fff;
-  padding: 1.5rem 2rem 1rem 2rem; /* internal padding */
-  border-bottom: 1px solid #e2e8f0;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-  margin-bottom: 0; /* remove space below */
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #fff;
+    padding: 1.5rem 2rem 1rem 2rem;
+    border-bottom: 1px solid #e2e8f0;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    position: sticky;
+    top: 0;
+    z-index: 20;
 }
 
+/* Job Title Text */
 .jobTitle {
-  margin: 0;
-  font-size: 1.75rem;
-  font-weight: 700;
-  color: #111827;
-  line-height: 1.2;
+    margin: 0;
+    font-size: 1.75rem;
+    font-weight: 700;
 }
 
+/* Back Button */
 .backButton {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  background: rgba(239, 68, 68, 0.1);
-  border: 1px solid rgba(239, 68, 68, 0.3);
-  color: #ef4444;
-  padding: 0.5rem 1rem;
-  border-radius: 6px;
-  text-decoration: none;
-  font-size: 0.9rem;
-  font-weight: 500;
-  transition: all 0.2s ease;
+    /* Layout */
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    text-decoration: none;
+
+    /* Appearance */
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    color: #ef4444;
+
+    /* Typography */
+    font-size: 0.9rem;
+    font-weight: 500;
+
+    /* Interaction */
+    transition: all 0.2s ease;
 }
 
 .backButton:hover {
-  background: rgba(239, 68, 68, 0.2);
-  border-color: rgba(239, 68, 68, 0.5);
+    background: rgba(239, 68, 68, 0.2);
+    border-color: rgba(239, 68, 68, 0.5);
 }
 
-.backIcon {
-  font-size: 1rem;
-}
+/*
+|--------------------------------------------------------------------------
+| Tab Navigation
+|--------------------------------------------------------------------------
+*/
 
-/* Tab Navigation immediately below job title */
+/* Tab Navigation Wrapper */
 .tabNavigation {
-  background: #fff;
-  border-bottom: 1px solid #e2e8f0;
-  position: sticky;
-  top: 60px; /* adjust according to header height if needed */
-  z-index: 15;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-  margin-top: 0; /* remove space above */
+    background: #fff;
+    border-bottom: 1px solid #e2e8f0;
+    position: sticky;
+    top: 85px; /* adjust to match header height (1.5rem + 1rem + 1px border) */
+    z-index: 15;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
+/* Tab Container (Flex for tabs) */
 .tabContainer {
-  display: flex;
-  justify-content: flex-start;
-  padding: 0 1rem;
-  overflow-x: auto;
+    display: flex;
+    justify-content: flex-start;
+    padding: 0 1rem;
+    overflow-x: auto; /* allows horizontal scroll for many tabs */
 }
 
+/* Individual Tab Button */
 .tabButton {
-  background: transparent;
-  border: none;
-  color: #6b7280;
-  padding: 1rem 1.5rem;
-  cursor: pointer;
-  font-size: 0.9rem;
-  font-weight: 500;
-  transition: all 0.2s ease;
-  white-space: nowrap;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  border-bottom: 2px solid transparent;
+    /* Reset */
+    background: transparent;
+    border: none;
+    cursor: pointer;
+
+    /* Layout */
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 1rem 1.5rem;
+    white-space: nowrap; /* prevent label wrapping */
+    border-bottom: 2px solid transparent;
+
+    /* Appearance */
+    color: #6b7280;
+
+    /* Typography */
+    font-size: 0.9rem;
+    font-weight: 500;
+    
+    /* Interaction */
+    transition: all 0.2s ease;
 }
 
 .tabButton:hover {
-  color: #374151;
-  background: rgba(59, 130, 246, 0.05);
+    color: #374151;
+    background: rgba(59, 130, 246, 0.05);
 }
 
 .tabButton.activeTab {
-  color: #3b82f6;
-  border-bottom-color: #3b82f6;
-  background: rgba(59, 130, 246, 0.05);
+    color: #3b82f6;
+    border-bottom-color: #3b82f6;
+    background: rgba(59, 130, 246, 0.05);
 }
 
+/* Tab elements */
 .tabIcon {
-  font-size: 1rem;
+    font-size: 1rem;
 }
 
 .tabLabel {
-  font-weight: 500;
+    font-weight: 500;
 }
 
-/* Content Wrapper */
-.contentWrapper {
-  flex: 1;
-  overflow-y: auto;
-  background-color: #f8fafc;
-  padding: 2rem;
-}
 
-/* Section block - plain white, no card styling */
-.sectionBlock {
-  background: #fff;
-  padding: 2rem;
-  margin-bottom: 2rem;
-}
+/*
+|--------------------------------------------------------------------------
+| Responsive Adjustments (Media Queries)
+|--------------------------------------------------------------------------
+*/
 
-/* Responsive adjustments */
+/* Tablet / Small Laptop (max-width: 1024px) */
 @media (max-width: 1024px) {
-  .jobTitleHeader {
-    padding: 1.2rem 1.5rem 0.8rem 1.5rem;
-  }
-  .tabContainer {
-    padding: 0 0.5rem;
-  }
-  .tabButton {
-    padding: 0.9rem 1rem;
-  }
-  .contentWrapper {
-    padding: 1.5rem;
-  }
+    .jobTitleHeader {
+        padding: 1.2rem 1.5rem 0.8rem 1.5rem;
+    }
+    .tabContainer {
+        padding: 0 0.5rem;
+    }
+    .tabButton {
+        padding: 0.9rem 1rem;
+    }
+    .contentWrapper {
+        padding: 1.5rem;
+    }
 }
 
+/* Small Tablet / Large Phone (max-width: 768px) */
 @media (max-width: 768px) {
-  :root {
-    --tab-height: 50px;
-  }
-  .jobTitleHeader {
-    padding: 1rem 1rem 0.5rem 1rem;
-  }
-  .tabButton {
-    padding: 0.75rem 0.9rem;
-    font-size: 0.85rem;
-  }
-  .tabLabel {
-    display: none; /* hide labels on small screens */
-  }
-  .contentWrapper {
-    padding: 1rem;
-  }
+    :root {
+        --tab-height: 50px;
+    }
+    .jobTitleHeader {
+        padding: 1rem 1rem 0.5rem 1rem;
+    }
+    .tabButton {
+        padding: 0.75rem 0.9rem;
+        font-size: 0.85rem;
+    }
+    .contentWrapper {
+        padding: 1rem;
+    }
 }
 
+/* Mobile (max-width: 480px) */
 @media (max-width: 480px) {
-  :root {
-    --tab-height: 48px;
-  }
-  .jobTitleHeader {
-    padding: 0.75rem 0.75rem 0.5rem 0.75rem;
-  }
-  .tabButton {
-    padding: 0.6rem 0.8rem;
-    gap: 0.25rem;
-  }
-  .backButton {
-    padding: 0.4rem 0.6rem;
-    font-size: 0.8rem;
-  }
-  .jobTitle {
-    font-size: 1.4rem;
-  }
-  .contentWrapper {
-    padding: 0.75rem;
-  }
+    :root {
+        --tab-height: 48px;
+    }
+    .jobTitleHeader {
+        padding: 0.75rem 0.75rem 0.5rem 0.75rem;
+    }
+    .jobTitle {
+        font-size: 1.4rem;
+    }
+    .backButton {
+        padding: 0.4rem 0.6rem;
+        font-size: 0.8rem;
+    }
+    .tabButton {
+        padding: 0.6rem 0.8rem;
+        gap: 0.25rem;
+    }
+    .contentWrapper {
+        padding: 0.75rem;
+    }
 }
 
+/* Extra Small Mobile (max-width: 360px) */
 @media (max-width: 360px) {
-  .tabButton {
-    padding: 0.5rem 0.6rem;
-  }
+    .tabButton {
+        padding: 0.5rem 0.6rem;
+    }
 }
