@@ -100,9 +100,11 @@ export default function CalendarPage() {
         end.setHours(0, 0, 0, 0);
 
         while (current <= end) {
-          const day = current.getDate();
-          if (!grouped[day]) grouped[day] = [];
-          grouped[day].push(gig);
+          if (current.getFullYear() === y && current.getMonth() === m) {
+            const day = current.getDate();
+            if (!grouped[day]) grouped[day] = [];
+            grouped[day].push(gig);
+          }
           current.setDate(current.getDate() + 1);
         }
       }

@@ -11,6 +11,7 @@ type JobOffer = {
   publishedAt: string;
   unlistedAt: string;
   isActive: boolean;
+  status: string;
 };
 
 function formatDateToDDMMYYYY(dateStr: string): string {
@@ -31,15 +32,55 @@ export default function DashboardPage() {
   const [isLoading, setIsLoading] = createSignal(false);
   const [pageInput, setPageInput] = createSignal("1");
   const [startPage, setStartPage] = createSignal(1);
+  const [isDropdownOpen, setIsDropdownOpen] = createSignal(false);
+  const [isMobile, setIsMobile] = createSignal(false);
   const pageWindowSize = 10;
+
+  const filterOptions = ["Ongoing", "Not Started", "Unpublished", "Completed", "Closed"];
+
+  // Check screen size and set mobile state
+  createEffect(() => {
+    const checkScreenSize = () => {
+      setIsMobile(window.innerWidth < 900);
+    };
+    
+    checkScreenSize();
+    window.addEventListener('resize', checkScreenSize);
+    
+    return () => window.removeEventListener('resize', checkScreenSize);
+  });
+
+  // Close dropdown when clicking outside
+  createEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (!target.closest(`.${styles.filterDropdownContainer}`)) {
+        setIsDropdownOpen(false);
+      }
+    };
+
+    if (isDropdownOpen()) {
+      document.addEventListener('click', handleClickOutside);
+      return () => document.removeEventListener('click', handleClickOutside);
+    }
+  });
 
   function getStatusForAPI(filter: string): string {
     const statusMap: Record<string, string> = {
-      Ongoing: "ongoing",
+      Closed: "closed",
       Completed: "completed",
-      "Not Started": "not_started",
+      Unpublished: "unpublished",
+      "Not Started": "not_started"
     };
     return statusMap[filter] || "";
+  }
+
+  function handleFilterChange(filter: string) {
+    setActiveFilter(filter);
+    setStartPage(1);
+    setCurrentPage(1);
+    setPageInput("1");
+    setIsDropdownOpen(false);
   }
 
   async function fetchJobOffers(status?: string) {
@@ -159,22 +200,12 @@ export default function DashboardPage() {
     }
   }
 
-  function getJobStatus(job: JobOffer) {
-    const today = new Date();
-    const publishedDate = new Date(job.publishedAt);
-
-    if (job.unlistedAt) return "Unlisted"; // 已下架
-    if (!job.unlistedAt && publishedDate <= today) return "Published"; // 已上架
-    if (!job.unlistedAt && publishedDate > today) return "Unpublished"; // 未發佈
-    return "Unknown";
-  }
-
   function getJobStatusColor(job: JobOffer) {
-    const status = getJobStatus(job);
-    if (status === "Unlisted") return styles.red;
-    if (status === "Published") return styles.green;
-    if (status === "Unpublished") return styles.yellow;
-    return styles.blue;
+    if (job.status === "已刊登") return styles.green; //published
+    if (job.status === "待刊登") return styles.yellow; //not started
+    if (job.status === "已下架") return styles.red; //unpublished
+    if (job.status === "已結束") return styles.red; //completed
+    if (job.status === "已關閉") return styles.red; //closed
   }
 
   return (
@@ -196,39 +227,64 @@ export default function DashboardPage() {
           stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <polygon points="3 4 21 4 14 12.5 14 19 10 21 10 12.5 3 4" />
         </svg>
-        <button
-          classList={{ [styles.btn]: true, active: activeFilter() === "Ongoing" }} 
-          onClick={() => {
-            setActiveFilter("Ongoing");
-            setStartPage(1);
-            setCurrentPage(1);
-            setPageInput("1");
-          }}
-        >
-          Ongoing
-        </button>
-        <button
-          classList={{ [styles.btn]: true, active: activeFilter() === "Completed" }} 
-          onClick={() => {
-            setActiveFilter("Completed");
-            setStartPage(1);
-            setCurrentPage(1);
-            setPageInput("1");
-          }}
-        >
-          Completed
-        </button>
-        <button
-          classList={{ [styles.btn]: true, active: activeFilter() === "Not Started" }} 
-          onClick={() => {
-            setActiveFilter("Not Started");
-            setStartPage(1);
-            setCurrentPage(1);
-            setPageInput("1");
-          }}
-        >
-          Not Started
-        </button>
+        
+        <Show when={!isMobile()}>
+          {/* Desktop view - show all buttons */}
+          <For each={filterOptions}>
+            {(filter) => (
+              <button
+                classList={{ [styles.btn]: true, active: activeFilter() === filter }}
+                onClick={() => handleFilterChange(filter)}
+              >
+                {filter}
+              </button>
+            )}
+          </For>
+        </Show>
+
+        <Show when={isMobile()}>
+          {/* Mobile view - show dropdown */}
+          <div class={styles.filterDropdownContainer}>
+            <button
+              class={`${styles.btn} active`}
+              classList={{ [styles.dropdownButton]: true }}
+              onClick={() => setIsDropdownOpen(!isDropdownOpen())}
+            >
+              {activeFilter()}
+              <svg 
+                class={styles.dropdownArrow}
+                classList={{ 
+                  [styles.open]: isDropdownOpen(), 
+                  [styles.closed]: !isDropdownOpen() 
+                }}
+                width="12" 
+                height="12" 
+                viewBox="0 0 24 24" 
+                fill="none" 
+                stroke="currentColor" 
+                stroke-width="2"
+              >
+                <path d="m6 9 6 6 6-6"/>
+              </svg>
+            </button>
+            
+            <Show when={isDropdownOpen()}>
+              <div class={styles.dropdownMenu}>
+                <For each={filterOptions}>
+                  {(filter) => (
+                    <button
+                      class={styles.dropdownItem}
+                      classList={{ [styles.active]: activeFilter() === filter }}
+                      onClick={() => handleFilterChange(filter)}
+                    >
+                      {filter}
+                    </button>
+                  )}
+                </For>
+              </div>
+            </Show>
+          </div>
+        </Show>
       </div>
 
       <Show when={isLoading()}>
@@ -336,41 +392,45 @@ export default function DashboardPage() {
                       <p
                         class={`${styles.jobStatus} ${getJobStatusColor(job)}`}
                       >
-                        {getJobStatus(job)}
+                        {job.status}
                       </p>
                     </div>
                   </div>
 
-                  <div class={styles.jobCardActions}>
-                    <button
-                      class={`${styles.actionButton} ${styles.blue}`}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        window.location.href = `/edit-job?gigId=${job.gigId}`;
-                      }}
-                    >
-                      Edit
-                    </button>
-                    <button
-                      class={`${styles.actionButton} ${job.unlistedAt? styles.green :styles.red}`}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        toggleListing(job.gigId);
-                      }}
-                    >
-                      {job.unlistedAt?"Activate":"Deactivate"}
-                    </button>
-                    <button
-                      class={`${styles.actionButton} ${styles.red}`}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        window.alert("Are you sure to remove this job?");
-                        toggleStatus(job.gigId);
-                      }}
-                    >
-                      Remove
-                    </button>
-                  </div>
+                  <Show when={job.status!="已關閉" && job.status!="已結束"}>
+                    <div class={styles.jobCardActions}>
+                      <button
+                        class={`${styles.actionButton} ${styles.blue}`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          window.location.href = `/edit-job?gigId=${job.gigId}`;
+                        }}
+                      >
+                        Edit
+                      </button>
+                      <Show when={job.status!="待刊登"}>
+                        <button
+                          class={`${styles.actionButton} ${job.unlistedAt? styles.green :styles.red}`}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleListing(job.gigId);
+                          }}
+                        >
+                          {job.unlistedAt?"Publish":"Unpublish"}
+                        </button>
+                      </Show>
+                      <button
+                        class={`${styles.actionButton} ${styles.red}`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          window.confirm("Are you sure to close this job?\nThis action cannot be undone!");
+                          toggleStatus(job.gigId);
+                        }}
+                      >
+                        Close job
+                      </button>
+                    </div>
+                  </Show>
                 </div>
               )}
             </For>

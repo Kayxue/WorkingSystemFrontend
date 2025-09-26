@@ -223,6 +223,79 @@
   margin-bottom: 30px;
 }
 
+/* FilterDropdown*/
+.filterDropdownContainer {
+  position: relative;
+  display: inline-block;
+}
+
+.dropdownButton {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 140px;
+  justify-content: space-between;
+}
+
+.dropdownArrow {
+  width: 12px;
+  height: 12px;
+  transition: transform 0.2s ease;
+}
+
+.dropdownArrow.open {
+  transform: rotate(180deg);
+}
+
+.dropdownArrow.closed {
+  transform: rotate(0deg);
+}
+
+.dropdownMenu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 1000;
+  background-color: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  min-width: 120px;
+  margin-top: 4px;
+}
+
+.dropdownItem {
+  width: 100%;
+  text-align: left;
+  padding: 12px 16px;
+  border: none;
+  border-radius: 0;
+  background-color: transparent;
+  color: #374151;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.dropdownItem.active {
+  background-color: #3b82f6;
+  color: white;
+}
+
+.dropdownItem:hover:not(.active) {
+  background-color: #f8fafc;
+}
+
+.dropdownItem:first-child {
+  border-top-left-radius: 6px;
+  border-top-right-radius: 6px;
+}
+
+.dropdownItem:last-child {
+  border-bottom-left-radius: 6px;
+  border-bottom-right-radius: 6px;
+}
+
 @keyframes spin {
   to {
     transform: rotate(360deg);
@@ -249,13 +322,15 @@
     font-weight: normal;
   }
   .jobCardWrapper {
-    font-size: smaller;
+    font-size: 13px;
   }
   .jobStatus {
-    width: 80px;
+    width: 70px;
   }
   .actionButton {
-    width: 100px;
+    width: 75px;
+    padding: 5px;
+    font-size: 12px;
   }
   .jobTitle {
     font-size: 20px;
