@@ -1,6 +1,7 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import CalendarPage from '../components/CalendarPage.solid.tsx';
+const currentYear = new Date().getFullYear();
 ---
 
 <Layout title="WorkNow - Calendar">
@@ -8,6 +9,11 @@ import CalendarPage from '../components/CalendarPage.solid.tsx';
     <CalendarPage client:only="solid-js"/>
     <a href="/post-job" class="floating-button" title="Add new job" aria-label="Add new job">＋</a>
   </main>
+  <footer class="bg-gray-800 text-white text-center py-6 w-full sm:py-8 text-xs sm:text-sm">
+    <div>
+      <p class="m-0">&copy; {currentYear} WorkNow. 保留所有權利。</p>
+    </div>
+  </footer>
 </Layout>
 
 <style>

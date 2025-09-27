@@ -1,6 +1,7 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import DashboardPage from '../components/DashboardPage.solid.tsx';
+const currentYear = new Date().getFullYear();
 ---
 
 <Layout title="WorkNow - 我的職缺列表">
@@ -8,6 +9,11 @@ import DashboardPage from '../components/DashboardPage.solid.tsx';
     <DashboardPage client:load />
     <a href="/post-job" class="floating-button" title="Post a new job" aria-label="Post a new job">＋</a>
   </main>
+  <footer class="bg-gray-800 text-white text-center py-6 w-full sm:py-8 text-xs sm:text-sm">
+    <div>
+      <p class="m-0">&copy; {currentYear} WorkNow. 保留所有權利。</p>
+    </div>
+  </footer>
 </Layout>
 
 <style>

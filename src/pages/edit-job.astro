@@ -3,6 +3,7 @@ import Layout from '../layouts/Layout.astro';
 import EditJobForm from '../components/EditJobForm.solid.tsx';
 const url = new URL(Astro.request.url);
 const gigId = url.searchParams.get("gigId");
+const currentYear = new Date().getFullYear();
 ---
 
 <Layout title="WorkNow - 編輯職缺">
@@ -11,6 +12,11 @@ const gigId = url.searchParams.get("gigId");
       <EditJobForm client:load/>
     </div>
   </main>
+  <footer class="bg-gray-800 text-white text-center py-6 w-full sm:py-8 text-xs sm:text-sm">
+    <div>
+      <p class="m-0">&copy; {currentYear} WorkNow. 保留所有權利。</p>
+    </div>
+  </footer>
 </Layout>
 
 <style>

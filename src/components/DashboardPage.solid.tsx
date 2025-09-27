@@ -437,12 +437,6 @@ export default function DashboardPage() {
           </div>
         </Show>
       </Show>
-
-      <footer class={styles.footer}>
-        <div class={styles.footerContent}>
-          <p>&copy; 2025 WorkNow. All rights reserved.</p>
-        </div>
-      </footer>
     </div>
   );
 }

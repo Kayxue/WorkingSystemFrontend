@@ -2,6 +2,7 @@
 import Layout from '../layouts/Layout.astro';
 import Navbar from '../components/Navbar.solid.jsx';
 import PostJobForm from '../components/PostJobForm.solid.tsx';
+const currentYear = new Date().getFullYear();
 ---
 
 <Layout title="WorkNow - 發布職缺">
@@ -10,6 +11,11 @@ import PostJobForm from '../components/PostJobForm.solid.tsx';
       <PostJobForm client:load />
     </div>
   </main>
+  <footer class="bg-gray-800 text-white text-center py-6 w-full sm:py-8 text-xs sm:text-sm">
+    <div>
+      <p class="m-0">&copy; {currentYear} WorkNow. 保留所有權利。</p>
+    </div>
+  </footer>
 </Layout>
 
 <style>
