@@ -18,6 +18,8 @@ html, body {
   flex-direction: column;
   height: 100vh; /* full viewport height */
   background-color: #f8fafc;
+  max-width: 900px;
+  margin: 0 auto;
 }
 
 /* Job Title Header */
@@ -123,7 +125,7 @@ html, body {
   flex: 1;
   overflow-y: auto;
   background-color: #f8fafc;
-  padding: 2rem;
+  padding: 0rem;
 }
 
 /* Section block */
