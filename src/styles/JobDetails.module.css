@@ -88,43 +88,51 @@ html, body {
   display: inline-block;
 }
 
-/* Status labels */
+/* Job status styling */
 .status {
   display: inline-block;
   padding: 0.4rem 1rem;
-  border-radius: 25px; 
-  font-size: 0.9rem;
+  border-radius: 25px;
+  font-size: 1rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  border: 1px solid transparent; 
+  border: 1px solid transparent;
 }
 
-.status.active, .status.published {
-  background: #e6f7ea;
-  color: #28a745; 
-  border-color: #28a745;
+.green {
+  background: #a7f3d0;
+  color: #065f46;
+  border-color: #065f46;
 }
 
-.status.inactive, .status.unlisted {
-  background: #fde8e9;
-  color: #dc3545;
-  border-color: #dc3545;
+.yellow {
+  background: #fef3c7;
+  color: #92400e;
+  border-color: #92400e;
 }
 
-.status.unpublished {
-  background: #fff3cd;
-  color: #856404;
-  border-color: #ffc107;
+.red {
+  background: #fecaca;
+  color: #991b1b;
+  border-color: #991b1b;
 }
 
-.status.unknown {
+.blue {
+  background: #93c5fd;
+  color: #1e293b;
+  border-color: #1e293b;
+}
+
+.unknown {
   background: #f0f2f5;
   color: #6c757d;
   border-color: #adb5bd;
 }
 
-/* Sections */
+/* ---------------------------------------------
+   Sections
+--------------------------------------------- */
 .section {
   margin: 3rem 0;
   padding: 0; 
