@@ -137,11 +137,6 @@ export default function RegisterForm() {
     files().forEach(filePreview => {
       formData.append('verificationDocuments', filePreview.file);
     });
-
-    // 由於我們是商家註冊，可以固定傳遞 role
-    formData.append('role', 'business');
-
-
     try {
       const response = await fetch("/api/user/register/employer", {
         method: "POST",
