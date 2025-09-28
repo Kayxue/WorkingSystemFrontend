@@ -11,6 +11,11 @@ const industryTypes = [
   { value: "其他", label: "其他" },
 ];
 
+const identificationTypes = [
+  {value:"businessNo", label:"統一編號"},
+  {value:"personalId", label:"身分證字號"},
+];
+
 interface FilePreview {
   file: File;
   url: string;
@@ -22,9 +27,10 @@ export default function RegisterForm() {
   const [confirmPassword, setConfirmPassword] = createSignal("");
   const [employerName, setEmployerName] = createSignal(""); // 公司/店家名稱
   const [branchName, setBranchName] = createSignal(""); // 分店名稱 (可選)
-  const [industryType, setIndustryType] = createSignal(""); // 產業類別
+  const [industryType, setIndustryType] = createSignal("餐飲業") // 產業類別
   const [address, setAddress] = createSignal(""); // 營業地址
   const [phoneNumber, setPhoneNumber] = createSignal(""); // 公司電話
+  const [identificationType, setIdentificationType] = createSignal("businessNo"); // 文件類別
   const [identificationNumber, setIdentificationNumber] = createSignal(""); // 統一編號
   const [files, setFiles] = createSignal<FilePreview[]>([]); // 驗證文件
   
@@ -125,8 +131,8 @@ export default function RegisterForm() {
     formData.append('industryType', industryType());
     formData.append('address', address());
     formData.append('phoneNumber', phoneNumber());
+    formData.append('identificationType', identificationType());
     formData.append('identificationNumber', identificationNumber());
-    formData.append('identificationType', 'unifiedBusinessNo'); // 固定為統一編號類型
     
     files().forEach(filePreview => {
       formData.append('verificationDocuments', filePreview.file);
@@ -137,10 +143,10 @@ export default function RegisterForm() {
 
 
     try {
-      const response = await fetch("/api/user/register/business", {
+      const response = await fetch("/api/user/register/employer", {
         method: "POST",
         headers: {
-          "platform": "web-business-register",
+          "platform": "web-employer",
         },
         body: formData,
       });
@@ -169,20 +175,15 @@ export default function RegisterForm() {
 
       <div class="flex flex-col md:flex-row gap-4">
         <div class="flex-1 text-left">
-          <label for="identificationNumber" class="block mb-2 text-gray-700 font-medium text-sm">統一編號 <span class="text-red-500">*</span></label>
-          <input type="text" id="identificationNumber" value={identificationNumber()} onInput={(e) => setIdentificationNumber(e.currentTarget.value)} placeholder="8位數字" required maxLength={8} class="w-full px-4 py-3 border border-gray-300 rounded-md text-base text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 placeholder-gray-400 transition" />
-        </div>
-        <div class="flex-1 text-left">
           <label for="phoneNumber" class="block mb-2 text-gray-700 font-medium text-sm">公司/店家電話 <span class="text-red-500">*</span></label>
           <input type="tel" id="phoneNumber" value={phoneNumber()} onInput={(e) => setPhoneNumber(e.currentTarget.value)} placeholder="例如：0212345678" required class="w-full px-4 py-3 border border-gray-300 rounded-md text-base text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 placeholder-gray-400 transition" />
         </div>
-      </div>
-      
-      <div class="text-left">
-        <label for="industryType" class="block mb-2 text-gray-700 font-medium text-sm">產業類別 <span class="text-red-500">*</span></label>
-        <select id="industryType" value={industryType()} onChange={(e) => setIndustryType(e.currentTarget.value)} required class="w-full px-4 py-3 border border-gray-300 rounded-md text-base text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition">
-          {industryTypes.map(type => <option value={type.value} disabled={type.value === ""}>{type.label}</option>)}
-        </select>
+        <div class="flex-1 text-left">
+          <label for="industryType" class="block mb-2 text-gray-700 font-medium text-sm">產業類別 <span class="text-red-500">*</span></label>
+          <select id="industryType" value={industryType()} onChange={(e) => setIndustryType(e.currentTarget.value)} required class="w-full px-4 py-3 border border-gray-300 rounded-md text-base text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition">
+            {industryTypes.map(type => <option value={type.value} disabled={type.value === ""}>{type.label}</option>)}
+          </select>
+        </div>
       </div>
 
       <div class="text-left">
@@ -198,13 +199,13 @@ export default function RegisterForm() {
       <hr class="my-2 border-gray-200" />
 
       <div class="text-left">
-        <label for="email" class="block mb-2 text-gray-700 font-medium text-sm">管理者電子郵件 <span class="text-red-500">*</span> <span class="text-gray-400 text-xs">(用於登入及接收通知)</span></label>
+        <label for="email" class="block mb-2 text-gray-700 font-medium text-sm">電子郵件 <span class="text-red-500">*</span> <span class="text-gray-400 text-xs">(用於登入及接收通知)</span></label>
         <input type="email" id="email" value={email()} onInput={(e) => setEmail(e.currentTarget.value)} placeholder="you@example.com" required class="w-full px-4 py-3 border border-gray-300 rounded-md text-base text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 placeholder-gray-400 transition" />
       </div>
 
       <div class="flex flex-col md:flex-row gap-4">
         <div class="flex-1 text-left">
-          <label for="password" class="block mb-2 text-gray-700 font-medium text-sm">管理者密碼 <span class="text-red-500">*</span></label>
+          <label for="password" class="block mb-2 text-gray-700 font-medium text-sm">密碼 <span class="text-red-500">*</span></label>
           <input type="password" id="password" value={password()} onInput={(e) => setPassword(e.currentTarget.value)} placeholder="至少8位，包含字母和數字" required class="w-full px-4 py-3 border border-gray-300 rounded-md text-base text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 placeholder-gray-400 transition" />
         </div>
         <div class="flex-1 text-left">
@@ -214,9 +215,23 @@ export default function RegisterForm() {
       </div>
 
       <hr class="my-2 border-gray-200" />
+      <div class="flex flex-col md:flex-row gap-4">
+        <div class="flex-1 text-left">
+          <label for="identificationType" class="block mb-2 text-gray-700 font-medium text-sm">文件類別 <span class="text-red-500">*</span></label>
+          <select id="identificationType" value={identificationType()} onChange={(e) => setIdentificationType(e.currentTarget.value)} required class="w-full px-4 py-3 border border-gray-300 rounded-md text-base text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition">
+            {identificationTypes.map(type => <option value={type.value} disabled={type.value === ""}>{type.label}</option>)}
+          </select>
+        </div>
+        <div class="flex-1 text-left">
+          <label for="identificationNumber" class="block mb-2 text-gray-700 font-medium text-sm">{identificationType() == "businessNo"? "統一編號" : "身分證字號"} <span class="text-red-500">*</span></label>
+          <input type="tel" id="identificationNumber" value={identificationNumber()} onInput={(e) => setIdentificationNumber(e.currentTarget.value)} 
+          placeholder={identificationType() == "businessNo"? "請輸入8位數統一編號" : "請輸入身分證字號"}
+          required class="w-full px-4 py-3 border border-gray-300 rounded-md text-base text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 placeholder-gray-400 transition" />
+        </div>
+      </div>
 
       <div class="text-left">
-        <label class="block mb-2 text-gray-700 font-medium text-sm">商業登記驗證文件 <span class="text-red-500">*</span> <span class="text-gray-400 text-xs">(最多 {MAX_FILES} 個，每個檔案不超過 {MAX_SIZE_MB}MB)</span></label>
+        <label class="block mb-2 text-gray-700 font-medium text-sm">登記驗證文件 <span class="text-red-500">*</span> <span class="text-gray-400 text-xs">(最多 {MAX_FILES} 個，每個檔案不超過 {MAX_SIZE_MB}MB)</span></label>
         {files().length < MAX_FILES && (
           <div class="relative flex items-center justify-center w-full">
             <label for="file-upload" class="flex flex-col items-center justify-center w-full h-48 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors">
