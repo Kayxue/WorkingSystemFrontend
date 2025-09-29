@@ -36,6 +36,7 @@ html, body {
   z-index: 20;
   height: var(--header-height);
   box-sizing: border-box;
+
 }
 
 /* Job Title */

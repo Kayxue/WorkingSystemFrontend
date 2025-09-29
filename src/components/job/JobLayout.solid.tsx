@@ -8,10 +8,33 @@ import styles from "../../styles/JobLayout.module.css";
 
 interface JobLayoutProps {
 	gigId: string;
-	initialStatus: string;
+	initialStatus?: string; // Make optional with default
 }
 
-async function fetchJobTitle(gigId: string): Promise<string> {
+// Shared job data type
+type JobData = {
+  gigId: string;
+  title: string;
+  dateStart: string;
+  dateEnd: string;
+  timeStart: string;
+  timeEnd: string;
+  hourlyRate: string;
+  address: string;
+  district: string;
+  city: string;
+  description: any;
+  requirements: any;
+  contactPerson: string;
+  contactPhone?: string;
+  contactEmail?: string;
+  publishedAt: string;
+  unlistedAt?: string;
+  environmentPhotos?: (string | { url: string })[];
+  status: string;
+};
+
+async function fetchJobData(gigId: string): Promise<JobData> {
 	try {
 		const response = await fetch(`/api/gig/${encodeURIComponent(gigId)}`, {
 			method: "GET",
@@ -22,16 +45,16 @@ async function fetchJobTitle(gigId: string): Promise<string> {
 			credentials: "include",
 		});
 		if (!response.ok) throw new Error(`Failed to fetch job: ${response.status}`);
-		const job = await response.json();
-		return job.title || "Job Details";
+		return await response.json();
 	} catch (err: any) {
-		console.error("Error fetching job title:", err);
-		return "Job Details";
+		console.error("Error fetching job data:", err);
+		throw err;
 	}
 }
 
 export default function JobLayout(props: JobLayoutProps) {
-	const [jobTitle] = createResource(() => props.gigId, fetchJobTitle);
+	// Fetch job data once and share it with child components
+	const [jobData] = createResource(() => props.gigId, fetchJobData);
 	const [activeSection, setActiveSection] = createSignal("details");
 	const [isUserClicking, setIsUserClicking] = createSignal(false);
 
@@ -138,7 +161,7 @@ export default function JobLayout(props: JobLayoutProps) {
 		<div class={styles.jobLayoutContainer}>
 			<div class={styles.jobTitleHeader}>
 				<h1 class={styles.jobTitle}>
-					{jobTitle.loading ? "Loading..." : jobTitle()}
+					{jobData.loading ? "Loading..." : (jobData()?.title || "Job Details")}
 				</h1>
 				<a class={styles.backButton} href="/dashboard">
 					<span class={styles.backIcon}>←</span>
@@ -165,10 +188,11 @@ export default function JobLayout(props: JobLayoutProps) {
 
 			<div class={styles.contentWrapper} ref={contentWrapperRef}>
 				<section id="details" class={styles.sectionBlock}>
-					<JobDetailsView gigId={props.gigId} />
+					{/* Pass the shared job data to avoid duplicate fetch */}
+					<JobDetailsView gigId={props.gigId} sharedJobData={jobData} />
 				</section>
 				<section id="applications" class={styles.sectionBlock}>
-					<JobApplicationsView gigId={props.gigId} initialStatus={props.initialStatus} />
+					<JobApplicationsView gigId={props.gigId} />
 				</section>
 				<section id="rating" class={styles.sectionBlock}>
 					<JobRatingView gigId={props.gigId} />
@@ -177,13 +201,11 @@ export default function JobLayout(props: JobLayoutProps) {
 					<JobAttendanceView gigId={props.gigId} />
 				</section>
 			</div>
-      <footer class={styles.footer}>
-        <div class={styles.footerContent}>
-          <p>&copy; 2025 WorkNow. All rights reserved.</p>
-        </div>
-      </footer>
+			<footer class={styles.footer}>
+				<div class={styles.footerContent}>
+					<p>&copy; 2025 WorkNow. All rights reserved.</p>
+				</div>
+			</footer>
 		</div>
-    
 	);
-  
 }

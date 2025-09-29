@@ -1,5 +1,5 @@
 import { createResource, createSignal, For, Show, onMount, onCleanup } from "solid-js";
-import type { Component } from "solid-js";
+import type { Component, Resource } from "solid-js";
 import styles from "../../styles/JobDetails.module.css";
 
 type JobData = {
@@ -21,11 +21,12 @@ type JobData = {
   publishedAt: string;
   unlistedAt?: string;
   environmentPhotos?: (string | { url: string })[];
-  status: string; // langsung dari API (已刊登, 待刊登, 已下架, 已結束, 已關閉)
+  status: string; // 已刊登, 待刊登, 已下架, 已結束, 已關閉
 };
 
 interface JobDetailsViewProps {
   gigId: string;
+  sharedJobData?: Resource<JobData>; // Optional shared data from parent
 }
 
 async function fetchJobData(gigId: string): Promise<JobData> {
@@ -63,7 +64,15 @@ function getJobStatusColor(status: string) {
 }
 
 const JobDetailsView: Component<JobDetailsViewProps> = (props) => {
-  const [jobData] = createResource(() => props.gigId, fetchJobData);
+  // Use shared data if available, otherwise create our own resource
+  const [localJobData] = createResource(() => {
+    // Only fetch if we don't have shared data
+    return props.sharedJobData ? null : props.gigId;
+  }, fetchJobData);
+  
+  // Use shared data or local data
+  const jobData = () => props.sharedJobData || localJobData;
+  
   const [selectedPhoto, setSelectedPhoto] = createSignal<string | null>(null);
   const [imageErrors, setImageErrors] = createSignal<Set<number>>(new Set());
 
@@ -91,11 +100,11 @@ const JobDetailsView: Component<JobDetailsViewProps> = (props) => {
 
   return (
     <div class={styles.jobDetailsContainer}>
-      <Show when={jobData.loading}>
+      <Show when={jobData()?.loading}>
         <p class={styles.loading}>Loading job details...</p>
       </Show>
 
-      <Show when={jobData.error}>
+      <Show when={jobData()?.error}>
         {(err) => (
           <div class={styles.errorContainer}>
             <h1>Job Not Found</h1>
@@ -108,7 +117,7 @@ const JobDetailsView: Component<JobDetailsViewProps> = (props) => {
         )}
       </Show>
 
-      <Show when={jobData()}>
+      <Show when={jobData()?.()}>
         {(job) => {
           const jobInfo = job();
           const location = [jobInfo.address, jobInfo.district, jobInfo.city]
