@@ -39,6 +39,21 @@ body {
 /* ---------------------------------------------
     Job Title Header (Header Sticky - Top: 0)
 --------------------------------------------- */
+.headerButtons {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.headerButtons .generateCodeButton {
+  background-color: #b91010; /* green */
+  color: white;
+}
+
+.headerButtons .generateCodeButton:hover {
+  background-color: #960505;
+}
+
 .jobTitleHeader {
     display: flex;
     justify-content: space-between;

@@ -34,10 +34,7 @@ type JobData = {
 async function fetchJobData(gigId: string): Promise<JobData> {
   const response = await fetch(`/api/gig/${encodeURIComponent(gigId)}`, {
     method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-      platform: "web-employer",
-    },
+    headers: { "Content-Type": "application/json", platform: "web-employer" },
     credentials: "include",
   });
   if (!response.ok) throw new Error(`Failed to fetch job: ${response.status}`);
@@ -55,6 +52,9 @@ export default function JobLayout(props: JobLayoutProps) {
   const [jobData] = createResource(() => props.gigId, fetchJobData);
   const [activeSection, setActiveSection] = createSignal("details");
   const [isUserClicking, setIsUserClicking] = createSignal(false);
+
+  const [generatedCode, setGeneratedCode] = createSignal<string | null>(null);
+  const [loadingCode, setLoadingCode] = createSignal(false);
 
   let contentWrapperRef: HTMLDivElement | undefined;
   let tabNavigationRef: HTMLDivElement | undefined;
@@ -106,11 +106,7 @@ export default function JobLayout(props: JobLayoutProps) {
           }
         }
       },
-      {
-        root: contentWrapperRef,
-        rootMargin: rootMarginValue,
-        threshold: [0, 0.001, 0.5],
-      }
+      { root: contentWrapperRef, rootMargin: rootMarginValue, threshold: [0, 0.001, 0.5] }
     );
 
     navigationItems.forEach((item) => {
@@ -133,6 +129,27 @@ export default function JobLayout(props: JobLayoutProps) {
     else if (e.altKey && e.key === "3") switchToSection("rating");
     else if (e.altKey && e.key === "4") switchToSection("attendance");
   };
+
+  const generateAttendanceCode = async () => {
+    setLoadingCode(true);
+    try {
+      const res = await fetch(`/api/gig/${props.gigId}/generate-attendance-code`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("Failed to generate attendance code");
+      const data = await res.json();
+      setGeneratedCode(data.attendanceCode);
+    } catch (err) {
+      console.error(err);
+      alert("Error generating attendance code");
+    } finally {
+      setLoadingCode(false);
+    }
+  };
+
+  const closeModal = () => setGeneratedCode(null);
 
   onMount(() => {
     document.addEventListener("keydown", handleKeyDown);
@@ -173,10 +190,20 @@ export default function JobLayout(props: JobLayoutProps) {
           </Show>
         </div>
 
-        <a class={styles.backButton} href="/dashboard">
-          <span class={styles.backIcon}>←</span>
-          <span>Back to Dashboard</span>
-        </a>
+        <div class={styles.headerButtons}>
+          <button
+            class={`${styles.backButton} ${styles.generateCodeButton}`}
+            onClick={generateAttendanceCode}
+            disabled={loadingCode()}
+          >
+            {loadingCode() ? "Generating..." : "Generate Code"}
+          </button>
+
+          <a class={styles.backButton} href="/dashboard">
+            <span class={styles.backIcon}>←</span>
+            <span>Back to Dashboard</span>
+          </a>
+        </div>
       </div>
 
       <div class={styles.tabNavigation} ref={tabNavigationRef}>
@@ -216,6 +243,19 @@ export default function JobLayout(props: JobLayoutProps) {
           <p>&copy; 2025 WorkNow. All rights reserved.</p>
         </div>
       </footer>
+
+      {/* Modal to show generated code */}
+      {generatedCode() && (
+        <div class={styles.modalOverlay} onClick={closeModal}>
+          <div class={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+            <h2>Attendance Code</h2>
+            <p class={styles.codeText}>{generatedCode()}</p>
+            <button class={styles.modalCloseButton} onClick={closeModal}>
+              Close
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
