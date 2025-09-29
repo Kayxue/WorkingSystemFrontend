@@ -6,13 +6,13 @@ type RatingStatus = 'all' | 'rated' | 'unrated';
 
 interface RatingItem {
   id: string;
-  userId: string;
+  workerId: string;
   userName: string;
-  userAvatar?: string;
+  userAvatar?: string | null;
   status: 'rated' | 'unrated';
-  employerRating?: number; // 1-5 scale - employer rating for employee
-  employerComment?: string;
-  ratedAt?: string;
+  employerRating?: number | null;
+  employerComment?: string | null;
+  ratedAt?: string | null;
   workCompletedAt: string;
   workSubmittedAt: string;
 }
@@ -41,133 +41,82 @@ export default function JobRatingView(props: JobRatingViewProps) {
   const [submittingRating, setSubmittingRating] = createSignal(false);
   const [filteredCount, setFilteredCount] = createSignal(0);
   const [error, setError] = createSignal<string>('');
+  const [isJobCompleted, setIsJobCompleted] = createSignal(true); // Track if job has completed work
 
-  // FIXED: Updated fetch function to use correct API endpoints
+  // FIXED: Handle 404 errors for ongoing jobs
   const fetchRatings = async (
-    gigId: string, 
-    status: RatingStatus, 
-    limit: number, 
+    gigId: string,
+    status: RatingStatus,
+    limit: number,
     offset: number
   ): Promise<RatingResponse> => {
     try {
-      // First get approved applications for this gig
-      const applicationsResponse = await fetch(`/api/application/gig/${encodeURIComponent(gigId)}`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          "platform": "web-employer",
-        },
-        credentials: "include",
-      });
-
-      if (!applicationsResponse.ok) {
-        throw new Error('Failed to fetch applications');
-      }
-
-      const applicationsResult = await applicationsResponse.json();
-      console.log('Applications API response:', applicationsResult);
-      
-      // Handle different possible response structures
-      let applications = [];
-      if (applicationsResult.data?.applications) {
-        applications = applicationsResult.data.applications;
-      } else if (applicationsResult.data && Array.isArray(applicationsResult.data)) {
-        applications = applicationsResult.data;
-      } else if (applicationsResult.applications && Array.isArray(applicationsResult.applications)) {
-        applications = applicationsResult.applications;
-      } else if (Array.isArray(applicationsResult)) {
-        applications = applicationsResult;
-      }
-      
-      console.log('Found applications:', applications);
-      
-      const approvedApplications = applications.filter(
-        (app: any) => app.status === 'approved'
+      const response = await fetch(
+        `/api/rating/list/employer/gig/${encodeURIComponent(gigId)}?status=${status}&limit=${limit}&offset=${offset}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            "platform": "web-employer",
+          },
+          credentials: "include",
+        }
       );
 
-      // FIXED: Get existing ratings using the correct endpoint
-      const ratingsResponse = await fetch(`/api/rating/my-ratings/employer`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          "platform": "web-employer",
-        },
-        credentials: "include",
-      });
-
-      let existingRatings = [];
-      if (ratingsResponse.ok) {
-        const ratingsResult = await ratingsResponse.json();
-        console.log('Ratings API response:', ratingsResult);
-        
-        // FIXED: Update field mapping to match backend response structure
-        let ratings = [];
-        if (ratingsResult.data && ratingsResult.data.myRatings && Array.isArray(ratingsResult.data.myRatings)) {
-          ratings = ratingsResult.data.myRatings;
-        } else if (ratingsResult.data && Array.isArray(ratingsResult.data)) {
-          ratings = ratingsResult.data;
-        } else if (Array.isArray(ratingsResult)) {
-          ratings = ratingsResult;
-        }
-        
-        // Filter ratings for this specific gig and map to match frontend structure
-        existingRatings = ratings
-          .filter((rating: any) => rating.gig?.gigId === gigId || rating.gigId === gigId)
-          .map((rating: any) => ({
-            userId: rating.worker?.workerId || rating.workerId,
-            rating: rating.ratingValue, // Backend uses 'ratingValue'
-            comment: rating.comment,
-            ratedAt: rating.createdAt, // Backend uses 'createdAt' for rating date
-            gigId: rating.gig?.gigId || rating.gigId
-          }));
-        console.log('Filtered existing ratings:', existingRatings);
+      // FIXED: Handle 404 for ongoing jobs with no completed work
+      if (response.status === 404) {
+        console.log("No rating data found for this job (likely ongoing/no completed work)");
+        setIsJobCompleted(false);
+        return {
+          data: [],
+          total: 0,
+          hasMore: false,
+        };
       }
 
-      console.log('Approved applications found:', approvedApplications.length);
-      console.log('Sample approved application:', approvedApplications[0]);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch rating list: ${response.status} ${response.statusText}`);
+      }
 
-      // Combine approved applications with existing ratings
-      const ratingItems: RatingItem[] = approvedApplications.map((app: any) => {
-        const existingRating = existingRatings.find((rating: any) => rating.userId === app.workerId);
-        
-        return {
-          id: app.applicationId || app.id || `${app.workerId}-${gigId}`,
-          userId: app.workerId || app.userId,
-          userName: app.workerName || app.userName || app.name || 'Unknown Worker',
-          userAvatar: app.workerAvatar || app.userAvatar || app.avatar,
-          status: existingRating ? 'rated' : 'unrated',
-          employerRating: existingRating?.rating,
-          employerComment: existingRating?.comment,
-          ratedAt: existingRating?.ratedAt || existingRating?.createdAt,
-          workCompletedAt: app.appliedAt || app.createdAt,
-          workSubmittedAt: app.appliedAt || app.createdAt,
-        };
-      });
+      const result = await response.json();
+      console.log("Ratings API response:", result);
 
-      console.log('Generated rating items:', ratingItems.length);
+      setIsJobCompleted(true); // Job has completed work
 
-      const filteredData = status === 'all' 
-        ? ratingItems 
-        : ratingItems.filter(item => item.status === status);
+      const workers = result.data?.workers || [];
+      const pagination = result.data?.pagination || { returned: 0, hasMore: false };
 
-      // Apply pagination to filtered data
-      const paginatedData = filteredData.slice(offset, offset + limit);
+      const ratingItems: RatingItem[] = workers.map((worker: any) => ({
+        id: worker.workerId + "-" + gigId,
+        workerId: worker.workerId,
+        userName: worker.name || "Unknown Worker",
+        userAvatar: worker.avatar || null,
+        status: worker.isRated ? "rated" : "unrated",
+        employerRating: worker.rating?.ratingValue || null,
+        employerComment: worker.rating?.comment || null,
+        ratedAt: worker.rating?.ratedAt || null,
+        workCompletedAt: worker.appliedAt,
+        workSubmittedAt: worker.appliedAt,
+      }));
 
       return {
-        data: paginatedData,
-        total: filteredData.length,
-        hasMore: offset + limit < filteredData.length
+        data: ratingItems,
+        total: pagination.returned,
+        hasMore: pagination.hasMore,
       };
-
     } catch (error) {
-      console.error('Error fetching ratings:', error);
+      console.error("Error fetching ratings:", error);
       throw error;
     }
   };
 
+  const [allCount, setAllCount] = createSignal(0);
+  const [ratedCount, setRatedCount] = createSignal(0);
+  const [unratedCount, setUnratedCount] = createSignal(0);
+
   const loadRatings = async (reset = false) => {
     setLoading(true);
-    setError(''); // Clear previous errors
+    setError('');
     try {
       const response = await fetchRatings(
         props.gigId,
@@ -175,7 +124,7 @@ export default function JobRatingView(props: JobRatingViewProps) {
         limit(),
         reset ? 0 : offset()
       );
-      
+
       if (reset) {
         setAllRatings(response.data);
         setOffset(response.data.length);
@@ -183,8 +132,20 @@ export default function JobRatingView(props: JobRatingViewProps) {
         setAllRatings(prev => [...prev, ...response.data]);
         setOffset(prev => prev + response.data.length);
       }
-      
-      setTotalCount(response.total);
+
+      // Update counts
+      if (status() === 'all') {
+        setAllCount(response.total);
+        const rated = response.data.filter(r => r.status === 'rated').length;
+        const unrated = response.data.filter(r => r.status === 'unrated').length;
+        setRatedCount(rated);
+        setUnratedCount(unrated);
+      } else if (status() === 'rated') {
+        setRatedCount(response.total);
+      } else if (status() === 'unrated') {
+        setUnratedCount(response.total);
+      }
+
       setFilteredCount(response.total);
     } catch (error) {
       console.error('Error loading ratings:', error);
@@ -201,15 +162,13 @@ export default function JobRatingView(props: JobRatingViewProps) {
   };
 
   const openRatingModal = (employee: RatingItem) => {
-    // Only allow rating modal for unrated employees
     if (employee.status === 'rated') {
       return;
     }
-    
     setSelectedEmployee(employee);
     setNewRating(0);
     setNewComment('');
-    setError(''); // Clear any previous errors
+    setError('');
     setShowRatingModal(true);
   };
 
@@ -218,10 +177,9 @@ export default function JobRatingView(props: JobRatingViewProps) {
     setSelectedEmployee(null);
     setNewRating(0);
     setNewComment('');
-    setError(''); // Clear errors when closing
+    setError('');
   };
 
-  // FIXED: Using the correct API endpoint for submitting ratings
   const submitRating = async (e?: Event) => {
     if (e) {
       e.preventDefault();
@@ -231,7 +189,6 @@ export default function JobRatingView(props: JobRatingViewProps) {
     const employee = selectedEmployee();
     const rating = newRating();
     
-    // Enhanced validation
     if (!employee) {
       setError('No employee selected');
       return;
@@ -248,26 +205,24 @@ export default function JobRatingView(props: JobRatingViewProps) {
     }
 
     setSubmittingRating(true);
-    setError(''); // Clear previous errors
+    setError('');
     
     console.log('Submitting rating:', {
-      workerId: employee.userId,
+      workerId: employee.workerId,
       gigId: props.gigId,
       rating: rating,
       comment: newComment().trim()
     });
 
     try {
-      // FIXED: Use the correct field name that matches the backend schema
       const ratingData = {
-        ratingValue: rating, // Backend expects 'ratingValue', not 'rating'
+        ratingValue: rating,
         comment: newComment().trim() || undefined
       };
 
       console.log('Sending rating data with correct field name:', ratingData);
 
-      // Use the correct API endpoint from your documentation
-      const response = await fetch(`/api/rating/worker/${employee.userId}/gig/${props.gigId}`, {
+      const response = await fetch(`/api/rating/worker/${employee.workerId}/gig/${props.gigId}`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
@@ -289,7 +244,6 @@ export default function JobRatingView(props: JobRatingViewProps) {
           result = { success: true };
         }
 
-        // Update the local state to reflect the new rating
         setAllRatings(prev => prev.map(item => 
           item.id === employee.id 
             ? {
@@ -306,7 +260,6 @@ export default function JobRatingView(props: JobRatingViewProps) {
         alert('Rating submitted successfully!');
         
       } else {
-        // Better error handling to see actual error message
         let errorMessage = `HTTP Error ${response.status}`;
         
         try {
@@ -330,8 +283,6 @@ export default function JobRatingView(props: JobRatingViewProps) {
       console.error('Error submitting rating:', error);
       const errorMsg = error instanceof Error ? error.message : 'Unknown error occurred';
       setError(`Failed to submit rating: ${errorMsg}`);
-      
-      // Don't close modal on error so user can retry
     } finally {
       setSubmittingRating(false);
     }
@@ -343,7 +294,6 @@ export default function JobRatingView(props: JobRatingViewProps) {
     }
   };
 
-  // Star rendering function with proper event handling
   const renderStars = (rating: number, interactive = false) => {
     return Array.from({ length: 5 }, (_, i) => (
       <span 
@@ -353,12 +303,11 @@ export default function JobRatingView(props: JobRatingViewProps) {
           e.stopPropagation();
           console.log('Star clicked:', i + 1);
           setNewRating(i + 1);
-          setError(''); // Clear error when user interacts
+          setError('');
         } : undefined}
         style={{
           cursor: interactive ? 'pointer' : 'default',
           color: i < rating ? '#FFD700' : '#D3D3D3',
-          
           transition: 'color 0.2s ease',
           display: 'inline-block',
           'user-select': 'none'
@@ -383,7 +332,7 @@ export default function JobRatingView(props: JobRatingViewProps) {
         day: 'numeric'
       });
     } catch {
-      return dateString; // Fallback to original string if parsing fails
+      return dateString;
     }
   };
 
@@ -400,7 +349,6 @@ export default function JobRatingView(props: JobRatingViewProps) {
         </div>
       </div>
 
-      {/* Error display */}
       <Show when={error()}>
         <div class={styles.errorMessage} style={{ 
           background: '#fee', 
@@ -420,19 +368,19 @@ export default function JobRatingView(props: JobRatingViewProps) {
             class={`${styles.filterButton} ${status() === 'all' ? styles.active : ''}`}
             onclick={() => handleStatusChange('all')}
           >
-            All ({totalCount()})
+            All ({allCount()})
           </button>
           <button
             class={`${styles.filterButton} ${status() === 'rated' ? styles.active : ''}`}
             onclick={() => handleStatusChange('rated')}
           >
-            Rated ({status() === 'rated' ? filteredCount() : allRatings().filter(r => r.status === 'rated').length})
+            Rated ({ratedCount()})
           </button>
           <button
             class={`${styles.filterButton} ${status() === 'unrated' ? styles.active : ''}`}
             onclick={() => handleStatusChange('unrated')}
           >
-            Unrated ({status() === 'unrated' ? filteredCount() : allRatings().filter(r => r.status === 'unrated').length})
+            Unrated ({unratedCount()})
           </button>
         </div>
       </div>
@@ -513,22 +461,36 @@ export default function JobRatingView(props: JobRatingViewProps) {
           <div class={styles.loadingMore}>Loading more ratings...</div>
         </Show>
 
+        {/* FIXED: Better empty state for ongoing jobs */}
         <Show when={!loading() && allRatings().length === 0}>
           <div class={styles.emptyState}>
-            <h3>No approved employees found</h3>
-            <p>
-              <Show 
-                when={status() === 'all'}
-                fallback={`No ${status()} employees for this job yet.`}
-              >
-                No approved applications for this job yet. Check the Applications tab to review and approve candidates.
-              </Show>
-            </p>
+            <Show 
+              when={!isJobCompleted()}
+              fallback={
+                <>
+                  <h3>No approved employees found</h3>
+                  <p>
+                    <Show 
+                      when={status() === 'all'}
+                      fallback={`No ${status()} employees for this job yet.`}
+                    >
+                      No approved applications for this job yet. Check the Applications tab to review and approve candidates.
+                    </Show>
+                  </p>
+                </>
+              }
+            >
+              <h3>Job In Progress</h3>
+              <p>This job is currently ongoing. Employee ratings will be available once work has been completed and submitted.</p>
+              <p style={{ 'margin-top': '10px', color: '#666' }}>
+                Check back after employees have completed their work to rate their performance.
+              </p>
+            </Show>
           </div>
         </Show>
       </div>
 
-      {/* Rating Modal - Only for unrated employees */}
+      {/* Rating Modal */}
       <Show when={showRatingModal()}>
         <div class={styles.modalOverlay} onclick={(e) => {
           e.preventDefault();
@@ -553,7 +515,6 @@ export default function JobRatingView(props: JobRatingViewProps) {
                   <p>Application approved on {formatDate(selectedEmployee()!.workSubmittedAt)}</p>
                 </div>
 
-                {/* Error display in modal */}
                 <Show when={error()}>
                   <div style={{ 
                     background: '#fee', 
@@ -584,7 +545,7 @@ export default function JobRatingView(props: JobRatingViewProps) {
                     value={newComment()}
                     onInput={(e) => {
                       setNewComment((e.target as HTMLTextAreaElement).value);
-                      setError(''); // Clear error when user types
+                      setError('');
                     }}
                     placeholder="Share your feedback about this employee's work..."
                     rows={4}
