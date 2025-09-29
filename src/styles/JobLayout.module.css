@@ -225,7 +225,7 @@ body {
 
 .sectionBlock:last-child {
     margin-bottom: 0;
-    border-bottom: none;
+    border-bottom: none; 
 }
 
 /* ---------------------------------------------
@@ -273,14 +273,11 @@ body {
 }
 
 /* ---------------------------------------------
-    Footer
+    Footer (MODIFIED FOR SCROLLABILITY)
 --------------------------------------------- */
 .footer {
     background: #fff;
-    border-top: 1px solid #e2e8f0;
     padding: 1rem 2rem;
-    margin-top: auto;
-    flex-shrink: 0;
 }
 
 .footerContent {
@@ -318,6 +315,7 @@ body {
         padding: 1rem 1rem;
     }
     .tabNavigation {
+        /* Re-adjusting top based on smaller header height */
         top: 110px; 
     }
     .tabButton { 
@@ -345,6 +343,7 @@ body {
         align-items: stretch;
     }
     .tabNavigation {
+        /* Re-adjusting top based on stacked header elements */
         top: 155px; 
     }
     .tabButton { 
