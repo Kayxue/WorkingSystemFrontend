@@ -21,7 +21,7 @@ type JobData = {
   publishedAt: string;
   unlistedAt?: string;
   environmentPhotos?: (string | { url: string })[];
-  status: string; // 已刊登, 待刊登, 已下架, 已結束, 已關閉
+  status: string;
 };
 
 interface JobDetailsViewProps {
@@ -53,26 +53,10 @@ function stripQuotes(str: any) {
   return str;
 }
 
-// status color helper ala DashboardPage
-function getJobStatusColor(status: string) {
-  if (status === "已刊登") return styles.green;
-  if (status === "待刊登") return styles.yellow;
-  if (status === "已下架") return styles.red;
-  if (status === "已結束") return styles.red;
-  if (status === "已關閉") return styles.red;
-  return styles.unknown;
-}
-
 const JobDetailsView: Component<JobDetailsViewProps> = (props) => {
-  // Use shared data if available, otherwise create our own resource
-  const [localJobData] = createResource(() => {
-    // Only fetch if we don't have shared data
-    return props.sharedJobData ? null : props.gigId;
-  }, fetchJobData);
-  
-  // Use shared data or local data
+  const [localJobData] = createResource(() => (props.sharedJobData ? null : props.gigId), fetchJobData);
   const jobData = () => props.sharedJobData || localJobData;
-  
+
   const [selectedPhoto, setSelectedPhoto] = createSignal<string | null>(null);
   const [imageErrors, setImageErrors] = createSignal<Set<number>>(new Set());
 
@@ -120,9 +104,8 @@ const JobDetailsView: Component<JobDetailsViewProps> = (props) => {
       <Show when={jobData()?.()}>
         {(job) => {
           const jobInfo = job();
-          const location = [jobInfo.address, jobInfo.district, jobInfo.city]
-            .filter(Boolean)
-            .join(", ") || "Location not specified";
+          const location =
+            [jobInfo.address, jobInfo.district, jobInfo.city].filter(Boolean).join(", ") || "Location not specified";
 
           const mapsQuery = encodeURIComponent(location);
           const mapsSrc = `https://www.google.com/maps?q=${mapsQuery}&output=embed`;
@@ -146,17 +129,10 @@ const JobDetailsView: Component<JobDetailsViewProps> = (props) => {
                 {formatDateToDDMMYYYY(jobInfo.dateEnd)}
               </p>
               <p>
-                <span class={styles.label}>Time :</span> {jobInfo.timeStart || "-"} –{" "}
-                {jobInfo.timeEnd || "-"}
+                <span class={styles.label}>Time :</span> {jobInfo.timeStart || "-"} – {jobInfo.timeEnd || "-"}
               </p>
               <p>
                 <span class={styles.label}>Rate :</span> {jobInfo.hourlyRate || "-"} NTD/hour
-              </p>
-              <p>
-                <span class={styles.label}>Status :</span>{" "}
-                <span class={`${styles.status} ${getJobStatusColor(jobInfo.status)}`}>
-                  {jobInfo.status}
-                </span>
               </p>
               <p>
                 <span class={styles.label}>Location :</span> {location}
@@ -177,6 +153,7 @@ const JobDetailsView: Component<JobDetailsViewProps> = (props) => {
                 </div>
               </Show>
 
+              {/* Job Description */}
               <section class={styles.section}>
                 <h2>Job Description</h2>
                 <Show
@@ -210,6 +187,7 @@ const JobDetailsView: Component<JobDetailsViewProps> = (props) => {
                 </Show>
               </section>
 
+              {/* Requirements */}
               <section class={styles.section}>
                 <h2>Requirements</h2>
                 <Show
@@ -249,7 +227,7 @@ const JobDetailsView: Component<JobDetailsViewProps> = (props) => {
                 </Show>
               </section>
 
-              {/* Environment photos */}
+              {/* Environment Photos */}
               <section class={styles.section}>
                 <Show
                   when={jobInfo.environmentPhotos && jobInfo.environmentPhotos.length > 0}
@@ -291,11 +269,11 @@ const JobDetailsView: Component<JobDetailsViewProps> = (props) => {
                 </Show>
               </section>
 
+              {/* Contact Info */}
               <section class={styles.section}>
                 <h2>Contact Information</h2>
                 <p>
-                  <span class={styles.label}>Contact Person:</span>{" "}
-                  {jobInfo.contactPerson || "-"}
+                  <span class={styles.label}>Contact Person:</span> {jobInfo.contactPerson || "-"}
                 </p>
                 <p>
                   <span class={styles.label}>Phone:</span>{" "}
@@ -310,8 +288,7 @@ const JobDetailsView: Component<JobDetailsViewProps> = (props) => {
                   </Show>
                 </p>
                 <p>
-                  <span class={styles.label}>Posted on:</span>{" "}
-                  {formatDateToDDMMYYYY(jobInfo.publishedAt)}
+                  <span class={styles.label}>Posted on:</span> {formatDateToDDMMYYYY(jobInfo.publishedAt)}
                 </p>
               </section>
 
