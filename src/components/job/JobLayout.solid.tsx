@@ -29,6 +29,11 @@ type JobData = {
   unlistedAt?: string;
   environmentPhotos?: (string | { url: string })[];
   status: string;
+  attendanceCodeInfo?: {
+    attendanceCode: string;
+    validDate: string;
+    expiresAt: string;
+  };
 };
 
 async function fetchJobData(gigId: string): Promise<JobData> {
@@ -37,16 +42,11 @@ async function fetchJobData(gigId: string): Promise<JobData> {
     headers: { "Content-Type": "application/json", platform: "web-employer" },
     credentials: "include",
   });
-  // Changed error message to English
   if (!response.ok) throw new Error(`Failed to fetch job: ${response.status}`);
   return await response.json();
 }
 
 function getJobStatusColor(status: string) {
-  // Assuming the original status strings correspond to these meanings:
-  // "已刊登" -> Published (Green)
-  // "待刊登" -> Pending/Draft (Yellow)
-  // "已下架" / "已結束" / "已關閉" -> Taken Down/Ended/Closed (Red)
   if (status === "已刊登") return styles.green;
   if (status === "待刊登") return styles.yellow;
   if (status === "已下架" || status === "已結束" || status === "已關閉") return styles.red;
@@ -54,12 +54,11 @@ function getJobStatusColor(status: string) {
 }
 
 export default function JobLayout(props: JobLayoutProps) {
-  const [jobData] = createResource(() => props.gigId, fetchJobData);
+  const [jobData, { refetch: refetchJobData }] = createResource(() => props.gigId, fetchJobData);
   const [activeSection, setActiveSection] = createSignal("details");
   const [isUserClicking, setIsUserClicking] = createSignal(false);
 
-  const [generatedCode, setGeneratedCode] = createSignal<string | null>(null);
-  const [loadingCode, setLoadingCode] = createSignal(false);
+  const [showCodeModal, setShowCodeModal] = createSignal(false);
 
   let contentWrapperRef: HTMLDivElement | undefined;
   let tabNavigationRef: HTMLDivElement | undefined;
@@ -83,7 +82,6 @@ export default function JobLayout(props: JobLayoutProps) {
       url.searchParams.set("section", sectionId);
       window.history.pushState({}, "", url.toString());
 
-      // Set a short timeout to re-enable IO tracking after scroll animation finishes
       const scrollEndTimeout = setTimeout(() => setIsUserClicking(false), 600);
       onCleanup(() => clearTimeout(scrollEndTimeout));
     }
@@ -91,17 +89,14 @@ export default function JobLayout(props: JobLayoutProps) {
 
   const setupIntersectionObserver = () => {
     if (!contentWrapperRef || !tabNavigationRef) return;
-    // Calculate the total sticky header height to use as rootMargin for IO
     const headerHeight = document.querySelector(`.${styles.jobTitleHeader}`)?.clientHeight || 85;
     const tabHeight = tabNavigationRef.offsetHeight;
     const stickyAreaHeight = headerHeight + tabHeight;
-    // Set rootMargin to trigger intersection slightly before the section hits the bottom of the sticky area
     const rootMarginValue = `-${stickyAreaHeight - 5}px 0px 0px 0px`;
 
     observer = new IntersectionObserver(
       (entries) => {
         if (isUserClicking()) return;
-        // Find the top-most intersecting section
         const topEntry = entries
           .filter((entry) => entry.isIntersecting)
           .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0];
@@ -109,7 +104,6 @@ export default function JobLayout(props: JobLayoutProps) {
           const newSectionId = topEntry.target.id;
           if (activeSection() !== newSectionId) {
             setActiveSection(newSectionId);
-            // Update URL search params without adding a history entry
             const url = new URL(window.location.href);
             url.searchParams.set("section", newSectionId);
             window.history.replaceState({}, "", url.toString());
@@ -129,7 +123,6 @@ export default function JobLayout(props: JobLayoutProps) {
     const params = new URLSearchParams(window.location.search);
     const section = params.get("section") || "details";
     setActiveSection(section);
-    // Scroll instantly to the section when using back/forward buttons
     const el = document.getElementById(section);
     if (el) el.scrollIntoView({ behavior: "instant", block: "start" });
   };
@@ -141,26 +134,15 @@ export default function JobLayout(props: JobLayoutProps) {
     else if (e.altKey && e.key === "4") switchToSection("attendance");
   };
 
-  const generateAttendanceCode = async () => {
-    setLoadingCode(true);
-    try {
-      const res = await fetch(`/api/gig/${props.gigId}/generate-attendance-code`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-      });
-      if (!res.ok) throw new Error("Failed to generate attendance code");
-      const data = await res.json();
-      setGeneratedCode(data.attendanceCode);
-    } catch (err) {
-      console.error(err);
-      alert("Error generating attendance code");
-    } finally {
-      setLoadingCode(false);
+  const openAttendanceCodeModal = () => {
+    if (!jobData()?.attendanceCodeInfo) {
+      alert("No attendance code available for this job.");
+      return;
     }
+    setShowCodeModal(true);
   };
 
-  const closeModal = () => setGeneratedCode(null);
+  const closeModal = () => setShowCodeModal(false);
 
   onMount(() => {
     document.addEventListener("keydown", handleKeyDown);
@@ -169,7 +151,6 @@ export default function JobLayout(props: JobLayoutProps) {
     const params = new URLSearchParams(window.location.search);
     const section = params.get("section") || "details";
 
-    // Timeout to ensure DOM is fully rendered before setting up IO and scrolling
     setTimeout(() => {
       setupIntersectionObserver();
       setActiveSection(section);
@@ -205,10 +186,10 @@ export default function JobLayout(props: JobLayoutProps) {
         <div class={styles.headerButtons}>
           <button
             class={`${styles.backButton} ${styles.generateCodeButton}`}
-            onClick={generateAttendanceCode}
-            disabled={loadingCode()}
+            onClick={openAttendanceCodeModal}
+            disabled={!jobData()?.attendanceCodeInfo}
           >
-            {loadingCode() ? "Generating..." : "Generate Code"}
+            Attendance Code
           </button>
 
           <a class={styles.backButton} href="/dashboard">
@@ -236,7 +217,6 @@ export default function JobLayout(props: JobLayoutProps) {
       </div>
 
       <div class={styles.contentWrapper} ref={contentWrapperRef}>
-        {/* All content sections are inside the scrollable wrapper */}
         <section id="details" class={styles.sectionBlock}>
           <JobDetailsView gigId={props.gigId} sharedJobData={jobData} />
         </section>
@@ -247,29 +227,36 @@ export default function JobLayout(props: JobLayoutProps) {
           <JobRatingView gigId={props.gigId} />
         </section>
         <section id="attendance" class={styles.sectionBlock}>
-          <JobAttendanceView gigId={props.gigId} />
+          <JobAttendanceView gigId={props.gigId} sharedJobData={jobData} />
         </section>
 
-        {/* --- FOOTER IS NOW INSIDE contentWrapper TO BE SCROLLABLE --- */}
-        <footer class={styles.footer}>
-          <div class={styles.footerContent}>
-            <p>&copy; 2025 WorkNow. All rights reserved.</p>
-          </div>
-        </footer>
       </div>
 
-      {/* Modal to show generated code */}
-      {generatedCode() && (
+      {/* Modal to show attendance code */}
+      <Show when={showCodeModal()}>
         <div class={styles.modalOverlay} onClick={closeModal}>
           <div class={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+            <button class={styles.modalCloseX} onClick={closeModal}>
+              ×
+            </button>
             <h2>Attendance Code</h2>
-            <p class={styles.codeText}>{generatedCode()}</p>
+            <Show when={jobData()?.attendanceCodeInfo}>
+              {(info) => (
+                <>
+                  <p class={styles.codeText}>{info().attendanceCode}</p>
+                  <div class={styles.codeDetails}>
+                    <p><strong>Valid from:</strong> {new Date(info().validDate).toLocaleDateString()}</p>
+                    <p><strong>Expires:</strong> {new Date(info().expiresAt).toLocaleDateString()}</p>
+                  </div>
+                </>
+              )}
+            </Show>
             <button class={styles.modalCloseButton} onClick={closeModal}>
               Close
             </button>
           </div>
         </div>
-      )}
+      </Show>
     </div>
   );
 }

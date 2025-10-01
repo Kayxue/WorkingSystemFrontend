@@ -88,47 +88,6 @@ html, body {
   display: inline-block;
 }
 
-/* Job status styling */
-.status {
-  display: inline-block;
-  padding: 0.4rem 1rem;
-  border-radius: 25px;
-  font-size: 1rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  border: 1px solid transparent;
-}
-
-.green {
-  background: #a7f3d0;
-  color: #065f46;
-  border-color: #065f46;
-}
-
-.yellow {
-  background: #fef3c7;
-  color: #92400e;
-  border-color: #92400e;
-}
-
-.red {
-  background: #fecaca;
-  color: #991b1b;
-  border-color: #991b1b;
-}
-
-.blue {
-  background: #93c5fd;
-  color: #1e293b;
-  border-color: #1e293b;
-}
-
-.unknown {
-  background: #f0f2f5;
-  color: #6c757d;
-  border-color: #adb5bd;
-}
 
 /* ---------------------------------------------
    Sections

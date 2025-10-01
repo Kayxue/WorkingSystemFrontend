@@ -5,21 +5,19 @@ html, body {
     height: 100%;
     margin: 0;
     padding: 0;
-    /* Use Inter font */
     font-family: 'Inter', sans-serif;
     background-color: #f8fafc;
     color: #111827;
 }
 
 :root {
-    --tab-height: 56px;
-    --header-height: auto;
+    --header-height: 72px; /* base header height */
 }
 
-/* Added some minimal body styling to ensure full height and smooth scrolling */
+/* Prevent body scroll, contentWrapper handles it */
 body {
     height: 100vh;
-    overflow: hidden; /* Prevent body scroll, contentWrapper handles scroll */
+    overflow: hidden;
 }
 
 /* ---------------------------------------------
@@ -37,38 +35,47 @@ body {
 }
 
 /* ---------------------------------------------
-    Job Title Header (Header Sticky - Top: 0)
+    Job Title Header (Sticky - Top: 0)
 --------------------------------------------- */
-.headerButtons {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-}
-
-.headerButtons .generateCodeButton {
-  background-color: #b91010; /* green */
-  color: white;
-}
-
-.headerButtons .generateCodeButton:hover {
-  background-color: #960505;
-}
-
 .jobTitleHeader {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
     flex-wrap: wrap;
-    gap: 1rem;
+    gap: 0.75rem;
     background: #fff;
     padding: 1.5rem 2rem;
     border-bottom: 1px solid #e2e8f0;
     box-shadow: 0 1px 3px rgba(0,0,0,0.05);
     position: sticky;
-    top: 0; /* Primary sticky element stays at the top of the viewport */
-    z-index: 30; 
+    top: 0;
+    z-index: 30;
     box-sizing: border-box;
     flex-shrink: 0;
+}
+
+/* Buttons container */
+.headerButtons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.headerButtons button,
+.headerButtons a {
+  flex: 1 1 auto;
+  min-width: 120px;
+  text-align: center;
+}
+
+.headerButtons .generateCodeButton {
+  background-color: #b91010;
+  color: white;
+}
+
+.headerButtons .generateCodeButton:hover {
+  background-color: #960505;
 }
 
 /* Wrapper for title + status */
@@ -100,17 +107,17 @@ body {
 .backButton {
     display: inline-flex;
     align-items: center;
+    justify-content: center;
     gap: 0.5rem;
     background: rgba(239, 68, 68, 0.1);
     border: 1px solid rgba(239, 68, 68, 0.3);
     color: #ef4444;
     padding: 0.5rem 1rem;
-    border-radius: 0.5rem; /* Using Tailwind standards */
+    border-radius: 0.5rem;
     text-decoration: none;
     font-size: 0.9rem;
     font-weight: 500;
     transition: all 0.2s ease;
-    flex-shrink: 0;
     white-space: nowrap;
 }
 
@@ -124,14 +131,14 @@ body {
 }
 
 /* ---------------------------------------------
-    Tab Navigation (Second Sticky Element)
+    Tab Navigation (Sticky under header)
 --------------------------------------------- */
 .tabNavigation {
     background: #fff;
     border-bottom: 1px solid #e2e8f0;
     position: sticky;
-    top: 130px; 
-    z-index: 25; 
+    top: 130px;
+    z-index: 25;
     box-shadow: 0 2px 4px rgba(0,0,0,0.05);
     flex-shrink: 0;
 }
@@ -148,11 +155,9 @@ body {
 .tabContainer::-webkit-scrollbar {
     height: 4px;
 }
-
 .tabContainer::-webkit-scrollbar-track {
     background: #f1f1f1;
 }
-
 .tabContainer::-webkit-scrollbar-thumb {
     background: #cbd5e1;
     border-radius: 2px;
@@ -196,16 +201,16 @@ body {
 }
 
 /* ---------------------------------------------
-    Content Wrapper (Scrollable Area)
+    Content Wrapper
 --------------------------------------------- */
 .contentWrapper {
     flex: 1;
-    overflow-y: auto; /* This is where the main scrolling happens */
+    overflow-y: auto;
     overflow-x: hidden;
     background-color: #f8fafc;
     padding: 0;
     box-sizing: border-box;
-    z-index: 1; 
+    z-index: 1;
 }
 
 /* ---------------------------------------------
@@ -219,17 +224,8 @@ body {
     min-height: 400px;
 }
 
-.sectionBlock:first-child {
-    margin-top: 0;
-}
-
-.sectionBlock:last-child {
-    margin-bottom: 0;
-    border-bottom: none; 
-}
-
 /* ---------------------------------------------
-    Job status badge
+    Status Badge
 --------------------------------------------- */
 .status {
     display: inline-block;
@@ -242,44 +238,19 @@ body {
     border: 1px solid transparent;
 }
 
-.green {
-    background: #a7f3d0;
-    color: #065f46;
-    border-color: #065f46;
-}
-
-.yellow {
-    background: #fef3c7;
-    color: #92400e;
-    border-color: #92400e;
-}
-
-.red {
-    background: #fecaca;
-    color: #991b1b;
-    border-color: #991b1b;
-}
-
-.blue {
-    background: #93c5fd;
-    color: #1e293b;
-    border-color: #1e293b;
-}
-
-.unknown {
-    background: #f0f2f5;
-    color: #6c757d;
-    border-color: #adb5bd;
-}
+.green { background: #a7f3d0; color: #065f46; border-color: #065f46; }
+.yellow { background: #fef3c7; color: #92400e; border-color: #92400e; }
+.red { background: #fecaca; color: #991b1b; border-color: #991b1b; }
+.blue { background: #93c5fd; color: #1e293b; border-color: #1e293b; }
+.unknown { background: #f0f2f5; color: #6c757d; border-color: #adb5bd; }
 
 /* ---------------------------------------------
-    Footer (MODIFIED FOR SCROLLABILITY)
+    Footer
 --------------------------------------------- */
 .footer {
     background: #fff;
     padding: 1rem 2rem;
 }
-
 .footerContent {
     display: flex;
     align-items: center;
@@ -287,97 +258,40 @@ body {
     color: #6b7280;
     font-size: 0.875rem;
 }
-
-.footerContent p {
-    margin: 0;
-}
+.footerContent p { margin: 0; }
 
 /* ---------------------------------------------
-    Responsive adjustments (Final Fixes)
+    Responsive Fixes
 --------------------------------------------- */
-@media (max-width: 1024px) {
-    .jobTitleHeader { 
-        padding: 1.2rem 1.5rem; 
-    }
-    .tabContainer { 
-        padding: 0 0.5rem; 
-    }
-    .tabButton { 
-        padding: 0.9rem 1rem; 
-    }
-    .sectionBlock {
-        padding: 1.5rem;
-    }
-}
-
 @media (max-width: 768px) {
-    .jobTitleHeader { 
-        padding: 1rem 1rem;
+    :root { --header-height: 100px; }
+    .jobTitle { font-size: 1.5rem; }
+    .jobStatus { font-size: 0.85rem; }
+    .headerButtons button,
+    .headerButtons a {
+        flex: 1 1 45%;
     }
-    .tabNavigation {
-        /* Re-adjusting top based on smaller header height */
-        top: 110px; 
-    }
-    .tabButton { 
-        padding: 0.75rem 0.9rem; 
-        font-size: 0.85rem; 
-    }
-    .jobTitle { 
-        font-size: 1.5rem; 
-    }
-    .jobStatus { 
-        font-size: 0.85rem; 
-    }
-    .sectionBlock {
-        padding: 1.25rem;
-    }
-    .footer {
-        padding: 0.75rem 1rem;
-    }
+    .tabNavigation { top: 125px; }
 }
 
-@media (max-width: 480px) {
-    .jobTitleHeader { 
-        padding: 0.75rem;
+@media (max-width: 580px) {
+    :root { --header-height: 130px; }
+    .jobTitleHeader {
+        padding: 1rem;
         flex-direction: column;
         align-items: stretch;
     }
-    .tabNavigation {
-        /* Re-adjusting top based on stacked header elements */
-        top: 155px; 
-    }
-    .tabButton { 
-        padding: 0.6rem 0.8rem; 
-        gap: 0.25rem; 
-        font-size: 0.8rem; 
-    }
-    .backButton { 
-        padding: 0.4rem 0.6rem; 
-        font-size: 0.8rem;
+    .headerButtons {
         width: 100%;
-        justify-content: center;
+        justify-content: stretch;
     }
-    .jobTitle { 
-        font-size: 1.3rem; 
+    .headerButtons button,
+    .headerButtons a {
+        flex: 1 1 100%;
+        min-width: unset;
     }
-    .jobStatus { 
-        font-size: 0.8rem; 
-    }
-    .sectionBlock {
-        padding: 1rem;
-        border-radius: 6px;
-    }
-}
-
-@media (max-width: 360px) {
-    .tabButton { 
-        padding: 0.5rem 0.6rem; 
-        font-size: 0.75rem; 
-    }
-    .tabIcon {
-        font-size: 0.9rem;
-    }
-    .sectionBlock {
-        padding: 0.75rem;
-    }
+    .tabNavigation { top: 215px; }
+    .tabButton { padding: 0.6rem 0.8rem; font-size: 0.8rem; }
+    .backButton { width: 100%; }
+    .jobTitle { font-size: 1.3rem; }
 }
