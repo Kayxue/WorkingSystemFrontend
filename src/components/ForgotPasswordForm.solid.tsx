@@ -49,6 +49,7 @@ export default function ForgotPasswordForm() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "platform": "web-employer",
         },
         body: JSON.stringify({
           email: email(),
@@ -114,7 +115,6 @@ export default function ForgotPasswordForm() {
           "Content-Type": "application/json",
           "platform": "web-employer",
         },
-        credentials: "include",
         body: JSON.stringify({
           email: email(),
           verificationCode: otp(),
@@ -150,7 +150,6 @@ export default function ForgotPasswordForm() {
           "Content-Type": "application/json",
           "platform": "web-employer",
         },
-        credentials: "include",
         body: JSON.stringify({
           email: email(),
         }),
