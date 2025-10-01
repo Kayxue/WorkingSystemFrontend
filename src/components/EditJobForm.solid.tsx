@@ -117,10 +117,26 @@ export default function EditJobForm() {
     const original = originalData();
     const changedFields: any = {};
 
+    // Define field pairs that must be sent together
+    const fieldPairs = [
+      ['dateStart', 'dateEnd'],
+      ['timeStart', 'timeEnd'],
+      ['city', 'district']
+    ];
+
     // Check each field for changes
     Object.keys(current).forEach(key => {
       if (!deepEqual(current[key], original[key])) {
         changedFields[key] = current[key];
+      }
+    });
+
+    // If one field in a pair changed, include both fields
+    fieldPairs.forEach(pair => {
+      const [field1, field2] = pair;
+      if (changedFields[field1] || changedFields[field2]) {
+        changedFields[field1] = current[field1];
+        changedFields[field2] = current[field2];
       }
     });
 
@@ -545,7 +561,6 @@ export default function EditJobForm() {
             </div>
           </Show>
 
-          {/* Rest of your existing form sections remain the same */}
           {/* 1. Title Section */}
           <div class={styles.formSection}>
             <h3 class={styles.sectionTitle}>
