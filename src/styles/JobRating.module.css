@@ -527,7 +527,8 @@
   
   .header {
     flex-direction: column;
-    align-items: flex-start;
+    align-items: stretch;
+    text-align: center;
     gap: 12px;
   }
   

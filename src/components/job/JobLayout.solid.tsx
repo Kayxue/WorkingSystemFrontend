@@ -57,7 +57,6 @@ export default function JobLayout(props: JobLayoutProps) {
   const [jobData, { refetch: refetchJobData }] = createResource(() => props.gigId, fetchJobData);
   const [activeSection, setActiveSection] = createSignal("details");
   const [isUserClicking, setIsUserClicking] = createSignal(false);
-
   const [showCodeModal, setShowCodeModal] = createSignal(false);
 
   let contentWrapperRef: HTMLDivElement | undefined;
@@ -71,20 +70,21 @@ export default function JobLayout(props: JobLayoutProps) {
     { id: "attendance", label: "Attendance", icon: "⏰", shortcut: "Alt+4" },
   ];
 
+  // Smooth scroll ke section
   const switchToSection = (sectionId: string) => {
     const el = document.getElementById(sectionId);
-    if (el && contentWrapperRef) {
-      setIsUserClicking(true);
-      setActiveSection(sectionId);
-      el.scrollIntoView({ behavior: "smooth", block: "start" });
+    if (!el || !contentWrapperRef) return;
 
-      const url = new URL(window.location.href);
-      url.searchParams.set("section", sectionId);
-      window.history.pushState({}, "", url.toString());
+    setActiveSection(sectionId);
+    setIsUserClicking(true);
 
-      const scrollEndTimeout = setTimeout(() => setIsUserClicking(false), 600);
-      onCleanup(() => clearTimeout(scrollEndTimeout));
-    }
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
+
+    setTimeout(() => setIsUserClicking(false), 400);
+
+    const url = new URL(window.location.href);
+    url.searchParams.set("section", sectionId);
+    window.history.pushState({}, "", url.toString());
   };
 
   const setupIntersectionObserver = () => {
@@ -169,13 +169,24 @@ export default function JobLayout(props: JobLayoutProps) {
     <div class={styles.jobLayoutContainer}>
       <div class={styles.jobTitleHeader}>
         <div class={styles.jobTitleWrapper}>
+          <button
+            class={styles.backButton}
+            onClick={() => {
+              if (document.referrer) window.location.href = document.referrer;
+              else window.location.href = "/dashboard"; // fallback
+            }}
+          >
+            <svg class={styles.backIcon} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+            </svg>
+          </button>
+
           <h1 class={styles.jobTitle}>
             {jobData.loading ? "Loading..." : jobData()?.title || "Job Details"}
           </h1>
 
           <Show when={jobData()?.status}>
             <p class={styles.jobStatus}>
-              Status:{" "}
               <span class={`${styles.status} ${getJobStatusColor(jobData()!.status)}`}>
                 {jobData()!.status}
               </span>
@@ -184,18 +195,15 @@ export default function JobLayout(props: JobLayoutProps) {
         </div>
 
         <div class={styles.headerButtons}>
-          <button
-            class={`${styles.backButton} ${styles.generateCodeButton}`}
-            onClick={openAttendanceCodeModal}
-            disabled={!jobData()?.attendanceCodeInfo}
-          >
-            Attendance Code
-          </button>
-
-          <a class={styles.backButton} href="/dashboard">
-            <span class={styles.backIcon}>←</span>
-            <span>Back to Dashboard</span>
-          </a>
+          <Show when={jobData()?.status === "已刊登"}>
+            <button
+              class={`${styles.backButton} ${styles.generateCodeButton}`}
+              onClick={openAttendanceCodeModal}
+              disabled={!jobData()?.attendanceCodeInfo}
+            >
+              Attendance Code
+            </button>
+          </Show>
         </div>
       </div>
 
@@ -229,10 +237,8 @@ export default function JobLayout(props: JobLayoutProps) {
         <section id="attendance" class={styles.sectionBlock}>
           <JobAttendanceView gigId={props.gigId} sharedJobData={jobData} />
         </section>
-
       </div>
 
-      {/* Modal to show attendance code */}
       <Show when={showCodeModal()}>
         <div class={styles.modalOverlay} onClick={closeModal}>
           <div class={styles.modalContent} onClick={(e) => e.stopPropagation()}>
@@ -245,8 +251,12 @@ export default function JobLayout(props: JobLayoutProps) {
                 <>
                   <p class={styles.codeText}>{info().attendanceCode}</p>
                   <div class={styles.codeDetails}>
-                    <p><strong>Valid from:</strong> {new Date(info().validDate).toLocaleDateString()}</p>
-                    <p><strong>Expires:</strong> {new Date(info().expiresAt).toLocaleDateString()}</p>
+                    <p>
+                      <strong>Valid from:</strong> {new Date(info().validDate).toLocaleDateString()}
+                    </p>
+                    <p>
+                      <strong>Expires:</strong> {new Date(info().expiresAt).toLocaleDateString()}
+                    </p>
                   </div>
                 </>
               )}

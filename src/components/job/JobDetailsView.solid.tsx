@@ -82,6 +82,10 @@ const JobDetailsView: Component<JobDetailsViewProps> = (props) => {
     document.body.style.overflow = "auto";
   });
 
+  // Show Edit button only for these statuses: "已刊登", "待刊登", "已下架"
+  const showEditButton = (status: string) =>
+    ["已刊登", "待刊登", "已下架"].includes(status);
+
   return (
     <div class={styles.jobDetailsContainer}>
       <Show when={jobData()?.loading}>
@@ -112,18 +116,22 @@ const JobDetailsView: Component<JobDetailsViewProps> = (props) => {
 
           return (
             <>
+              {/* Header with Job Title and conditional Edit button */}
               <div class={styles.headerRow}>
                 <h1 class={styles.jobTitle}>Job Info</h1>
-                <button
-                  class={styles.editButton}
-                  onClick={() =>
-                    (window.location.href = `/edit-job?gigId=${encodeURIComponent(jobInfo.gigId)}`)
-                  }
-                >
-                  ✎ Edit
-                </button>
+                <Show when={showEditButton(jobInfo.status)}>
+                  <button
+                    class={styles.editButton}
+                    onClick={() =>
+                      (window.location.href = `/edit-job?gigId=${encodeURIComponent(jobInfo.gigId)}`)
+                    }
+                  >
+                    ✎ Edit
+                  </button>
+                </Show>
               </div>
 
+              {/* Job details */}
               <p>
                 <span class={styles.label}>Date :</span> {formatDateToDDMMYYYY(jobInfo.dateStart)} –{" "}
                 {formatDateToDDMMYYYY(jobInfo.dateEnd)}
@@ -185,6 +193,7 @@ const JobDetailsView: Component<JobDetailsViewProps> = (props) => {
                 >
                   {stripQuotes(jobInfo.description)}
                 </Show>
+
               </section>
 
               {/* Requirements */}
@@ -287,11 +296,9 @@ const JobDetailsView: Component<JobDetailsViewProps> = (props) => {
                     <a href={`mailto:${jobInfo.contactEmail}`}>{jobInfo.contactEmail}</a>
                   </Show>
                 </p>
-                <p>
-                  <span class={styles.label}>Posted on:</span> {formatDateToDDMMYYYY(jobInfo.publishedAt)}
-                </p>
               </section>
 
+              {/* Photo modal */}
               <Show when={selectedPhoto()}>
                 <div class={styles.photoModal} onClick={closePhotoModal}>
                   <div class={styles.modalContent} onClick={(e) => e.stopPropagation()}>

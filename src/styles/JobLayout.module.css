@@ -1,248 +1,210 @@
 /* ---------------------------------------------
-    Global / Reset Styles
+   Global / Reset Styles
 --------------------------------------------- */
-html, body {
-    height: 100%;
-    margin: 0;
-    padding: 0;
-    font-family: 'Inter', sans-serif;
-    background-color: #f8fafc;
-    color: #111827;
+html,
+body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  font-family: 'Inter', sans-serif;
+  background-color: #f8fafc;
+  color: #111827;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  scroll-behavior: smooth; /* default smooth scroll */
 }
 
 :root {
-    --header-height: 72px; /* base header height */
-}
-
-/* Prevent body scroll, contentWrapper handles it */
-body {
-    height: 100vh;
-    overflow: hidden;
+  --header-height: 85px; /* default header height */
+  --tab-height: 56px;    /* default tab height */
 }
 
 /* ---------------------------------------------
-    Layout container
+   Layout Container
 --------------------------------------------- */
 .jobLayoutContainer {
-    display: flex;
-    flex-direction: column;
-    height: 100vh;
-    max-width: 900px;
-    margin: 0 auto;
-    background-color: #fff;
-    border-left: 1px solid #e2e8f0;
-    border-right: 1px solid #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  max-width: 900px;
+  margin: 0 auto;
+  background-color: #fff;
+  border-radius: 8px;
+  border-left: 1px solid #e5e7eb;
+  border-right: 1px solid #e5e7eb;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
 }
 
 /* ---------------------------------------------
-    Job Title Header (Sticky - Top: 0)
+   Job Header
 --------------------------------------------- */
 .jobTitleHeader {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    flex-wrap: wrap;
-    gap: 0.75rem;
-    background: #fff;
-    padding: 1.5rem 2rem;
-    border-bottom: 1px solid #e2e8f0;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-    position: sticky;
-    top: 0;
-    z-index: 30;
-    box-sizing: border-box;
-    flex-shrink: 0;
-}
-
-/* Buttons container */
-.headerButtons {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
   align-items: center;
+  justify-content: space-between;
+  padding: 1rem 0.5rem;
+  background: #fff;
+  border-bottom: 1px solid #f3f4f6;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.06);
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  gap: 8px;
 }
 
-.headerButtons button,
-.headerButtons a {
-  flex: 1 1 auto;
-  min-width: 120px;
-  text-align: center;
-}
-
-.headerButtons .generateCodeButton {
-  background-color: #b91010;
-  color: white;
-}
-
-.headerButtons .generateCodeButton:hover {
-  background-color: #960505;
-}
-
-/* Wrapper for title + status */
 .jobTitleWrapper {
-    display: flex;
-    flex-direction: column;
-    flex: 1;
-    min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 0px;
+  flex: 1 1 auto;
+  min-width: 0;
+  flex-wrap: wrap;
 }
 
-/* Job Title */
-.jobTitle {
-    margin: 0;
-    font-size: 1.75rem;
-    font-weight: 700;
-    word-break: break-word;
-    color: #111827;
-}
-
-/* Job Status */
-.jobStatus {
-    font-size: 0.95rem;
-    font-weight: 500;
-    color: #6b7280;
-    margin: 0.5rem 0 0 0;
-}
-
-/* Back Button */
+/* ---------- Back Button ---------- */
 .backButton {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    background: rgba(239, 68, 68, 0.1);
-    border: 1px solid rgba(239, 68, 68, 0.3);
-    color: #ef4444;
-    padding: 0.5rem 1rem;
-    border-radius: 0.5rem;
-    text-decoration: none;
-    font-size: 0.9rem;
-    font-weight: 500;
-    transition: all 0.2s ease;
-    white-space: nowrap;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  padding: 0.25rem;
+  color: #3b82f6;
+  cursor: pointer;
+  transition: color 0.15s ease;
+  flex-shrink: 0;
 }
 
 .backButton:hover {
-    background: rgba(239, 68, 68, 0.2);
-    border-color: rgba(239, 68, 68, 0.5);
+  color: #1d4ed8;
 }
 
 .backIcon {
-    font-size: 1.1rem;
+  width: 1.5rem;
+  height: 1.5rem;
+  stroke: currentColor;
+  flex-shrink: 0;
 }
 
-/* ---------------------------------------------
-    Tab Navigation (Sticky under header)
---------------------------------------------- */
-.tabNavigation {
-    background: #fff;
-    border-bottom: 1px solid #e2e8f0;
-    position: sticky;
-    top: 130px;
-    z-index: 25;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-    flex-shrink: 0;
+/* ---------- Job Title ---------- */
+.jobTitle {
+  margin: 0;
+  font-size: 1.85rem;
+  font-weight: 700;
+  line-height: 1.2;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+  min-width: 0;
 }
 
-.tabContainer {
-    display: flex;
-    justify-content: flex-start;
-    padding: 0 1rem;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: thin;
-}
-
-.tabContainer::-webkit-scrollbar {
-    height: 4px;
-}
-.tabContainer::-webkit-scrollbar-track {
-    background: #f1f1f1;
-}
-.tabContainer::-webkit-scrollbar-thumb {
-    background: #cbd5e1;
-    border-radius: 2px;
-}
-
-.tabButton {
-    background: transparent;
-    border: none;
-    color: #6b7280;
-    padding: 1rem 1.5rem;
-    cursor: pointer;
-    font-size: 0.9rem;
-    font-weight: 500;
-    transition: all 0.2s ease;
-    white-space: nowrap;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    border-bottom: 3px solid transparent;
-    flex-shrink: 0;
-    outline: none;
-}
-
-.tabButton:hover {
-    color: #374151;
-    background: rgba(59, 130, 246, 0.05);
-}
-
-.tabButton.activeTab {
-    color: #3b82f6;
-    border-bottom-color: #3b82f6;
-    background: rgba(59, 130, 246, 0.05);
-}
-
-.tabIcon {
-    font-size: 1.1rem;
-}
-
-.tabLabel {
-    font-weight: 500;
-}
-
-/* ---------------------------------------------
-    Content Wrapper
---------------------------------------------- */
-.contentWrapper {
-    flex: 1;
-    overflow-y: auto;
-    overflow-x: hidden;
-    background-color: #f8fafc;
-    padding: 0;
-    box-sizing: border-box;
-    z-index: 1;
-}
-
-/* ---------------------------------------------
-    Section Block
---------------------------------------------- */
-.sectionBlock {
-    background: #fff;
-    padding: 2rem;
-    margin: 0;
-    border-bottom: 8px solid #f8fafc;
-    min-height: 400px;
-}
-
-/* ---------------------------------------------
-    Status Badge
---------------------------------------------- */
+/* ---------- Status ---------- */
 .status {
-    display: inline-block;
-    padding: 0.25rem 0.75rem;
-    border-radius: 25px;
-    font-size: 0.85rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    border: 1px solid transparent;
+  display: inline-block;
+  padding: 0.35rem 0.5rem;
+  border-radius: 50px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  border: 1px solid transparent;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .green { background: #a7f3d0; color: #065f46; border-color: #065f46; }
 .yellow { background: #fef3c7; color: #92400e; border-color: #92400e; }
 .red { background: #fecaca; color: #991b1b; border-color: #991b1b; }
-.blue { background: #93c5fd; color: #1e293b; border-color: #1e293b; }
 .unknown { background: #f0f2f5; color: #6c757d; border-color: #adb5bd; }
+
+/* ---------- Attendance Code Button ---------- */
+.generateCodeButton {
+  background-color: #eb2525;
+  color: #fff;
+  border: none;
+  padding: 0.4rem 0.8rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  font-size: 0.95rem;
+  font-weight: 600;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+  flex-shrink: 0;
+}
+
+.generateCodeButton:hover {
+  background-color: #af1e1e;
+  color: #fff;
+  transform: translateY(-1px);
+}
+
+.generateCodeButton:active {
+  background-color: #7f1c1c;
+  color: #fff;
+  transform: translateY(0);
+}
+
+/* ---------------------------------------------
+   Tabs
+--------------------------------------------- */
+.tabNavigation {
+  background: #fff;
+  border-bottom: 1px solid #f3f4f6;
+  position: sticky;
+  top: 70px;
+  z-index: 25;
+}
+
+.tabContainer {
+  display: flex;
+  padding: 0 1rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+  scroll-behavior: smooth;
+}
+
+.tabContainer::-webkit-scrollbar { height: 4px; }
+.tabContainer::-webkit-scrollbar-track { background: #f1f1f1; }
+.tabContainer::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 2px; }
+
+.tabButton {
+  background: transparent;
+  border: none;
+  color: #4b5563;
+  padding: 0.7rem 1.5rem;
+  cursor: pointer;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-bottom: 3px solid transparent;
+  flex-shrink: 0;
+  font-size: 0.95rem;
+  transition: color 0.2s ease, background 0.2s ease, border-bottom-color 0.2s ease;
+}
+
+.tabButton:hover { color: #111827; background: #f9fafb; }
+.tabButton.activeTab { font-weight: 700; color: #3b82f6; border-bottom-color: #3b82f6; }
+
+/* ---------------------------------------------
+   Content Wrapper
+--------------------------------------------- */
+.contentWrapper {
+  flex: 1;
+  overflow-y: auto; 
+  scrollbar-width: none;
+  overflow-x: hidden;
+  background-color: #f9fafb;
+  box-sizing: border-box;
+}
+
+.sectionBlock {
+  background: #fff;
+  padding: 2.5rem 2rem;
+  margin: 0;
+  border-bottom: 10px solid #f3f4f6;
+  min-height: 400px;
+  scroll-margin-top: calc(var(--header-height) + var(--tab-height) + 5px);
+}
 
 /* ---------------------------------------------
    Modal Pop Up
@@ -253,7 +215,7 @@ body {
   left: 0;
   width: 100vw;
   height: 100vh;
-  background: rgba(0, 0, 0, 0.55); /* semi-transparent dark background */
+  background: rgba(0,0,0,0.55);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -266,21 +228,15 @@ body {
   padding: 30px 25px;
   max-width: 420px;
   width: 90%;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.25);
   position: relative;
   text-align: center;
   animation: modalFadeIn 0.3s ease-out;
 }
 
 @keyframes modalFadeIn {
-  from {
-    opacity: 0;
-    transform: scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
+  from { opacity: 0; transform: scale(0.95); }
+  to   { opacity: 1; transform: scale(1); }
 }
 
 .modalCloseX {
@@ -301,9 +257,7 @@ body {
   transition: color 0.2s ease;
 }
 
-.modalCloseX:hover {
-  color: #000;
-}
+.modalCloseX:hover { color: #000; }
 
 .codeText {
   font-size: 32px;
@@ -328,9 +282,7 @@ body {
   color: #333;
 }
 
-.codeDetails p {
-  margin: 6px 0;
-}
+.codeDetails p { margin: 6px 0; }
 
 .modalCloseButton {
   margin-top: 20px;
@@ -344,53 +296,28 @@ body {
   transition: background 0.25s ease;
 }
 
-.modalCloseButton:hover {
-  background: #1e40af;
-}
+.modalCloseButton:hover { background: #1e40af; }
 
 /* ---------------------------------------------
-    Responsive Fixes
+   Responsive
 --------------------------------------------- */
 @media (max-width: 768px) {
-    :root { --header-height: 100px; }
-    .jobTitle { font-size: 1.5rem; }
-    .jobStatus { font-size: 0.85rem; }
-    .headerButtons button,
-    .headerButtons a {
-        flex: 1 1 45%;
-    }
-    .tabNavigation { top: 125px; }
-}
-
-@media (max-width: 607px) {
-    :root { --header-height: 100px; }
-    .jobTitle { font-size: 1.5rem; }
-    .jobStatus { font-size: 0.85rem; }
-    .headerButtons button,
-    .headerButtons a {
-        flex: 1 1 45%;
-    }
-    .tabNavigation { top: 165px; }
+  .jobTitleHeader { padding: 0.8rem 0.5rem; }
+  .jobTitle { font-size: 1.5rem; }
+  .backIcon { width: 1.25rem; height: 1.25rem; }
+  .generateCodeButton { padding: 0.35rem 0.7rem; font-size: 0.85rem; }
+  .tabNavigation { top:60px; }
+  .tabButton { padding: 0.7rem 1.25rem; font-size: 0.9rem; }
+  .sectionBlock { padding: 1.5rem; }
 }
 
 @media (max-width: 580px) {
-    :root { --header-height: 130px; }
-    .jobTitleHeader {
-        padding: 1rem;
-        flex-direction: column;
-        align-items: stretch;
-    }
-    .headerButtons {
-        width: 100%;
-        justify-content: stretch;
-    }
-    .headerButtons button,
-    .headerButtons a {
-        flex: 1 1 100%;
-        min-width: unset;
-    }
-    .tabNavigation { top: 215px; }
-    .tabButton { padding: 0.6rem 0.8rem; font-size: 0.8rem; }
-    .backButton { width: 100%; }
-    .jobTitle { font-size: 1.3rem; }
+  .jobTitle { font-size: 1.35rem; }
+  .generateCodeButton { width: 100%; }
+}
+
+@media (max-width: 443px) {
+  .jobTitle { font-size: 1.2rem; }
+  .generateCodeButton { width: 100%; }
+  .tabButton { font-size: 0.8rem; }
 }
