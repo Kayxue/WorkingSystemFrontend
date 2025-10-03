@@ -133,18 +133,13 @@ export default function JobRatingView(props: JobRatingViewProps) {
         setOffset(prev => prev + response.data.length);
       }
 
-      // Update counts
-      if (status() === 'all') {
-        setAllCount(response.total);
-        const rated = response.data.filter(r => r.status === 'rated').length;
-        const unrated = response.data.filter(r => r.status === 'unrated').length;
-        setRatedCount(rated);
-        setUnratedCount(unrated);
-      } else if (status() === 'rated') {
-        setRatedCount(response.total);
-      } else if (status() === 'unrated') {
-        setUnratedCount(response.total);
-      }
+      // --- Always update counts from "all" status ---
+      const allResponse = await fetchRatings(props.gigId, "all", limit(), 0);
+      const allData = allResponse.data;
+
+      setAllCount(allData.length);
+      setRatedCount(allData.filter(r => r.status === "rated").length);
+      setUnratedCount(allData.filter(r => r.status === "unrated").length);
 
       setFilteredCount(response.total);
     } catch (error) {
@@ -154,6 +149,7 @@ export default function JobRatingView(props: JobRatingViewProps) {
       setLoading(false);
     }
   };
+
 
   const handleStatusChange = (newStatus: RatingStatus) => {
     setStatus(newStatus);
@@ -258,6 +254,8 @@ export default function JobRatingView(props: JobRatingViewProps) {
         
         closeRatingModal();
         alert('Rating submitted successfully!');
+        loadRatings(true)
+        //window.location.reload()
         
       } else {
         let errorMessage = `HTTP Error ${response.status}`;
@@ -344,9 +342,7 @@ export default function JobRatingView(props: JobRatingViewProps) {
     <div class={styles.ratingViewContainer}>
       <div class={styles.header}>
         <h2>Rate Approved Employees</h2>
-        <div class={styles.stats}>
-          <span>Approved Applications: {totalCount()}</span>
-        </div>
+        
       </div>
 
       <Show when={error()}>
@@ -563,14 +559,23 @@ export default function JobRatingView(props: JobRatingViewProps) {
                   >
                     Cancel
                   </button>
-                  <button 
-                    class={`${styles.submitButton} ${newRating() === 0 || submittingRating() ? styles.disabled : ''}`}
-                    onclick={submitRating}
-                    disabled={newRating() === 0 || submittingRating()}
-                    type="button"
-                  >
-                    {submittingRating() ? 'Submitting...' : 'Submit Rating'}
-                  </button>
+                  <div style={{ position: 'relative', display: 'inline-block' }}>
+                    <button 
+                      class={`${styles.submitButton} ${newRating() === 0 || submittingRating() ? styles.disabled : ''}`}
+                      onclick={(e) => {
+                        if (newRating() === 0) {
+                          e.preventDefault();
+                          setError('Please select a rating by clicking on the stars above');
+                          return;
+                        }
+                        submitRating(e);
+                      }}
+                      disabled={submittingRating()}
+                      type="button"
+                    >
+                      {submittingRating() ? 'Submitting...' : 'Submit Rating'}
+                    </button>
+                  </div>
                 </div>
               </Show>
             </div>

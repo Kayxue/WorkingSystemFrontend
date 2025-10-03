@@ -9,8 +9,7 @@
   box-sizing: border-box;
 }
 
-
-/* Header row  */
+/* Header row */
 .headerRow {
   display: flex;
   align-items: center;
@@ -32,7 +31,7 @@
   border: 1px solid #d1d5db;
   border-radius: 6px;
   font-size: 1rem;
-  color: inherit; /* allow inline color for status dropdown */
+  color: inherit;
   background-color: #fff;
 }
 
@@ -43,17 +42,15 @@
 .statusDropdown option[value="on_time"] {
   color: #10b981; /* green */
 }
-
 .statusDropdown option[value="late"] {
   color: #f59e0b; /* orange */
 }
-
 .statusDropdown option[value="early"] {
   color: #ef4444; /* red */
 }
 
 /* ============================
-   Beautified Table Styling
+   Table Styling
 ============================ */
 .recordsTable {
   width: 100%;
@@ -64,10 +61,10 @@
   box-shadow: 0 2px 8px rgba(0,0,0,0.05);
 }
 
-/* Header */
+/* ✅ Header and Rows use SAME grid */
 .tableHeader {
   display: grid;
-  grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
+  grid-template-columns: 2fr 1.2fr 100px 1.2fr 2fr; /* fixed Time col */
   padding: 0.9rem 0.6rem;
   align-items: center;
   font-size: 1.2rem;
@@ -75,24 +72,24 @@
   color: #374151;
   background: #f9fafb;
   border-bottom: 2px solid #e5e7eb;
+  box-sizing: border-box;
 }
 
-/* Rows */
 .tableRow {
   display: grid;
-  grid-template-columns: 1.9fr 1fr 1.1fr 1.025fr 1fr;
+  grid-template-columns: 2fr 1.2fr 120px 1.2fr 2fr; /* ✅ match header */
   padding: 0.9rem 0.6rem;
   align-items: center;
   font-size: 1rem;
   color: #111827;
   transition: background 0.2s ease;
+  box-sizing: border-box;
 }
 
 /* Striped effect */
 .tableRow:nth-child(even) {
   background: #fdfdfd;
 }
-
 .tableRow:nth-child(odd) {
   background: #ffffff;
 }
@@ -105,6 +102,7 @@
 /* Cells */
 .cell {
   padding: 0.4rem 0.6rem;
+  box-sizing: border-box;
 }
 
 /* Worker info */
@@ -112,11 +110,9 @@
   display: flex;
   flex-direction: column;
 }
-
 .workerName {
   font-weight: 500;
 }
-
 .workerEmail {
   font-size: 0.8rem;
   color: #6b7280;
@@ -129,12 +125,10 @@
   font-size: 1rem;
   font-weight: 500;
 }
-
 .check_in {
   background-color: #ecfdf5;
   color: #059669;
 }
-
 .check_out {
   background-color: #eff6ff;
   color: #2563eb;
@@ -156,9 +150,8 @@
 }
 
 /* --------------------------
-   Responsive Adjustments
+   Responsive
 --------------------------- */
-
 @media (max-width: 768px) {
   .headerRow {
     flex-direction: column;
@@ -166,14 +159,13 @@
     text-align: center;
     gap: 1rem;
   }
-
   .formInput {
     flex: 1;
     min-width: 140px;
   }
 }
 
-/* ✅ Convert table to list-style cards on small screens */
+/* ✅ Convert table to cards on small screens */
 @media (max-width: 600px) {
   .tableHeader {
     display: none; /* hide table header */
@@ -198,7 +190,6 @@
     border-bottom: 1px solid #f3f4f6;
     font-size: 0.85rem;
   }
-
   .cell:last-child {
     border-bottom: none;
   }
@@ -213,18 +204,16 @@
 
   /* Notes column alignment */
   .cell[data-label="Notes"] {
-    flex-direction: column;   /* label on top, value below */
-    align-items: flex-end;    /* value right-aligned */
+    flex-direction: column;
+    align-items: flex-end;
   }
-
   .cell[data-label="Notes"] input {
-    text-align: right;        /* input text right-aligned */
-    width: 100%;              /* full card width */
+    text-align: right;
+    width: 100%;
     box-sizing: border-box;
   }
-
   .cell[data-label="Notes"]::before {
-    align-self: flex-start;   /* label top-left */
+    align-self: flex-start;
     margin-bottom: 0.25rem;
   }
 }
