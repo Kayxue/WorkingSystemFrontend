@@ -61,7 +61,6 @@ export default function JobLayout(props: JobLayoutProps) {
 
   let contentWrapperRef: HTMLDivElement | undefined;
   let tabNavigationRef: HTMLDivElement | undefined;
-  let observer: IntersectionObserver;
 
   const navigationItems = [
     { id: "details", label: "Job Info", icon: "📋", shortcut: "Alt+1" },
@@ -80,43 +79,61 @@ export default function JobLayout(props: JobLayoutProps) {
 
     el.scrollIntoView({ behavior: "smooth", block: "start" });
 
-    setTimeout(() => setIsUserClicking(false), 400);
+    setTimeout(() => setIsUserClicking(false), 800);
 
     const url = new URL(window.location.href);
     url.searchParams.set("section", sectionId);
     window.history.pushState({}, "", url.toString());
   };
 
-  const setupIntersectionObserver = () => {
-    if (!contentWrapperRef || !tabNavigationRef) return;
+  // Calculate sticky offset dynamically
+  const getStickyOffset = () => {
     const headerHeight = document.querySelector(`.${styles.jobTitleHeader}`)?.clientHeight || 85;
-    const tabHeight = tabNavigationRef.offsetHeight;
-    const stickyAreaHeight = headerHeight + tabHeight;
-    const rootMarginValue = `-${stickyAreaHeight - 5}px 0px 0px 0px`;
+    const tabHeight = tabNavigationRef?.offsetHeight || 0;
+    return headerHeight + tabHeight;
+  };
 
-    observer = new IntersectionObserver(
-      (entries) => {
-        if (isUserClicking()) return;
-        const topEntry = entries
-          .filter((entry) => entry.isIntersecting)
-          .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0];
-        if (topEntry) {
-          const newSectionId = topEntry.target.id;
-          if (activeSection() !== newSectionId) {
-            setActiveSection(newSectionId);
-            const url = new URL(window.location.href);
-            url.searchParams.set("section", newSectionId);
-            window.history.replaceState({}, "", url.toString());
-          }
+  // Determine active section based on scroll position
+  const updateActiveSection = () => {
+    if (isUserClicking()) return;
+
+    const stickyOffset = getStickyOffset();
+    const viewportHeight = window.innerHeight;
+    
+    // Check sections from bottom to top
+    for (let i = navigationItems.length - 1; i >= 0; i--) {
+      const section = document.getElementById(navigationItems[i].id);
+      if (!section) continue;
+
+      const rect = section.getBoundingClientRect();
+      
+      // Calculate how much of the section is visible
+      const visibleTop = Math.max(rect.top, stickyOffset);
+      const visibleBottom = Math.min(rect.bottom, viewportHeight);
+      const visibleHeight = Math.max(0, visibleBottom - visibleTop);
+      const visiblePercentage = visibleHeight / rect.height;
+      
+      // Section is active if:
+      // 1. Its top is within the sticky area AND at least 30% is visible, OR
+      // 2. More than 50% of the section is visible in viewport
+      const isTopInView = rect.top <= stickyOffset + 5 && visiblePercentage >= 0.3;
+      const isMostlyVisible = visiblePercentage > 0.5;
+      
+      if (isTopInView || isMostlyVisible) {
+        const newSectionId = navigationItems[i].id;
+        if (activeSection() !== newSectionId) {
+          setActiveSection(newSectionId);
+          const url = new URL(window.location.href);
+          url.searchParams.set("section", newSectionId);
+          window.history.replaceState({}, "", url.toString());
         }
-      },
-      { root: contentWrapperRef, rootMargin: rootMarginValue, threshold: [0, 0.001, 0.5] }
-    );
+        break;
+      }
+    }
+  };
 
-    navigationItems.forEach((item) => {
-      const el = document.getElementById(item.id);
-      if (el) observer.observe(el);
-    });
+  const handleScroll = () => {
+    requestAnimationFrame(updateActiveSection);
   };
 
   const handlePopState = () => {
@@ -147,12 +164,15 @@ export default function JobLayout(props: JobLayoutProps) {
   onMount(() => {
     document.addEventListener("keydown", handleKeyDown);
     window.addEventListener("popstate", handlePopState);
+    
+    if (contentWrapperRef) {
+      contentWrapperRef.addEventListener("scroll", handleScroll);
+    }
 
     const params = new URLSearchParams(window.location.search);
     const section = params.get("section") || "details";
 
     setTimeout(() => {
-      setupIntersectionObserver();
       setActiveSection(section);
       const el = document.getElementById(section);
       if (el) el.scrollIntoView({ behavior: "instant", block: "start" });
@@ -162,7 +182,9 @@ export default function JobLayout(props: JobLayoutProps) {
   onCleanup(() => {
     document.removeEventListener("keydown", handleKeyDown);
     window.removeEventListener("popstate", handlePopState);
-    if (observer) observer.disconnect();
+    if (contentWrapperRef) {
+      contentWrapperRef.removeEventListener("scroll", handleScroll);
+    }
   });
 
   return (
@@ -252,10 +274,10 @@ export default function JobLayout(props: JobLayoutProps) {
                   <p class={styles.codeText}>{info().attendanceCode}</p>
                   <div class={styles.codeDetails}>
                     <p>
-                      <strong>Valid from:</strong> {new Date(info().validDate).toLocaleDateString()}
+                      <strong>Valid from:</strong> {new Date(info().validDate).toISOString().replace('T', ' ').replace('.000Z', '')}
                     </p>
                     <p>
-                      <strong>Expires:</strong> {new Date(info().expiresAt).toLocaleDateString()}
+                      <strong>Expires:</strong> {new Date(info().expiresAt).toISOString().replace('T', ' ').replace('.000Z', '')}
                     </p>
                   </div>
                 </>

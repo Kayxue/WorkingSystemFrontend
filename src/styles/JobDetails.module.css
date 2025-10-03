@@ -225,12 +225,14 @@ html, body {
 }
 
 .editButton {
-  margin-top: 20px;
+  margin-top: 15px;
   position: absolute;
   top: 45px;
   right: 0px;
-  background-color: #007acc;
-  color: white;
+  border-color: #034774;
+  background-color: rgba(44, 157, 233, 0.39);
+  border: 1px solid transparent;
+  color: #007acc;
   border: none;
   padding: 0.75rem 1.5rem;
   font-size: 1rem;
