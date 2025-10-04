@@ -18,8 +18,6 @@
     "kleur": "^4.1.5",
     "solid-app-router": "^0.4.2",
     "solid-js": "^1.9.9",
-    "tailwindcss": "^4.1.12",
-    "workingsystemfrontend": ".",
-    "workingsystemfrontend": "file:"
+    "tailwindcss": "^4.1.12"
   }
 }
