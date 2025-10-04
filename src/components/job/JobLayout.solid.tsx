@@ -69,7 +69,6 @@ export default function JobLayout(props: JobLayoutProps) {
     { id: "attendance", label: "Attendance", icon: "⏰", shortcut: "Alt+4" },
   ];
 
-  // Smooth scroll ke section
   const switchToSection = (sectionId: string) => {
     const el = document.getElementById(sectionId);
     if (!el || !contentWrapperRef) return;
@@ -86,39 +85,31 @@ export default function JobLayout(props: JobLayoutProps) {
     window.history.pushState({}, "", url.toString());
   };
 
-  // Calculate sticky offset dynamically
   const getStickyOffset = () => {
     const headerHeight = document.querySelector(`.${styles.jobTitleHeader}`)?.clientHeight || 85;
     const tabHeight = tabNavigationRef?.offsetHeight || 0;
     return headerHeight + tabHeight;
   };
 
-  // Determine active section based on scroll position
   const updateActiveSection = () => {
     if (isUserClicking()) return;
 
     const stickyOffset = getStickyOffset();
     const viewportHeight = window.innerHeight;
-    
-    // Check sections from bottom to top
+
     for (let i = navigationItems.length - 1; i >= 0; i--) {
       const section = document.getElementById(navigationItems[i].id);
       if (!section) continue;
 
       const rect = section.getBoundingClientRect();
-      
-      // Calculate how much of the section is visible
       const visibleTop = Math.max(rect.top, stickyOffset);
       const visibleBottom = Math.min(rect.bottom, viewportHeight);
       const visibleHeight = Math.max(0, visibleBottom - visibleTop);
       const visiblePercentage = visibleHeight / rect.height;
-      
-      // Section is active if:
-      // 1. Its top is within the sticky area AND at least 30% is visible, OR
-      // 2. More than 50% of the section is visible in viewport
+
       const isTopInView = rect.top <= stickyOffset + 5 && visiblePercentage >= 0.3;
       const isMostlyVisible = visiblePercentage > 0.5;
-      
+
       if (isTopInView || isMostlyVisible) {
         const newSectionId = navigationItems[i].id;
         if (activeSection() !== newSectionId) {
@@ -164,10 +155,21 @@ export default function JobLayout(props: JobLayoutProps) {
   onMount(() => {
     document.addEventListener("keydown", handleKeyDown);
     window.addEventListener("popstate", handlePopState);
-    
+
     if (contentWrapperRef) {
       contentWrapperRef.addEventListener("scroll", handleScroll);
     }
+
+    // 🔥 Forward wheel events to contentWrapper so it scrolls even if cursor is outside
+    const forwardWheel = (e: WheelEvent) => {
+      if (!contentWrapperRef) return;
+      contentWrapperRef.scrollBy({
+        top: e.deltaY,
+        behavior: "auto"
+      });
+      e.preventDefault();
+    };
+    window.addEventListener("wheel", forwardWheel, { passive: false });
 
     const params = new URLSearchParams(window.location.search);
     const section = params.get("section") || "details";
@@ -177,14 +179,15 @@ export default function JobLayout(props: JobLayoutProps) {
       const el = document.getElementById(section);
       if (el) el.scrollIntoView({ behavior: "instant", block: "start" });
     }, 100);
-  });
 
-  onCleanup(() => {
-    document.removeEventListener("keydown", handleKeyDown);
-    window.removeEventListener("popstate", handlePopState);
-    if (contentWrapperRef) {
-      contentWrapperRef.removeEventListener("scroll", handleScroll);
-    }
+    onCleanup(() => {
+      document.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("popstate", handlePopState);
+      if (contentWrapperRef) {
+        contentWrapperRef.removeEventListener("scroll", handleScroll);
+      }
+      window.removeEventListener("wheel", forwardWheel);
+    });
   });
 
   return (
@@ -195,7 +198,7 @@ export default function JobLayout(props: JobLayoutProps) {
             class={styles.backButton}
             onClick={() => {
               if (document.referrer) window.location.href = document.referrer;
-              else window.location.href = "/dashboard"; // fallback
+              else window.location.href = "/dashboard";
             }}
           >
             <svg class={styles.backIcon} fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -274,10 +277,12 @@ export default function JobLayout(props: JobLayoutProps) {
                   <p class={styles.codeText}>{info().attendanceCode}</p>
                   <div class={styles.codeDetails}>
                     <p>
-                      <strong>Valid from:</strong> {new Date(info().validDate).toISOString().replace('T', ' ').replace('.000Z', '')}
+                      <strong>Valid from:</strong>{" "}
+                      {new Date(info().validDate).toISOString().replace("T", " ").replace(".000Z", "")}
                     </p>
                     <p>
-                      <strong>Expires:</strong> {new Date(info().expiresAt).toISOString().replace('T', ' ').replace('.000Z', '')}
+                      <strong>Expires:</strong>{" "}
+                      {new Date(info().expiresAt).toISOString().replace("T", " ").replace(".000Z", "")}
                     </p>
                   </div>
                 </>
