@@ -1,0 +1,246 @@
+---
+// src/pages/dashboard.astro
+import Layout from '../../layouts/AdminLayout.astro';
+
+const isLoggedIn = Astro.locals?.authData?.loggedIn;
+
+// 可以在這裡做 SSR 數據獲取
+const metrics = {
+  revenues: { value: '15%', trend: 'up', subtitle: 'Increase compared to last week' },
+  lostDeals: { value: '4%', closed: 96, total: 100 },
+  quarterGoal: 84
+};
+---
+
+<Layout title="Dashboard" currentPath="/dashboard">
+  <!-- Dashboard Content -->
+  <div class="space-y-6">
+    <!-- Top Metrics -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <!-- Revenues Card -->
+      <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+        <h3 class="text-sm font-medium text-gray-600 mb-2">Revenues</h3>
+        <div class="flex items-end gap-2 mb-1">
+          <span class="text-3xl font-bold text-gray-900">{metrics.revenues.value}</span>
+          <span class="text-green-500 text-xl mb-1">↑</span>
+        </div>
+        <p class="text-xs text-gray-500">{metrics.revenues.subtitle}</p>
+        <a href="/reports/revenues" class="text-sm text-blue-600 hover:text-blue-700 mt-3 inline-block">
+          Revenues report →
+        </a>
+      </div>
+
+      <!-- Lost Deals Card -->
+      <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+        <h3 class="text-sm font-medium text-gray-600 mb-2">Lost deals</h3>
+        <div class="flex items-end gap-2 mb-1">
+          <span class="text-3xl font-bold text-gray-900">{metrics.lostDeals.value}</span>
+        </div>
+        <p class="text-xs text-gray-500">
+          You closed {metrics.lostDeals.closed} out of {metrics.lostDeals.total} deals
+        </p>
+        <a href="/deals" class="text-sm text-blue-600 hover:text-blue-700 mt-3 inline-block">
+          All deals →
+        </a>
+      </div>
+
+      <!-- Quarter Goal Card -->
+      <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+        <h3 class="text-sm font-medium text-gray-600 mb-2">Quarter goal</h3>
+        <div class="flex items-center justify-center py-4">
+          <div class="relative w-32 h-32">
+            <svg class="transform -rotate-90 w-32 h-32">
+              <circle
+                cx="64"
+                cy="64"
+                r="56"
+                stroke="#e5e7eb"
+                stroke-width="12"
+                fill="none"
+              />
+              <circle
+                cx="64"
+                cy="64"
+                r="56"
+                stroke="#fbbf24"
+                stroke-width="12"
+                fill="none"
+                stroke-dasharray={`${2 * Math.PI * 56}`}
+                stroke-dashoffset={`${2 * Math.PI * 56 * (1 - metrics.quarterGoal / 100)}`}
+                stroke-linecap="round"
+              />
+            </svg>
+            <div class="absolute inset-0 flex items-center justify-center">
+              <span class="text-2xl font-bold text-gray-900">{metrics.quarterGoal}%</span>
+            </div>
+          </div>
+        </div>
+        <a href="/goals" class="text-sm text-blue-600 hover:text-blue-700 mt-3 inline-block">
+          All goals →
+        </a>
+      </div>
+    </div>
+
+    <!-- Customers Section -->
+    <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-lg font-semibold text-gray-900">Customers</h2>
+        <button class="text-sm text-gray-600 hover:text-gray-900">
+          Sort by Newest ▼
+        </button>
+      </div>
+      
+      <div class="space-y-3">
+        <div class="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors">
+          <img src="https://i.pravatar.cc/40?img=1" alt="Customer" class="w-10 h-10 rounded-full" />
+          <div class="flex-1">
+            <div class="font-medium text-gray-900">Chris Friedly</div>
+            <div class="text-sm text-gray-500">Supermarket Villanova</div>
+          </div>
+        </div>
+        
+        <div class="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors">
+          <img src="https://i.pravatar.cc/40?img=2" alt="Customer" class="w-10 h-10 rounded-full" />
+          <div class="flex-1">
+            <div class="font-medium text-gray-900">Maggie Johnson</div>
+            <div class="text-sm text-gray-500">Oasis Organic Inc.</div>
+          </div>
+        </div>
+        
+        <div class="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors">
+          <img src="https://i.pravatar.cc/40?img=3" alt="Customer" class="w-10 h-10 rounded-full" />
+          <div class="flex-1">
+            <div class="font-medium text-gray-900">Gael Harry</div>
+            <div class="text-sm text-gray-500">New York Finest Fruits</div>
+          </div>
+        </div>
+      </div>
+      
+      <a href="/customers" class="text-sm text-blue-600 hover:text-blue-700 mt-4 inline-block">
+        All customers →
+      </a>
+    </div>
+
+    <!-- Two Column Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <!-- Growth Chart Placeholder -->
+      <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-lg font-semibold text-gray-900">Growth</h2>
+          <select class="text-sm border border-gray-300 rounded-lg px-3 py-1">
+            <option>Yearly</option>
+            <option>Monthly</option>
+            <option>Weekly</option>
+          </select>
+        </div>
+        <div class="h-64 flex items-center justify-center text-gray-400">
+          📈 Chart Component Here
+        </div>
+      </div>
+
+      <!-- Top States -->
+      <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+        <h2 class="text-lg font-semibold text-gray-900 mb-4">Top states</h2>
+        <div class="space-y-3">
+          <div class="flex items-center gap-3">
+            <span class="text-sm font-medium text-gray-700 w-8">NY</span>
+            <div class="flex-1 bg-gray-200 rounded-full h-8 overflow-hidden">
+              <div class="bg-yellow-400 h-full rounded-full" style="width: 120%"></div>
+            </div>
+            <span class="text-sm font-medium text-gray-900 w-12 text-right">120K</span>
+          </div>
+          
+          <div class="flex items-center gap-3">
+            <span class="text-sm font-medium text-gray-700 w-8">MA</span>
+            <div class="flex-1 bg-gray-200 rounded-full h-8 overflow-hidden">
+              <div class="bg-yellow-400 h-full rounded-full" style="width: 80%"></div>
+            </div>
+            <span class="text-sm font-medium text-gray-900 w-12 text-right">80K</span>
+          </div>
+          
+          <div class="flex items-center gap-3">
+            <span class="text-sm font-medium text-gray-700 w-8">NH</span>
+            <div class="flex-1 bg-gray-200 rounded-full h-8 overflow-hidden">
+              <div class="bg-yellow-400 h-full rounded-full" style="width: 70%"></div>
+            </div>
+            <span class="text-sm font-medium text-gray-900 w-12 text-right">70K</span>
+          </div>
+          
+          <div class="flex items-center gap-3">
+            <span class="text-sm font-medium text-gray-700 w-8">OR</span>
+            <div class="flex-1 bg-gray-200 rounded-full h-8 overflow-hidden">
+              <div class="bg-yellow-400 h-full rounded-full" style="width: 50%"></div>
+            </div>
+            <span class="text-sm font-medium text-gray-900 w-12 text-right">50K</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom Section -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <!-- Chats -->
+      <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-lg font-semibold text-gray-900">Chats</h2>
+          <span class="text-sm text-gray-500">2 unread messages</span>
+        </div>
+        <div class="flex -space-x-2">
+          <img src="https://i.pravatar.cc/40?img=4" alt="User" class="w-10 h-10 rounded-full ring-2 ring-white" />
+          <img src="https://i.pravatar.cc/40?img=5" alt="User" class="w-10 h-10 rounded-full ring-2 ring-white" />
+          <img src="https://i.pravatar.cc/40?img=6" alt="User" class="w-10 h-10 rounded-full ring-2 ring-white" />
+          <img src="https://i.pravatar.cc/40?img=7" alt="User" class="w-10 h-10 rounded-full ring-2 ring-white" />
+        </div>
+      </div>
+
+      <!-- New Deals -->
+      <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+        <h2 class="text-lg font-semibold text-gray-900 mb-4">New deals</h2>
+        <div class="grid grid-cols-2 gap-3">
+          <div class="flex items-center gap-2 p-2 border border-gray-200 rounded-lg hover:border-yellow-400 transition-colors cursor-pointer">
+            <span class="text-xl">🍊</span>
+            <span class="text-sm font-medium text-gray-700">Fruit2Go</span>
+          </div>
+          <div class="flex items-center gap-2 p-2 border border-gray-200 rounded-lg hover:border-yellow-400 transition-colors cursor-pointer">
+            <span class="text-xl">🛒</span>
+            <span class="text-sm font-medium text-gray-700">Marshall's MKT</span>
+          </div>
+          <div class="flex items-center gap-2 p-2 border border-gray-200 rounded-lg hover:border-yellow-400 transition-colors cursor-pointer">
+            <span class="text-xl">🏪</span>
+            <span class="text-sm font-medium text-gray-700">Joana Mini-market</span>
+          </div>
+          <div class="flex items-center gap-2 p-2 border border-gray-200 rounded-lg hover:border-yellow-400 transition-colors cursor-pointer">
+            <span class="text-xl">🌱</span>
+            <span class="text-sm font-medium text-gray-700">Little Brazil Vegan</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Additional Stats Row -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+        <div class="text-sm text-gray-600 mb-1">Top month</div>
+        <div class="text-2xl font-bold text-yellow-600">November</div>
+        <div class="text-xs text-gray-500 mt-1">2019</div>
+      </div>
+      
+      <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+        <div class="text-sm text-gray-600 mb-1">Top year</div>
+        <div class="text-2xl font-bold text-gray-900">2023</div>
+        <div class="text-xs text-gray-500 mt-1">96K sold so far</div>
+      </div>
+      
+      <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+        <div class="text-sm text-gray-600 mb-1">Top buyer</div>
+        <div class="flex items-center gap-2 mt-2">
+          <img src="https://i.pravatar.cc/40?img=2" alt="Top buyer" class="w-10 h-10 rounded-full" />
+          <div>
+            <div class="font-medium text-gray-900">Maggie Johnson</div>
+            <div class="text-xs text-gray-500">Oasis Organic Inc.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</Layout>

@@ -1,0 +1,93 @@
+---
+import Layout from '../../layouts/AdminLayout.astro';
+import UserApprovalList from '../../components/admin/UserApprovalList.solid.tsx';
+import { BACKEND_BASE_URL } from '../../Constant';
+
+const response = await fetch(`${BACKEND_BASE_URL}/admin/pendingEmployer`, {
+    method: 'GET',
+    headers: {
+        'Content-Type': 'application/json',
+        'platform': "web-admin",
+        'Cookie': Astro.request.headers.get('cookie') || ''
+    },
+    credentials: 'include'
+});
+
+const pendingUsers = await response.json();
+---
+
+<Layout title="User Approval" currentPath="/user-approval">
+  <div class="space-y-6">
+    <!-- Page Header -->
+    <div class="flex items-center justify-between">
+      <div>
+        <h1 class="text-2xl font-bold text-gray-900">User Approval</h1>
+        <p class="text-sm text-gray-600 mt-1">Review and approve new user registrations</p>
+      </div>
+      
+      <div class="flex items-center gap-3">
+        <button class="px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+          <span class="mr-2">📊</span>
+          Export Report
+        </button>
+        <button class="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+          <span class="mr-2">🔍</span>
+          Filter
+        </button>
+      </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div>
+      <!-- <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-200">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm text-gray-600">Pending</p>
+            <p class="text-2xl font-bold text-orange-600 mt-1">{stats.pending}</p>
+          </div>
+          <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
+            <span class="text-2xl">⏳</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-200">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm text-gray-600">Approved</p>
+            <p class="text-2xl font-bold text-green-600 mt-1">{stats.approved}</p>
+          </div>
+          <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+            <span class="text-2xl">✅</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-200">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm text-gray-600">Rejected</p>
+            <p class="text-2xl font-bold text-red-600 mt-1">{stats.rejected}</p>
+          </div>
+          <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
+            <span class="text-2xl">❌</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-200">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm text-gray-600">Total Users</p>
+            <p class="text-2xl font-bold text-gray-900 mt-1">{stats.total}</p>
+          </div>
+          <div class="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
+            <span class="text-2xl">👥</span>
+          </div>
+        </div>
+      </div>
+    </div> -->
+    <!-- User Approval List -->
+    <UserApprovalList client:load initialData={pendingUsers} />
+  </div>
+</Layout>
