@@ -7,14 +7,13 @@ const checkAuth = defineMiddleware(async (context, next) => {
         return next();
     }
     const userCookies = context.request.headers.get('cookie') || '';
-    let loginData = { loggedIn: false, user: null }; 
+    let loginData = { loggedIn: false, user: null}; 
 
     try {
         const response = await fetch(`${BACKEND_BASE_URL}/user/profile`, {
             method: "GET",
             headers: {
             "Content-Type": "application/json",
-            "platform": "web-employer",
             "Cookie": userCookies,
             },
             credentials: "include",
@@ -36,7 +35,15 @@ const checkAuth = defineMiddleware(async (context, next) => {
 
     context.locals.authData = loginData;
 
-    const protectedRoutes = ['/edit-job', '/post-job', '/dashboard', '/calendar','profile','account-settings']
+    const protectedRoutes = ['/edit-job', '/post-job', '/dashboard', '/calendar','/profile','/account-settings']
+    const adminRoutes = ['/admin/admin-dashboard','/admin/user-approval','/admin/jobs'];
+    if (loginData.user?.role !== 'admin' && adminRoutes.includes(context.url.pathname)) {
+        return new Response(null, { status: 404 }); 
+    }
+    // admin try to access employer route
+    if (loginData.user?.role == 'admin' && !adminRoutes.includes(context.url.pathname)) {
+        return Response.redirect(new URL('/admin/admin-dashboard', context.url));
+    }
     if (!loginData.loggedIn && protectedRoutes.includes(context.url.pathname)) {
         return Response.redirect(new URL('/redirect-login', context.url));
     }

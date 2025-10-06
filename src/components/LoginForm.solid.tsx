@@ -4,11 +4,12 @@ import { createSignal, Show } from "solid-js";
 export default function LoginForm() {
   const [email, setEmail] = createSignal("");
   const [password, setPassword] = createSignal("");
-  const [role, setRole] = createSignal("business");
+  const [role, setRole] = createSignal("employer");
   const [error, setError] = createSignal("");
   const [isLoading, setIsLoading] = createSignal(false);
 
   const handleSubmit = async (e: Event) => {
+    const selectedRole = role();
     e.preventDefault();
     setError("");
     setIsLoading(true);
@@ -24,7 +25,7 @@ export default function LoginForm() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "platform": "web-employer"
+          "platform": `${selectedRole == "admin" ? "web-admin" : "web-employer"}`
         },
         body: JSON.stringify({
           email: email(),
@@ -34,7 +35,8 @@ export default function LoginForm() {
       });
 
       if (response.ok) {
-        window.location.href = "/dashboard";
+        if(selectedRole == "employer") window.location.href = "/dashboard";
+        if(selectedRole == "admin") window.location.href = "/admin/admin-dashboard";
       } else {
         const result = await response.text();
         console.log("Login failed:", result);
@@ -88,15 +90,15 @@ export default function LoginForm() {
         <label class="block mb-2 text-gray-700 font-medium text-sm">登入身份</label>
         <div class="flex gap-3 mt-1">
           <label class={`flex-1 px-3 py-2 border rounded-md text-center cursor-pointer text-sm font-medium transition select-none
-            ${role() === "business" ? "bg-blue-50 border-blue-400 text-blue-700 font-semibold shadow-sm" : "bg-white border-gray-300 text-gray-700"}
+            ${role() === "employer" ? "bg-blue-50 border-blue-400 text-blue-700 font-semibold shadow-sm" : "bg-white border-gray-300 text-gray-700"}
             hover:bg-blue-100`}
           >
             <input
               type="radio"
               name="role"
-              value="business"
-              checked={role() === "business"}
-              onChange={() => setRole("business")}
+              value="employer"
+              checked={role() === "employer"}
+              onChange={() => setRole("employer")}
               class="sr-only"
             />
             商家

@@ -6,7 +6,6 @@ export interface Props {
 	showNavbar?: boolean;
 }
 
-// Default showNavbar to true if not provided
 const { title , showNavbar = true } = Astro.props;
 
 const user = Astro.locals?.authData?.user;
