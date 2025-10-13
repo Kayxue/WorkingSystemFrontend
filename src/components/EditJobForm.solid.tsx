@@ -50,13 +50,9 @@ export default function EditJobForm() {
   const [areaData, setAreaData] = createSignal<Record<string, string[]>>({});
   const [districtList, setDistrictList] = createSignal<string[]>([]);
   const [existingPhotos, setExistingPhotos] = createSignal<ExistingPhoto[]>([]);
-  
-  const [deletedPhotoIds, setDeletedPhotoIds] = createSignal<string[]>([]);
-
-  // For handling skills as tags
+  const [previewImage, setPreviewImage] = createSignal<string | null>(null);
+  const [deletedPhotoNames, setDeletedPhotoNames] = createSignal<string[]>([]);
   const [skillInput, setSkillInput] = createSignal("");
-
-  // Store original values to track changes
   const [originalData, setOriginalData] = createSignal<any>({});
 
   const MAX_FILES = 3;
@@ -65,13 +61,11 @@ export default function EditJobForm() {
   const ALLOWED_TYPES = ["image/jpeg", "image/png"];
   const ALLOWED_EXTENSIONS = [".jpg", ".jpeg", ".png"];
 
-  // Get today's date in YYYY-MM-DD format
   const getTodayDate = () => {
     const today = new Date();
     return today.toISOString().split('T')[0];
   };
 
-  // Helper function to deep compare objects
   const deepEqual = (obj1: any, obj2: any): boolean => {
     if (obj1 === obj2) return true;
     if (obj1 == null || obj2 == null) return false;
@@ -95,7 +89,6 @@ export default function EditJobForm() {
     return false;
   };
 
-  // Get only changed fields
   const getChangedFields = () => {
     const current = {
       title: title().trim(),
@@ -117,14 +110,12 @@ export default function EditJobForm() {
     const original = originalData();
     const changedFields: any = {};
 
-    // Define field pairs that must be sent together
     const fieldPairs = [
       ['dateStart', 'dateEnd'],
       ['timeStart', 'timeEnd'],
       ['city', 'district']
     ];
 
-    // Check each field for changes
     Object.keys(current).forEach(key => {
       if (!deepEqual(current[key], original[key])) {
         changedFields[key] = current[key];
@@ -143,15 +134,13 @@ export default function EditJobForm() {
     return changedFields;
   };
 
-  // Check if there are any changes
   const hasChanges = () => {
     const changedFields = getChangedFields();
     const hasFieldChanges = Object.keys(changedFields).length > 0;
-    const hasPhotoChanges = files().length > 0 || deletedPhotoIds().length > 0;
+    const hasPhotoChanges = files().length > 0 || deletedPhotoNames().length > 0;
     return hasFieldChanges || hasPhotoChanges;
   };
 
-  // Validate date selection
   const handleDateStartChange = (value: string) => {
     setError("");
     setDateStart(value);
@@ -172,7 +161,6 @@ export default function EditJobForm() {
     setDateEnd(value);
   };
 
-  // Load area data
   createEffect(async () => {
     try {
       setAreaData(areaDataJson);
@@ -181,7 +169,6 @@ export default function EditJobForm() {
     }
   });
 
-  // Update district list when city changes
   createEffect(() => {
     const selectedCity = city();
     if (selectedCity && areaData()[selectedCity]) {
@@ -192,14 +179,12 @@ export default function EditJobForm() {
     }
   });
 
-  // Initialize gigId from URL params
   createEffect(() => {
     const searchParams = new URLSearchParams(window.location.search);
     const id = searchParams.get("gigId");
     setGigId(id);
   });
 
-  // Fetch gig data when gigId is available
   createEffect(async () => {
     const id = gigId();
     if (!id) {
@@ -231,7 +216,6 @@ export default function EditJobForm() {
       const data = await res.json();
       console.log(data);
 
-      // Set form data
       setTitle(data.title || "");
       setDateStart(data.dateStart ? data.dateStart.slice(0, 10) : "");
       setDateEnd(data.dateEnd ? data.dateEnd.slice(0, 10) : "");
@@ -250,7 +234,6 @@ export default function EditJobForm() {
       setContactPhone(data.contactPhone || "");
       setContactEmail(data.contactEmail || "");
 
-      // Store original data for comparison
       setOriginalData({
         title: data.title || "",
         dateStart: data.dateStart ? data.dateStart.slice(0, 10) : "",
@@ -271,7 +254,6 @@ export default function EditJobForm() {
         contactEmail: data.contactEmail || ""
       });
 
-      // Set existing photos
       const photosArray = data.photos || data.environmentPhotos;
       if (photosArray && Array.isArray(photosArray)) {
         const photoArray = photosArray.map((photo: any, index: number) => {
@@ -299,7 +281,6 @@ export default function EditJobForm() {
     }
   });
 
-  // Handle requirements updates
   const updateRequirementExperience = (experience: string) => {
     setRequirements(prev => ({ ...prev, experience }));
   };
@@ -371,7 +352,10 @@ export default function EditJobForm() {
   };
 
   const handleExistingPhotoDelete = (photoId: string) => {
-    setDeletedPhotoIds(current => [...current, photoId]);
+    const photoToDelete = existingPhotos().find(photo => photo.id === photoId);
+    if (photoToDelete) {
+      setDeletedPhotoNames(current => [...current, photoToDelete.filename]);
+    }
     setExistingPhotos(current => current.filter(photo => photo.id !== photoId));
   };
   
@@ -437,83 +421,60 @@ export default function EditJobForm() {
 
     try {
       const changedFields = getChangedFields();
-      const hasFieldChanges = Object.keys(changedFields).length > 0;
-      const hasPhotoChanges = files().length > 0 || deletedPhotoIds().length > 0;
-
-      // Only update basic fields if there are changes
-      if (hasFieldChanges) {
-        const formData = new FormData();
-        
-        // Only append changed fields
-        Object.entries(changedFields).forEach(([key, value]) => {
-          if (key === 'requirements') {
-            formData.append(key, JSON.stringify(value));
-          } else {
-            formData.append(key, String(value));
-          }
-        });
-
-        console.log("Submitting changed fields:", Object.keys(changedFields));
-
-        const response = await fetch(`/api/gig/${id}`, {
-          method: "PUT", // Using PUT as required by backend
-          headers: {
-            "platform": "web-employer",
-          },
-          credentials: "include",
-          body: formData,
-        });
-
-        if (!response.ok) {
-          const result = await response.json().catch(() => ({}));
-          console.error("API Error Details:", {
-            status: response.status,
-            statusText: response.statusText,
-            body: result
-          });
-          setError(result.message || result.error || `Update failed (${response.status}): ${response.statusText}`);
-          setIsLoading(false);
-          return;
+      const formData = new FormData();
+      
+      // Append all changed fields
+      Object.entries(changedFields).forEach(([key, value]) => {
+        if (key === 'requirements') {
+          formData.append(key, JSON.stringify(value));
+        } else {
+          formData.append(key, String(value));
         }
+      });
+
+      // Add new photos
+      if (files().length > 0) {
+        files().forEach(filePreview => {
+          formData.append('environmentPhotos', filePreview.file);
+        });
       }
 
-      // Handle photo changes separately
-      if (hasPhotoChanges) {
-        const photoFormData = new FormData();
+      // Add deleted photo names
+      if (deletedPhotoNames().length > 0) {
+        formData.append("deletedPhotoFiles", JSON.stringify(deletedPhotoNames()));
+      }
 
-        // Add new photos
-        if (files().length > 0) {
-          files().forEach(filePreview => {
-            photoFormData.append('environmentPhotos', filePreview.file);
-          });
-        }
-
-        // Include photo management info
-        if (deletedPhotoIds().length > 0) {
-          photoFormData.append("deletedPhotoIds", JSON.stringify(deletedPhotoIds()));
-        }
-        if (existingPhotos().length > 0) {
-          photoFormData.append("keepPhotoIds", JSON.stringify(existingPhotos().map(photo => photo.id)));
-        }
-
-        console.log("Submitting photo changes");
-
-        const photoResponse = await fetch(`/api/gig/${id}/photos`, {
-          method: "PUT", // Using PUT as required by backend
-          headers: {
-            "platform": "web-employer",
-          },
-          credentials: "include",
-          body: photoFormData,
+      // Add existing photo names to keep
+      if (existingPhotos().length > 0) {
+        const keepPhotoNames = existingPhotos().map(photo => {
+          // Extract filename from URL or use the name property
+          if (typeof photo === 'string') {
+            return photo.includes('/') ? photo.split('/').pop() : photo;
+          }
+          return photo.name || photo.url?.split('/').pop();
         });
+        formData.append("keepPhotoNames", JSON.stringify(keepPhotoNames));
+      }
 
-        if (!photoResponse.ok) {
-          const photoResult = await photoResponse.json().catch(() => ({}));
-          console.warn("Photo update failed:", photoResult);
-          setError("Job updated but photo changes failed. Please try updating photos again.");
-          setIsLoading(false);
-          return;
-        }
+      const response = await fetch(`/api/gig/${id}`, {
+        method: "PUT",
+        headers: {
+          "platform": "web-employer",
+        },
+        credentials: "include",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const result = await response.json().catch(() => ({}));
+        console.error("API Error Details:", {
+          status: response.status,
+          statusText: response.statusText,
+          body: result
+        });
+        setError(result.message || result.error || `Update failed (${response.status}): ${response.statusText}`);
+        setIsLoading(false);
+        return;
       }
 
       setSuccess(true);
@@ -542,7 +503,7 @@ export default function EditJobForm() {
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
           </svg>
         </button>
-        <span class={styles.headerTitle}>Edit Job</span>
+        <span class={styles.headerTitle}>編輯職位</span>
       </div>
 
       <Show when={isFetching()}>
@@ -557,7 +518,7 @@ export default function EditJobForm() {
               <svg style="width: 16px; height: 16px; display: inline-block; margin-right: 8px;" fill="currentColor" viewBox="0 0 20 20">
                 <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
               </svg>
-              You have unsaved changes
+              您有未儲存的更改
             </div>
           </Show>
 
@@ -567,10 +528,10 @@ export default function EditJobForm() {
               <svg class={styles.sectionIcon} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
               </svg>
-              Job Title
+              職位名稱
             </h3>
             <label class={styles.postjobLabel}>
-              <span>Title <span class={styles.required}>*</span></span>
+              <span>職位名稱 <span class={styles.required}>*</span></span>
               <input
                 class={styles.postjobInput}
                 type="text"
@@ -587,11 +548,11 @@ export default function EditJobForm() {
               <svg class={styles.sectionIcon} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
               </svg>
-              Schedule
+              工作時間
             </h3>
             <div class={styles.postjobRow}>
               <label class={styles.postjobRowLabel}>
-                <span>Start Date <span class={styles.required}>*</span></span>
+                <span>開始日期 <span class={styles.required}>*</span></span>
                 <input
                   class={styles.postjobInput}
                   type="date"
@@ -601,7 +562,7 @@ export default function EditJobForm() {
                 />
               </label>
               <label class={styles.postjobRowLabel}>
-                <span>End Date <span class={styles.required}>*</span></span>
+                <span>結束日期 <span class={styles.required}>*</span></span>
                 <input
                   class={styles.postjobInput}
                   type="date"
@@ -614,7 +575,7 @@ export default function EditJobForm() {
 
             <div class={styles.postjobRow}>
               <label class={styles.postjobRowLabel}>
-                <span>Start Time <span class={styles.required}>*</span></span>
+                <span>開始時間 <span class={styles.required}>*</span></span>
                 <input
                   class={styles.postjobInput}
                   type="time"
@@ -624,7 +585,7 @@ export default function EditJobForm() {
                 />
               </label>
               <label class={styles.postjobRowLabel}>
-                <span>End Time <span class={styles.required}>*</span></span>
+                <span>結束時間 <span class={styles.required}>*</span></span>
                 <input
                   class={styles.postjobInput}
                   type="time"
@@ -642,10 +603,10 @@ export default function EditJobForm() {
               <svg class={styles.sectionIcon} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"/>
               </svg>
-              Compensation
+              薪資
             </h3>
             <label class={styles.postjobLabel}>
-              <span>Hourly Rate (TWD) <span class={styles.required}>*</span></span>
+              <span>時薪（新台幣） <span class={styles.required}>*</span></span>
               <input
                 class={styles.postjobInput}
                 type="number"
@@ -664,18 +625,18 @@ export default function EditJobForm() {
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
               </svg>
-              Location
+              工作地點
             </h3>
             <div class={styles.postjobRow}>
               <label class={styles.postjobRowLabel}>
-                <span>City <span class={styles.required}>*</span></span>
+                <span>縣市 <span class={styles.required}>*</span></span>
                 <select
                   class={styles.postjobSelect}
                   value={city()}
                   onInput={(e) => setCity(e.currentTarget.value)}
                   required
                 >
-                  <option value="">Select City</option>
+                  <option value="">選擇縣市</option>
                   {Object.keys(areaData()).map((cityName) => (
                     <option value={cityName}>{cityName}</option>
                   ))}
@@ -683,7 +644,7 @@ export default function EditJobForm() {
               </label>
 
               <label class={styles.postjobRowLabel}>
-                <span>District <span class={styles.required}>*</span></span>
+                <span>區域 <span class={styles.required}>*</span></span>
                 <select
                   class={styles.postjobSelect}
                   value={district()}
@@ -691,7 +652,7 @@ export default function EditJobForm() {
                   required
                   disabled={!districtList().length}
                 >
-                  <option value="">Select District</option>
+                  <option value="">選擇區域</option>
                   {districtList().map((dist) => (
                     <option value={dist}>{dist}</option>
                   ))}
@@ -700,7 +661,7 @@ export default function EditJobForm() {
             </div>
 
             <label class={styles.postjobLabel}>
-              <span>Address <span class={styles.required}>*</span></span>
+              <span>地址 <span class={styles.required}>*</span></span>
               <input
                 class={styles.postjobInput}
                 type="text"
@@ -717,10 +678,10 @@ export default function EditJobForm() {
               <svg class={styles.sectionIcon} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
               </svg>
-              Job Description
+              工作說明
             </h3>
             <label class={styles.postjobLabel}>
-              <span>Description <span class={styles.required}>*</span></span>
+              <span>工作說明 <span class={styles.required}>*</span></span>
               <textarea
                 class={styles.postjobTextarea}
                 value={description()}
@@ -737,12 +698,12 @@ export default function EditJobForm() {
               <svg class={styles.sectionIcon} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
               </svg>
-              Job Requirements
+              職位要求
             </h3>
             
             <div class={styles.requirementField}>
               <label class={styles.postjobLabel}>
-                <span>Experience <span class={styles.required}>*</span></span>
+                <span>經驗要求 <span class={styles.required}>*</span></span>
                 <input
                   class={styles.postjobInput}
                   type="text"
@@ -755,7 +716,7 @@ export default function EditJobForm() {
 
             <div class={styles.requirementField}>
               <label class={styles.postjobLabel}>
-                <span>Required Skills <span class={styles.required}>*</span></span>
+                <span>技能要求 <span class={styles.required}>*</span></span>
                 
                 <div class={styles.skillsContainer}>
                   <div class={styles.skillInputSection}>
@@ -770,7 +731,7 @@ export default function EditJobForm() {
                           value={skillInput()}
                           onInput={(e) => setSkillInput(e.currentTarget.value)}
                           onKeyPress={handleSkillInputKeyPress}
-                          placeholder="Add a skill"
+                          placeholder="新增技能"
                         />
                       </div>
                       <button
@@ -787,7 +748,7 @@ export default function EditJobForm() {
                     </div>
                     
                     <div class={styles.skillInputHint}>
-                      💡 Press <kbd class={styles.kbd}>Enter</kbd> or click Add to include this skill
+                      💡 按 <kbd class={styles.kbd}>Enter</kbd> 或點擊新增來加入此技能
                     </div>
                   </div>
 
@@ -798,7 +759,7 @@ export default function EditJobForm() {
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/>
                         </svg>
                         <span class={styles.skillsHeaderText}>
-                          {requirements().skills.length} skill{requirements().skills.length !== 1 ? 's' : ''} added
+                          已新增 {requirements().skills.length} 項技能
                         </span>
                       </div>
                       
@@ -811,7 +772,7 @@ export default function EditJobForm() {
                                 type="button"
                                 class={styles.removeSkillButton}
                                 onClick={() => removeSkill(skill)}
-                                title={`Remove ${skill}`}
+                                title={`移除 ${skill}`}
                               >
                                 <svg class={styles.removeIcon} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
@@ -831,8 +792,8 @@ export default function EditJobForm() {
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
                         </svg>
                       </div>
-                      <p class={styles.emptyStateText}>No skills added yet</p>
-                      <p class={styles.emptyStateSubtext}>Add at least one skill requirement to continue</p>
+                      <p class={styles.emptyStateText}>尚未新增技能</p>
+                      <p class={styles.emptyStateSubtext}>請至少新增一項技能要求才能繼續</p>
                     </div>
                   </Show>
                 </div>
@@ -846,12 +807,12 @@ export default function EditJobForm() {
               <svg class={styles.sectionIcon} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
               </svg>
-              Environment Photos
+              環境照片
             </h3>
 
             <div class={styles.fileUploadSection}>
               <label class={styles.postjobLabel}>
-                <span>Workplace Photos <span class={styles.fileHint}>(Max: {MAX_FILES} photos, {MAX_SIZE_MB}MB each)</span></span>
+                <span>工作環境照片 <span class={styles.fileHint}>(最多：{MAX_FILES} 張照片，每張 {MAX_SIZE_MB}MB)</span></span>
               </label>
               
               <Show when={totalPhotos() < MAX_FILES}>
@@ -861,8 +822,8 @@ export default function EditJobForm() {
                       <svg class={styles.uploadIcon} aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 16">
                         <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2"/>
                       </svg>
-                      <p class={styles.uploadText}><span class={styles.uploadBold}>Click to add photo</span></p>
-                      <p class={styles.uploadSubtext}>JPG, PNG (Max: {MAX_SIZE_MB}MB)</p>
+                      <p class={styles.uploadText}><span class={styles.uploadBold}>點擊新增照片</span></p>
+                      <p class={styles.uploadSubtext}>JPG、PNG（最大：{MAX_SIZE_MB}MB）</p>
                     </div>
                     <input 
                       id="file-upload" 
@@ -881,13 +842,19 @@ export default function EditJobForm() {
                   <For each={existingPhotos()}>
                     {(photo) => (
                       <div class={styles.filePreview}>
-                        <img src={photo.url} alt="Existing workplace photo" class={styles.previewImage} />
+                        <img 
+                          src={photo.url}
+                          alt="現有工作場所照片"
+                          class={styles.previewImage}
+                          onClick={() => setPreviewImage(photo.url)}
+                          style={{ cursor: 'pointer' }}
+                        />
                         <p class={styles.fileName} title={photo.filename}>{photo.filename}</p>
                         <button 
                           onClick={() => handleExistingPhotoDelete(photo.id)} 
                           type="button" 
                           class={styles.deleteButton}
-                          title="Remove photo"
+                          title="刪除照片"
                         >
                           &times;
                         </button>
@@ -898,13 +865,27 @@ export default function EditJobForm() {
                   <For each={files()}>
                     {(filePreview, index) => (
                       <div class={styles.filePreview}>
-                        <img src={filePreview.url} alt="New workplace photo" class={styles.previewImage} />
+                        {filePreview.file.type.startsWith('image/') ? (
+                          <img 
+                            src={filePreview.url} 
+                            alt="預覽" 
+                            class={styles.previewImage}
+                            onClick={() => setPreviewImage(filePreview.url)}
+                            style={{ cursor: 'pointer' }}
+                          />
+                        ) : (
+                          <div class={styles.previewDocument}>
+                            <svg class={styles.documentIcon} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                            </svg>
+                            <span class={styles.documentLabel}>文件</span>
+                          </div>
+                        )}
                         <p class={styles.fileName} title={filePreview.file.name}>{filePreview.file.name}</p>
                         <button 
                           onClick={() => handleFileDelete(index())} 
                           type="button" 
                           class={styles.deleteButton}
-                          title="Remove photo"
                         >
                           &times;
                         </button>
@@ -912,6 +893,28 @@ export default function EditJobForm() {
                     )}
                   </For>
                 </div>
+
+                <Show when={previewImage()}>
+                  <div 
+                    class={styles.modal} 
+                    onClick={() => setPreviewImage(null)}
+                  >
+                    <div class={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+                      <button 
+                        class={styles.modalClose}
+                        onClick={() => setPreviewImage(null)}
+                        type="button"
+                      >
+                        ✕
+                      </button>
+                      <img 
+                        src={previewImage()!} 
+                        alt="照片預覽" 
+                        class={styles.modalImage}
+                      />
+                    </div>
+                  </div>
+                </Show>
               </Show>
             </div>
           </div>
@@ -922,11 +925,11 @@ export default function EditJobForm() {
               <svg class={styles.sectionIcon} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
               </svg>
-              Contact Information
+              聯絡資訊
             </h3>
             <div class={styles.postjobRow}>
               <label class={styles.postjobRowLabel}>
-                <span>Contact Person <span class={styles.required}>*</span></span>
+                <span>聯絡人 <span class={styles.required}>*</span></span>
                 <input
                   class={styles.postjobInput}
                   type="text"
@@ -936,7 +939,7 @@ export default function EditJobForm() {
                 />
               </label>
               <label class={styles.postjobRowLabel}>
-                <span>Contact Phone <span class={styles.required}>*</span></span>
+                <span>聯絡人電話 <span class={styles.required}>*</span></span>
                 <input
                   class={styles.postjobInput}
                   type="tel"
@@ -948,7 +951,7 @@ export default function EditJobForm() {
             </div>
 
             <label class={styles.postjobLabel}>
-              <span>Contact Email <span class={styles.required}>*</span></span>
+              <span>聯絡人電子郵件 <span class={styles.required}>*</span></span>
               <input
                 class={styles.postjobInput}
                 type="email"
@@ -973,7 +976,7 @@ export default function EditJobForm() {
             type="submit" 
             disabled={isLoading() || !hasChanges()}
           >
-            {isLoading() ? "更新中..." : hasChanges() ? "Update Job" : "No Changes to Save"}
+            {isLoading() ? "更新中..." : hasChanges() ? "更新" : "無需儲存任何更改"}
           </button>
         </form>
       </Show>
