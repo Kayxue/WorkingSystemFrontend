@@ -31,8 +31,6 @@ type JobData = {
   status: string;
   attendanceCodeInfo?: {
     attendanceCode: string;
-    validDate: string;
-    expiresAt: string;
   };
 };
 
@@ -275,22 +273,9 @@ export default function JobLayout(props: JobLayoutProps) {
               {(info) => (
                 <>
                   <p class={styles.codeText}>{info().attendanceCode}</p>
-                  <div class={styles.codeDetails}>
-                    <p>
-                      <strong>Valid from:</strong>{" "}
-                      {new Date(info().validDate).toISOString().replace("T", " ").replace(".000Z", "")}
-                    </p>
-                    <p>
-                      <strong>Expires:</strong>{" "}
-                      {new Date(info().expiresAt).toISOString().replace("T", " ").replace(".000Z", "")}
-                    </p>
-                  </div>
                 </>
               )}
             </Show>
-            <button class={styles.modalCloseButton} onClick={closeModal}>
-              Close
-            </button>
           </div>
         </div>
       </Show>
