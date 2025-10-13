@@ -2,7 +2,7 @@ import { createSignal, For, Show, createMemo, createEffect } from "solid-js";
 import styles from "../styles/CalendarForm.module.css";
 import _gigId_ from "../pages/job/[gigId].astro";
 
-const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const days = ["日", "一", "二", "三", "四", "五", "六"];
 
 type JobOffer = {
   gigId: string;
@@ -191,10 +191,10 @@ export default function CalendarPage() {
               window.location.href = "/dashboard";
             }}
           >
-            Listings
+            職缺列表
           </button>
           <button class={`${styles.viewButton} ${styles.active}`}>
-            Calendar
+            行事曆
           </button>
         </div>
 
@@ -225,7 +225,7 @@ export default function CalendarPage() {
                   setMonth(now.getMonth());
                 }}
               >
-                Today
+                今天
               </button>
 
               <select
@@ -238,7 +238,7 @@ export default function CalendarPage() {
                 <For each={Array.from({ length: 31 }, (_, i) => 2020 + i)}>
                   {(y) => (
                     <option value={y} selected={y === year()}>
-                      {y}
+                      {y}年
                     </option>
                   )}
                 </For>
@@ -253,8 +253,8 @@ export default function CalendarPage() {
               >
                 <For
                   each={[
-                    "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-                    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+                    "1月", "2月", "3月", "4月", "5月", "6月",
+                    "7月", "8月", "9月", "10月", "11月", "12月"
                   ]}
                 >
                   {(m, i) => (
@@ -353,7 +353,7 @@ export default function CalendarPage() {
               <button 
                 class={styles.calendarToggleButton}
                 onClick={toggleCalendar}
-                title="Toggle Calendar View"
+                title="切換行事曆檢視"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
                   <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
@@ -363,11 +363,11 @@ export default function CalendarPage() {
                 </svg>
               </button>
               <div class={styles.jobsLoadedText}>
-                Jobs of {month()+1}/{selectedDay()} loaded! ({selectedGigs().length} jobs)
+                {month()+1}月{selectedDay()}日的職位已載入！（共 {selectedGigs().length} 個職位）
               </div>
             </div>
             
-            <Show when={selectedGigs().length > 0} fallback={<p>No jobs on this day.</p>}>
+            <Show when={selectedGigs().length > 0} fallback={<p>當天沒有職位。</p>}>
               <div class={styles.jobCard}>
                 <div class={styles.gridOfGigs}>
                   <For each={selectedPaginatedGig()}>
@@ -380,7 +380,7 @@ export default function CalendarPage() {
                           when={gig.environmentPhotos?.length > 0}
                           fallback={
                             <div class={styles.noPhoto}>
-                              No environment photos available for this job.
+                              此職位沒有環境照片
                             </div>
                           }
                         >
@@ -459,16 +459,19 @@ export default function CalendarPage() {
                     jumpToPage();
                   }}
                 >
-                  Page{" "}
+                  第{" "}
                   <input
                     type="number"
                     min="1"
                     max={totalPages()}
                     value={pageInput()}
                     onInput={(e) => setPageInput(e.currentTarget.value)}
-                    style={{ width: "60px", "text-align": "center" }}
-                  />{" "}
-                  of {totalPages()} pages.
+                    style={{ 
+                      width: "40px", 
+                      "text-align": "center",
+                    }}
+                  />
+                  頁，共 {totalPages()} 頁
                 </form>
               </div>
             </Show>

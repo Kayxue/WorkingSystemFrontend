@@ -33,33 +33,30 @@ export default function DashboardPage() {
   const [pageInput, setPageInput] = createSignal("1");
   const [startPage, setStartPage] = createSignal(1);
   const [isDropdownOpen, setIsDropdownOpen] = createSignal(false);
-  const [isMobile, setIsMobile] = createSignal(false);
+  const [searchQuery, setSearchQuery] = createSignal("");
+  const [isFilterDropdownOpen, setIsFilterDropdownOpen] = createSignal(false);
   const pageWindowSize = 10;
 
-  const filterOptions = ["Ongoing", "Not Started", "Unpublished", "Completed", "Closed"];
+  const filterOptions = [
+    { label: "已刊登", value: "Ongoing" },
+    { label: "未開始", value: "Not Started" },
+    { label: "已下架", value: "Unpublished" },
+    { label: "已結束", value: "Completed" },
+    { label: "已關閉", value: "Closed" }
+  ];
 
-  // Check screen size and set mobile state
-  createEffect(() => {
-    const checkScreenSize = () => {
-      setIsMobile(window.innerWidth < 900);
-    };
-    
-    checkScreenSize();
-    window.addEventListener('resize', checkScreenSize);
-    
-    return () => window.removeEventListener('resize', checkScreenSize);
-  });
-
-  // Close dropdown when clicking outside
   createEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as HTMLElement;
       if (!target.closest(`.${styles.filterDropdownContainer}`)) {
         setIsDropdownOpen(false);
       }
+      if (!target.closest(`.${styles.searchFilterDropdown}`)) {
+        setIsFilterDropdownOpen(false);
+      }
     };
 
-    if (isDropdownOpen()) {
+    if (isDropdownOpen() || isFilterDropdownOpen()) {
       document.addEventListener('click', handleClickOutside);
       return () => document.removeEventListener('click', handleClickOutside);
     }
@@ -83,13 +80,18 @@ export default function DashboardPage() {
     setIsDropdownOpen(false);
   }
 
-  async function fetchJobOffers(status?: string) {
+  async function fetchJobOffers() {
     try {
       setIsLoading(true);
+      
       let offset = (currentPage() - 1) * itemsPerPage;
       let url = `/api/gig/my-gigs?offset=${offset}&limit=${itemsPerPage}`;
+      const status = getStatusForAPI(activeFilter());
       if (status && status.trim() !== "") {
         url += `&status=${encodeURIComponent(status)}`;
+      }
+      if (searchQuery().trim() !== "") {
+        url += `&search=${encodeURIComponent(searchQuery())}`;
       }
       const response = await fetch(url, {
         method: "GET",
@@ -118,9 +120,20 @@ export default function DashboardPage() {
     }
   }
 
+  // Watch for filter changes
   createEffect(() => {
-    const status = getStatusForAPI(activeFilter());
-    fetchJobOffers(status);
+    activeFilter();
+    setCurrentPage(1);
+    setStartPage(1);
+    setPageInput("1");
+  });
+
+  // Watch for currentPage, activeFilter, and searchQuery changes
+  createEffect(() => {
+    currentPage();
+    activeFilter();
+    searchQuery();
+    fetchJobOffers();
   });
 
   const paginatedJobs = createMemo(() => jobOffers());
@@ -151,7 +164,6 @@ export default function DashboardPage() {
     setStartPage(newStart);
     setCurrentPage(newStart);
     setPageInput(String(newStart));
-    fetchJobOffers(getStatusForAPI(activeFilter()));
   }
 
   function jumpToPage() {
@@ -161,12 +173,28 @@ export default function DashboardPage() {
       setCurrentPage(page);
       const windowStart = Math.floor((page - 1) / pageWindowSize) * pageWindowSize + 1;
       setStartPage(windowStart);
-      fetchJobOffers(getStatusForAPI(activeFilter()));
-      setPageInput(String(page));
     }
   }
 
+  function handleSearchKeyPress(e: KeyboardEvent) {
+    if (e.key === 'Enter') {
+      setCurrentPage(1);
+      setStartPage(1);
+      setPageInput("1");
+    }
+  }
+
+  function clearSearch() {
+    setSearchQuery("");
+    setCurrentPage(1);
+    setStartPage(1);
+    setPageInput("1");
+  }
+
   async function toggleStatus(gigId: string) {
+    const confirmed = window.confirm("確定要關閉此職位嗎？\n此操作無法復原！");
+    if (!confirmed) return;
+    
     try {
       const res = await fetch(`/api/gig/${gigId}/toggle-status`, {
         method: "PATCH",
@@ -177,7 +205,7 @@ export default function DashboardPage() {
         credentials: "include",
       });
       if (!res.ok) throw new Error("Failed to toggle status");
-      await fetchJobOffers(getStatusForAPI(activeFilter()));
+      await fetchJobOffers();
     } catch (err) {
       console.error("Toggle status failed:", err);
     }
@@ -194,97 +222,116 @@ export default function DashboardPage() {
         credentials: "include",
       });
       if (!res.ok) throw new Error("Failed to toggle listing");
-      await fetchJobOffers(getStatusForAPI(activeFilter()));
+      await fetchJobOffers();
     } catch (err) {
       console.error("Toggle listing failed:", err);
     }
   }
 
   function getJobStatusColor(job: JobOffer) {
-    if (job.status === "已刊登") return styles.green; //published
-    if (job.status === "待刊登") return styles.yellow; //not started
-    if (job.status === "已下架") return styles.red; //unpublished
-    if (job.status === "已結束") return styles.red; //completed
-    if (job.status === "已關閉") return styles.red; //closed
+    if (job.status === "已刊登") return styles.green;
+    if (job.status === "未開始") return styles.yellow;
+    if (job.status === "已下架") return styles.red;
+    if (job.status === "已結束") return styles.red;
+    if (job.status === "已關閉") return styles.red;
   }
 
   return (
     <div class={styles.dashboardContainer}>
       <div class={styles.viewToggle}>
-        <button class={`${styles.viewButton} ${styles.active}`}>Listings</button>
+        <button class={`${styles.viewButton} ${styles.active}`}>職缺列表</button>
         <button
           class={styles.viewButton}
           onClick={() => {
             window.location.href = "/calendar";
           }}
         >
-          Calendar
+          行事曆
         </button>
       </div>
-
-      <div class={styles.filter}>
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3b82f6"
-          stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <polygon points="3 4 21 4 14 12.5 14 19 10 21 10 12.5 3 4" />
-        </svg>
         
-        <Show when={!isMobile()}>
-          {/* Desktop view - show all buttons */}
-          <For each={filterOptions}>
-            {(filter) => (
-              <button
-                classList={{ [styles.btn]: true, active: activeFilter() === filter }}
-                onClick={() => handleFilterChange(filter)}
-              >
-                {filter}
-              </button>
-            )}
-          </For>
-        </Show>
-
-        <Show when={isMobile()}>
-          {/* Mobile view - show dropdown */}
-          <div class={styles.filterDropdownContainer}>
+      {/* Search Bar */}
+      <div class={styles.searchContainer}>
+        <div class={styles.searchInputWrapper}>
+          <svg class={styles.searchIcon} xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"/>
+            <path d="m21 21-4.35-4.35"/>
+          </svg>
+          <input
+            type="text"
+            class={styles.searchInput}
+            placeholder="搜尋職位名稱..."
+            value={searchQuery()}
+            onInput={(e) => setSearchQuery(e.currentTarget.value)}
+            onKeyPress={handleSearchKeyPress}
+          />
+          <Show when={searchQuery().trim() !== ""}>
             <button
-              class={`${styles.btn} active`}
-              classList={{ [styles.dropdownButton]: true }}
-              onClick={() => setIsDropdownOpen(!isDropdownOpen())}
+              class={styles.clearSearchButton}
+              onClick={clearSearch}
+              title="清除搜尋"
             >
-              {activeFilter()}
-              <svg 
-                class={styles.dropdownArrow}
-                classList={{ 
-                  [styles.open]: isDropdownOpen(), 
-                  [styles.closed]: !isDropdownOpen() 
-                }}
-                width="12" 
-                height="12" 
-                viewBox="0 0 24 24" 
-                fill="none" 
-                stroke="currentColor" 
-                stroke-width="2"
-              >
-                <path d="m6 9 6 6 6-6"/>
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"/>
+                <line x1="6" y1="6" x2="18" y2="18"/>
               </svg>
             </button>
-            
-            <Show when={isDropdownOpen()}>
-              <div class={styles.dropdownMenu}>
-                <For each={filterOptions}>
-                  {(filter) => (
-                    <button
-                      class={styles.dropdownItem}
-                      classList={{ [styles.active]: activeFilter() === filter }}
-                      onClick={() => handleFilterChange(filter)}
-                    >
-                      {filter}
-                    </button>
-                  )}
-                </For>
-              </div>
-            </Show>
-          </div>
-        </Show>
+          </Show>
+        </div>
+        
+        <div class={styles.searchFilterDropdown}>
+          <button
+            class={styles.filterButton}
+            onClick={() => setIsFilterDropdownOpen(!isFilterDropdownOpen())}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="4" y1="21" x2="4" y2="14"/>
+              <line x1="4" y1="10" x2="4" y2="3"/>
+              <line x1="12" y1="21" x2="12" y2="12"/>
+              <line x1="12" y1="8" x2="12" y2="3"/>
+              <line x1="20" y1="21" x2="20" y2="16"/>
+              <line x1="20" y1="12" x2="20" y2="3"/>
+              <line x1="1" y1="14" x2="7" y2="14"/>
+              <line x1="9" y1="8" x2="15" y2="8"/>
+              <line x1="17" y1="16" x2="23" y2="16"/>
+            </svg>
+            <span>{filterOptions.find(f => f.value === activeFilter())?.label}</span>
+            <svg 
+              class={styles.dropdownArrow}
+              classList={{ 
+                [styles.open]: isFilterDropdownOpen(), 
+                [styles.closed]: !isFilterDropdownOpen() 
+              }}
+              width="12" 
+              height="12" 
+              viewBox="0 0 24 24" 
+              fill="none" 
+              stroke="currentColor" 
+              stroke-width="2"
+            >
+              <path d="m6 9 6 6 6-6"/>
+            </svg>
+          </button>
+          
+          <Show when={isFilterDropdownOpen()}>
+            <div class={styles.filterDropdownMenu}>
+              <For each={filterOptions}>
+                {(filter) => (
+                  <button
+                    class={styles.filterDropdownItem}
+                    classList={{ [styles.active]: activeFilter() === filter.value }}
+                    onClick={() => {
+                      handleFilterChange(filter.value);
+                      setIsFilterDropdownOpen(false);
+                    }}
+                  >
+                    {filter.label}
+                  </button>
+                )}
+              </For>
+            </div>
+          </Show>
+        </div>
       </div>
 
       <Show when={isLoading()}>
@@ -292,7 +339,7 @@ export default function DashboardPage() {
       </Show>
 
       <Show when={!isLoading()}>
-        <Show when={jobOffers() && jobOffers().length > 0} fallback={<p class={styles.dashboardEmpty}>No job postings found.</p>}>
+        <Show when={jobOffers() && jobOffers().length > 0} fallback={<p class={styles.dashboardEmpty}>沒有職位。</p>}>
 
           <div style={{ "margin-bottom": "10px", "text-align": "center" }}>
             <form
@@ -301,16 +348,19 @@ export default function DashboardPage() {
                 jumpToPage();
               }}
             >
-              Page{" "}
+              第{" "}
               <input
                 type="number"
                 min="1"
                 max={totalPages()}
                 value={pageInput()}
                 onInput={(e) => setPageInput(e.currentTarget.value)}
-                style={{ width: "60px", "text-align": "center"}}
-              />{" "}
-              of {totalPages()} pages ({totalJobCount()} jobs)
+                style={{ 
+                  width: "40px", 
+                  "text-align": "center",
+                }}
+              />
+              頁，共 {totalPages()} 頁（{totalJobCount()} 個職位）
             </form>
           </div>
 
@@ -324,7 +374,6 @@ export default function DashboardPage() {
                 setPageInput(String(newPage));
                 const windowStart = Math.floor((newPage - 1) / pageWindowSize) * pageWindowSize + 1;
                 setStartPage(windowStart);
-                fetchJobOffers(getStatusForAPI(activeFilter()));
               }}
             >
               &lt;
@@ -340,7 +389,6 @@ export default function DashboardPage() {
                   onClick={() => {
                     setCurrentPage(page);
                     setPageInput(String(page));
-                    fetchJobOffers(getStatusForAPI(activeFilter()));
                   }}
                 >
                   {page}
@@ -364,7 +412,6 @@ export default function DashboardPage() {
                 setPageInput(String(newPage));
                 const nextWindowStart = Math.floor((newPage - 1) / pageWindowSize) * pageWindowSize + 1;
                 setStartPage(nextWindowStart);
-                fetchJobOffers(getStatusForAPI(activeFilter()));
               }}
             >
               &gt;
@@ -382,13 +429,13 @@ export default function DashboardPage() {
                   >
                     <h2 class={styles.jobTitle}>{job.title}</h2>
                     <p class={styles.jobRate}>
-                      Date: {formatDateToDDMMYYYY(job.dateStart)} to {formatDateToDDMMYYYY(job.dateEnd)}
+                      日期：{formatDateToDDMMYYYY(job.dateStart)} 至 {formatDateToDDMMYYYY(job.dateEnd)}
                     </p>
                     <p class={styles.jobTime}>
-                      Time: {job.timeStart} - {job.timeEnd}
+                      時間：{job.timeStart} - {job.timeEnd}
                     </p>
                     <div class={styles.jobStatusContainer}>
-                      Status: 
+                      狀態： 
                       <p
                         class={`${styles.jobStatus} ${getJobStatusColor(job)}`}
                       >
@@ -406,7 +453,7 @@ export default function DashboardPage() {
                           window.location.href = `/edit-job?gigId=${job.gigId}`;
                         }}
                       >
-                        Edit
+                        編輯
                       </button>
                       <Show when={job.status!="待刊登"}>
                         <button
@@ -416,18 +463,17 @@ export default function DashboardPage() {
                             toggleListing(job.gigId);
                           }}
                         >
-                          {job.unlistedAt?"Publish":"Unpublish"}
+                          {job.unlistedAt?"刊登":"下架"}
                         </button>
                       </Show>
                       <button
                         class={`${styles.actionButton} ${styles.red}`}
                         onClick={(e) => {
                           e.stopPropagation();
-                          window.confirm("Are you sure to close this job?\nThis action cannot be undone!");
                           toggleStatus(job.gigId);
                         }}
                       >
-                        Close job
+                        關閉職位
                       </button>
                     </div>
                   </Show>

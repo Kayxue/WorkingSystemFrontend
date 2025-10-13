@@ -24,7 +24,6 @@ export default function PostJobForm() {
   const [address, setAddress] = createSignal("");
   const [description, setDescription] = createSignal("");
   
-  // Changed to handle requirements as JSON object
   const [requirements, setRequirements] = createSignal<Requirements>({
     experience: "",
     skills: []
@@ -42,8 +41,8 @@ export default function PostJobForm() {
   const [areaData, setAreaData] = createSignal<Record<string, string[]>>({});
   const [districtList, setDistrictList] = createSignal<string[]>([]);
 
-  // For handling skills as tags
   const [skillInput, setSkillInput] = createSignal("");
+  const [previewImage, setPreviewImage] = createSignal<string | null>(null);
 
   const MAX_FILES = 3;
   const MAX_SIZE_MB = 2;
@@ -51,18 +50,14 @@ export default function PostJobForm() {
   const ALLOWED_TYPES = ["image/jpeg", "image/png"];
   const ALLOWED_EXTENSIONS = [".jpg", ".jpeg", ".png"];
 
-  // Get today's date in YYYY-MM-DD format
   const getTodayDate = () => {
     const today = new Date();
     return today.toISOString().split('T')[0];
   };
 
-  // Validate date selection
   const handleDateStartChange = (value: string) => {
     setError("");
     setDateStart(value);
-    
-    // If end date is before the new start date, reset it
     if (dateEnd() && dateEnd() < value) {
       setDateEnd("");
     }
@@ -70,16 +65,14 @@ export default function PostJobForm() {
 
   const handleDateEndChange = (value: string) => {
     const startDate = dateStart();
-    
     if (startDate && value < startDate) {
-      setError("End date cannot be before start date.");
+      setError("結束日期不能早於開始日期。");
       return;
     }
     setError("");
     setDateEnd(value);
   };
 
-  // Handle requirements updates
   const updateRequirementExperience = (experience: string) => {
     setRequirements(prev => ({ ...prev, experience }));
   };
@@ -176,31 +169,29 @@ export default function PostJobForm() {
     setError("");
     setSuccess(false);
 
-    // Additional validation before submission
     const today = getTodayDate();
     if (dateStart() < today) {
-      setError("Start date cannot be in the past. Please select today or a future date.");
+      setError("開始日期不能是過去的日期。請選擇今天或未來的日期。");
       return;
     }
 
     if (dateEnd() < today) {
-      setError("End date cannot be in the past. Please select today or a future date.");
+      setError("結束日期不能是過去的日期。請選擇今天或未來的日期。");
       return;
     }
 
     if (dateEnd() && dateEnd() < dateStart()) {
-      setError("End date cannot be before start date. Please select an end date that is the same or after the start date.");
+      setError("結束日期不能早於開始日期。請選擇與開始日期相同或之後的結束日期。");
       return;
     }
 
-    // Validate requirements
     if (!requirements().experience.trim()) {
-      setError("Experience is required.");
+      setError("經驗要求為必填。");
       return;
     }
 
     if (requirements().skills.length === 0) {
-      setError("At least one skill is required.");
+      setError("至少需要一項技能要求。");
       return;
     }
 
@@ -218,10 +209,7 @@ export default function PostJobForm() {
       formData.append("district", district());
       formData.append("address", address());
       formData.append("description", description());
-      
-      // Send requirements as JSON string
       formData.append("requirements", JSON.stringify(requirements()));
-      
       formData.append("contactPerson", contactPerson());
       formData.append("contactPhone", contactPhone());
 
@@ -243,7 +231,7 @@ export default function PostJobForm() {
 
       if (response.ok) {
         setSuccess(true);
-        alert("Job posted successfully");
+        alert("職位發布成功");
         window.location.href = "/dashboard";
       } else {
         const result = await response.json().catch(() => ({}));
@@ -268,20 +256,19 @@ export default function PostJobForm() {
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
           </svg>
         </button>
-        <span class={styles.headerTitle}>New Job</span>
+        <span class={styles.headerTitle}>新增職位</span>
       </div>
 
       <form class={styles.postjobFormWrapper} onSubmit={handleSubmit}>
-        {/* 1. Title Section */}
         <div class={styles.formSection}>
           <h3 class={styles.sectionTitle}>
             <svg class={styles.sectionIcon} fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
             </svg>
-            Job Title
+            職位名稱
           </h3>
           <label class={styles.postjobLabel}>
-            <span>Title <span class={styles.required}>*</span></span>
+            <span>職位名稱 <span class={styles.required}>*</span></span>
             <input
               class={styles.postjobInput}
               type="text"
@@ -292,17 +279,16 @@ export default function PostJobForm() {
           </label>
         </div>
 
-        {/* 2. Time Section */}
         <div class={styles.formSection}>
           <h3 class={styles.sectionTitle}>
             <svg class={styles.sectionIcon} fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
             </svg>
-            Schedule
+            工作時間
           </h3>
           <div class={styles.postjobRow}>
             <label class={styles.postjobRowLabel}>
-              <span>Start Date <span class={styles.required}>*</span></span>
+              <span>開始日期 <span class={styles.required}>*</span></span>
               <input
                 class={styles.postjobInput}
                 type="date"
@@ -313,7 +299,7 @@ export default function PostJobForm() {
               />
             </label>
             <label class={styles.postjobRowLabel}>
-              <span>End Date <span class={styles.required}>*</span></span>
+              <span>結束日期 <span class={styles.required}>*</span></span>
               <input
                 class={styles.postjobInput}
                 type="date"
@@ -327,7 +313,7 @@ export default function PostJobForm() {
 
           <div class={styles.postjobRow}>
             <label class={styles.postjobRowLabel}>
-              <span>Start Time <span class={styles.required}>*</span></span>
+              <span>開始時間 <span class={styles.required}>*</span></span>
               <input
                 class={styles.postjobInput}
                 type="time"
@@ -337,7 +323,7 @@ export default function PostJobForm() {
               />
             </label>
             <label class={styles.postjobRowLabel}>
-              <span>End Time <span class={styles.required}>*</span></span>
+              <span>結束時間 <span class={styles.required}>*</span></span>
               <input
                 class={styles.postjobInput}
                 type="time"
@@ -349,16 +335,15 @@ export default function PostJobForm() {
           </div>
         </div>
 
-        {/* 3. Hourly Rate Section */}
         <div class={styles.formSection}>
           <h3 class={styles.sectionTitle}>
             <svg class={styles.sectionIcon} fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"/>
             </svg>
-            Compensation
+            薪資
           </h3>
           <label class={styles.postjobLabel}>
-            <span>Hourly Rate (TWD) <span class={styles.required}>*</span></span>
+            <span>時薪（新台幣） <span class={styles.required}>*</span></span>
             <input
               class={styles.postjobInput}
               type="number"
@@ -370,25 +355,24 @@ export default function PostJobForm() {
           </label>
         </div>
 
-        {/* 4. Location Section */}
         <div class={styles.formSection}>
           <h3 class={styles.sectionTitle}>
             <svg class={styles.sectionIcon} fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
             </svg>
-            Location
+            工作地點
           </h3>
           <div class={styles.postjobRow}>
             <label class={styles.postjobRowLabel}>
-              <span>City <span class={styles.required}>*</span></span>
+              <span>縣市 <span class={styles.required}>*</span></span>
               <select
                 class={styles.postjobSelect}
                 value={city()}
                 onInput={(e) => setCity(e.currentTarget.value)}
                 required
               >
-                <option value="">Select City</option>
+                <option value="">選擇縣市</option>
                 {Object.keys(areaData()).map((cityName) => (
                   <option value={cityName}>{cityName}</option>
                 ))}
@@ -396,7 +380,7 @@ export default function PostJobForm() {
             </label>
 
             <label class={styles.postjobRowLabel}>
-              <span>District <span class={styles.required}>*</span></span>
+              <span>區域 <span class={styles.required}>*</span></span>
               <select
                 class={styles.postjobSelect}
                 value={district()}
@@ -404,7 +388,7 @@ export default function PostJobForm() {
                 required
                 disabled={!districtList().length}
               >
-                <option value="">Select District</option>
+                <option value="">選擇區域</option>
                 {districtList().map((dist) => (
                   <option value={dist}>{dist}</option>
                 ))}
@@ -413,7 +397,7 @@ export default function PostJobForm() {
           </div>
 
           <label class={styles.postjobLabel}>
-            <span>Address <span class={styles.required}>*</span></span>
+            <span>地址 <span class={styles.required}>*</span></span>
             <input
               class={styles.postjobInput}
               type="text"
@@ -424,16 +408,15 @@ export default function PostJobForm() {
           </label>
         </div>
 
-        {/* 5. Job Description Section */}
         <div class={styles.formSection}>
           <h3 class={styles.sectionTitle}>
             <svg class={styles.sectionIcon} fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
             </svg>
-            Job Description
+            工作說明
           </h3>
           <label class={styles.postjobLabel}>
-            <span>Description <span class={styles.required}>*</span></span>
+            <span>工作說明 <span class={styles.required}>*</span></span>
             <textarea
               class={styles.postjobTextarea}
               value={description()}
@@ -444,19 +427,17 @@ export default function PostJobForm() {
           </label>
         </div>
 
-        {/* 6. Job Requirements Section - JSON */}
         <div class={styles.formSection}>
           <h3 class={styles.sectionTitle}>
             <svg class={styles.sectionIcon} fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
             </svg>
-            Job Requirements
+            職位要求
           </h3>
           
-          {/* Experience Field */}
           <div class={styles.requirementField}>
             <label class={styles.postjobLabel}>
-              <span>Experience <span class={styles.required}>*</span></span>
+              <span>經驗要求 <span class={styles.required}>*</span></span>
               <input
                 class={styles.postjobInput}
                 type="text"
@@ -467,13 +448,11 @@ export default function PostJobForm() {
             </label>
           </div>
 
-          {/* Skills Field */}
           <div class={styles.requirementField}>
             <label class={styles.postjobLabel}>
-              <span>Required Skills <span class={styles.required}>*</span></span>
+              <span>技能要求 <span class={styles.required}>*</span></span>
               
               <div class={styles.skillsContainer}>
-                {/* Skill Input */}
                 <div class={styles.skillInputSection}>
                   <div class={styles.skillInputWrapper}>
                     <div class={styles.skillInputBox}>
@@ -486,7 +465,7 @@ export default function PostJobForm() {
                         value={skillInput()}
                         onInput={(e) => setSkillInput(e.currentTarget.value)}
                         onKeyPress={handleSkillInputKeyPress}
-                        placeholder="Add a skill"
+                        placeholder="新增技能"
                       />
                     </div>
                     <button
@@ -498,16 +477,15 @@ export default function PostJobForm() {
                       <svg class={styles.addButtonIcon} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                       </svg>
-                      Add
+                      新增
                     </button>
                   </div>
                   
                   <div class={styles.skillInputHint}>
-                    💡 Press <kbd class={styles.kbd}>Enter</kbd> or click Add to include this skill
+                    💡 按 <kbd class={styles.kbd}>Enter</kbd> 或點擊新增來加入此技能
                   </div>
                 </div>
 
-                {/* Skills Display */}
                 <Show when={requirements().skills.length > 0}>
                   <div class={styles.skillsDisplay}>
                     <div class={styles.skillsHeader}>
@@ -515,20 +493,20 @@ export default function PostJobForm() {
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/>
                       </svg>
                       <span class={styles.skillsHeaderText}>
-                        {requirements().skills.length} skill{requirements().skills.length !== 1 ? 's' : ''} added
+                        已新增 {requirements().skills.length} 項技能
                       </span>
                     </div>
                     
                     <div class={styles.skillTags}>
                       <For each={requirements().skills}>
-                        {(skill, index) => (
+                        {(skill) => (
                           <div class={`${styles.skillTag} ${styles.skillTagAnimated}`}>
                             <span class={styles.skillTagText}>{skill}</span>
                             <button
                               type="button"
                               class={styles.removeSkillButton}
                               onClick={() => removeSkill(skill)}
-                              title={`Remove ${skill}`}
+                              title={`移除 ${skill}`}
                             >
                               <svg class={styles.removeIcon} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
@@ -541,7 +519,6 @@ export default function PostJobForm() {
                   </div>
                 </Show>
                 
-                {/* Empty State */}
                 <Show when={requirements().skills.length === 0}>
                   <div class={styles.skillsEmptyState}>
                     <div class={styles.emptyStateIcon}>
@@ -549,8 +526,8 @@ export default function PostJobForm() {
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
                       </svg>
                     </div>
-                    <p class={styles.emptyStateText}>No skills added yet</p>
-                    <p class={styles.emptyStateSubtext}>Add at least one skill requirement to continue</p>
+                    <p class={styles.emptyStateText}>尚未新增技能</p>
+                    <p class={styles.emptyStateSubtext}>請至少新增一項技能要求才能繼續</p>
                   </div>
                 </Show>
               </div>
@@ -558,18 +535,17 @@ export default function PostJobForm() {
           </div>
         </div>
 
-        {/* 7. Environment Photos Section */}
         <div class={styles.formSection}>
           <h3 class={styles.sectionTitle}>
             <svg class={styles.sectionIcon} fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
             </svg>
-            Environment Photos
+            環境照片
           </h3>
 
           <div class={styles.fileUploadSection}>
             <label class={styles.postjobLabel}>
-              <span>Workplace Photos <span class={styles.fileHint}>(Max: {MAX_FILES} photos, {MAX_SIZE_MB}MB each)</span></span>
+              <span>工作環境照片 <span class={styles.fileHint}>(最多：{MAX_FILES} 張照片，每張 {MAX_SIZE_MB}MB)</span></span>
             </label>
             
             {files().length < MAX_FILES && (
@@ -579,8 +555,8 @@ export default function PostJobForm() {
                     <svg class={styles.uploadIcon} aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 16">
                       <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2"/>
                     </svg>
-                    <p class={styles.uploadText}><span class={styles.uploadBold}>Click to add photo</span></p>
-                    <p class={styles.uploadSubtext}>JPG, PNG (Max: {MAX_SIZE_MB}MB)</p>
+                    <p class={styles.uploadText}><span class={styles.uploadBold}>點擊新增照片</span></p>
+                    <p class={styles.uploadSubtext}>JPG、PNG（最大：{MAX_SIZE_MB}MB）</p>
                   </div>
                   <input 
                     id="file-upload" 
@@ -599,13 +575,19 @@ export default function PostJobForm() {
                 {(filePreview, index) => (
                   <div class={styles.filePreview}>
                     {filePreview.file.type.startsWith('image/') ? (
-                      <img src={filePreview.url} alt="Preview" class={styles.previewImage} />
+                      <img 
+                        src={filePreview.url} 
+                        alt="預覽" 
+                        class={styles.previewImage}
+                        onClick={() => setPreviewImage(filePreview.url)}
+                        style={{ cursor: 'pointer' }}
+                      />
                     ) : (
                       <div class={styles.previewDocument}>
                         <svg class={styles.documentIcon} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                         </svg>
-                        <span class={styles.documentLabel}>Document</span>
+                        <span class={styles.documentLabel}>文件</span>
                       </div>
                     )}
                     <p class={styles.fileName} title={filePreview.file.name}>{filePreview.file.name}</p>
@@ -623,17 +605,38 @@ export default function PostJobForm() {
           </div>
         </div>
 
-        {/* 8. Contact Information Section */}
+        <Show when={previewImage()}>
+          <div 
+            class={styles.modal} 
+            onClick={() => setPreviewImage(null)}
+          >
+            <div class={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+              <button 
+                class={styles.modalClose}
+                onClick={() => setPreviewImage(null)}
+                type="button"
+              >
+                ✕
+              </button>
+              <img 
+                src={previewImage()!} 
+                alt="照片預覽" 
+                class={styles.modalImage}
+              />
+            </div>
+          </div>
+        </Show>
+
         <div class={styles.formSection}>
           <h3 class={styles.sectionTitle}>
             <svg class={styles.sectionIcon} fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
             </svg>
-            Contact Information
+            聯絡資訊
           </h3>
           <div class={styles.postjobRow}>
             <label class={styles.postjobRowLabel}>
-              <span>Contact Person <span class={styles.required}>*</span></span>
+              <span>聯絡人 <span class={styles.required}>*</span></span>
               <input
                 class={styles.postjobInput}
                 type="text"
@@ -643,7 +646,7 @@ export default function PostJobForm() {
               />
             </label>
             <label class={styles.postjobRowLabel}>
-              <span>Contact Phone <span class={styles.required}>*</span></span>
+              <span>聯絡人電話 <span class={styles.required}>*</span></span>
               <input
                 class={styles.postjobInput}
                 type="tel"
@@ -655,7 +658,7 @@ export default function PostJobForm() {
           </div>
 
           <label class={styles.postjobLabel}>
-            <span>Contact Email <span class={styles.required}>*</span></span>
+            <span>聯絡人電子郵件 <span class={styles.required}>*</span></span>
             <input
               class={styles.postjobInput}
               type="email"
@@ -674,7 +677,7 @@ export default function PostJobForm() {
         </Show>
 
         <button class={styles.postjobBtn} type="submit" disabled={isLoading()}>
-          {isLoading() ? "發布中..." : "Post Job"}
+          {isLoading() ? "發布中..." : "發佈"}
         </button>
       </form>
     </div>
