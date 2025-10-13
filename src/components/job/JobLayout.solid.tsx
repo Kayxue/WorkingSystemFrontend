@@ -61,10 +61,10 @@ export default function JobLayout(props: JobLayoutProps) {
   let tabNavigationRef: HTMLDivElement | undefined;
 
   const navigationItems = [
-    { id: "details", label: "Job Info", icon: "📋", shortcut: "Alt+1" },
-    { id: "applications", label: "View Applicants", icon: "👥", shortcut: "Alt+2" },
-    { id: "rating", label: "Rating", icon: "⭐", shortcut: "Alt+3" },
-    { id: "attendance", label: "Attendance", icon: "⏰", shortcut: "Alt+4" },
+    { id: "details", label: "詳情", icon: "📋", shortcut: "Alt+1" },
+    { id: "applications", label: "應徵", icon: "👥", shortcut: "Alt+2" },
+    { id: "rating", label: "評價", icon: "⭐", shortcut: "Alt+3" },
+    { id: "attendance", label: "出席", icon: "⏰", shortcut: "Alt+4" },
   ];
 
   const switchToSection = (sectionId: string) => {

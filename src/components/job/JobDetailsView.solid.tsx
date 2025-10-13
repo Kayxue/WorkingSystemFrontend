@@ -26,7 +26,7 @@ type JobData = {
 
 interface JobDetailsViewProps {
   gigId: string;
-  sharedJobData?: Resource<JobData>; // Optional shared data from parent
+  sharedJobData?: Resource<JobData>; // 可選：從父元件傳入的共用資料
 }
 
 async function fetchJobData(gigId: string): Promise<JobData> {
@@ -35,7 +35,7 @@ async function fetchJobData(gigId: string): Promise<JobData> {
     headers: { "Content-Type": "application/json", platform: "web-employer" },
     credentials: "include",
   });
-  if (!res.ok) throw new Error(`Failed to fetch job: ${res.status}`);
+  if (!res.ok) throw new Error(`無法取得職缺資料：${res.status}`);
   return await res.json();
 }
 
@@ -82,24 +82,24 @@ const JobDetailsView: Component<JobDetailsViewProps> = (props) => {
     document.body.style.overflow = "auto";
   });
 
-  // Show Edit button only for these statuses: "已刊登", "待刊登", "已下架"
+  // 僅以下狀態顯示「編輯」按鈕："已刊登", "待刊登", "已下架"
   const showEditButton = (status: string) =>
     ["已刊登", "待刊登", "已下架"].includes(status);
 
   return (
     <div class={styles.jobDetailsContainer}>
       <Show when={jobData()?.loading}>
-        <p class={styles.loading}>Loading job details...</p>
+        <p class={styles.loading}>載入職缺詳情中...</p>
       </Show>
 
       <Show when={jobData()?.error}>
         {(err) => (
           <div class={styles.errorContainer}>
-            <h1>Job Not Found</h1>
+            <h1>找不到職缺</h1>
             <p class={styles.error}>{(err() as Error).message}</p>
-            <p>Job ID: {props.gigId}</p>
+            <p>職缺編號：{props.gigId}</p>
             <button class={styles.backButton} onClick={goBack}>
-              ← Back
+              ← 返回
             </button>
           </div>
         )}
@@ -109,16 +109,16 @@ const JobDetailsView: Component<JobDetailsViewProps> = (props) => {
         {(job) => {
           const jobInfo = job();
           const location =
-            [jobInfo.address, jobInfo.district, jobInfo.city].filter(Boolean).join(", ") || "Location not specified";
+            [jobInfo.address, jobInfo.district, jobInfo.city].filter(Boolean).join(", ") || "未提供地點資訊";
 
           const mapsQuery = encodeURIComponent(location);
           const mapsSrc = `https://www.google.com/maps?q=${mapsQuery}&output=embed`;
 
           return (
             <>
-              {/* Header with Job Title and conditional Edit button */}
+              {/* 標題與編輯按鈕 */}
               <div class={styles.headerRow}>
-                <h1 class={styles.jobTitle}>Job Info</h1>
+                <h1 class={styles.jobTitle}>工作詳情</h1>
                 <Show when={showEditButton(jobInfo.status)}>
                   <button
                     class={styles.editButton}
@@ -126,28 +126,28 @@ const JobDetailsView: Component<JobDetailsViewProps> = (props) => {
                       (window.location.href = `/edit-job?gigId=${encodeURIComponent(jobInfo.gigId)}`)
                     }
                   >
-                    ✎ Edit
+                    ✎ 編輯
                   </button>
                 </Show>
               </div>
 
-              {/* Job details */}
+              {/* 職缺詳情 */}
               <p>
-                <span class={styles.label}>Date :</span> {formatDateToDDMMYYYY(jobInfo.dateStart)} –{" "}
+                <span class={styles.label}>日期：</span> {formatDateToDDMMYYYY(jobInfo.dateStart)} –{" "}
                 {formatDateToDDMMYYYY(jobInfo.dateEnd)}
               </p>
               <p>
-                <span class={styles.label}>Time :</span> {jobInfo.timeStart || "-"} – {jobInfo.timeEnd || "-"}
+                <span class={styles.label}>時間：</span> {jobInfo.timeStart || "-"} – {jobInfo.timeEnd || "-"}
               </p>
               <p>
-                <span class={styles.label}>Rate :</span> {jobInfo.hourlyRate || "-"} NTD/hour
+                <span class={styles.label}>時薪：</span> {jobInfo.hourlyRate || "-"} 元/小時
               </p>
               <p>
-                <span class={styles.label}>Location :</span> {location}
+                <span class={styles.label}>地點：</span> {location}
               </p>
 
-              {/* Google Maps */}
-              <Show when={location !== "Location not specified"}>
+              {/* Google 地圖 */}
+              <Show when={location !== "未提供地點資訊"}>
                 <div class={styles.mapContainer}>
                   <iframe
                     src={mapsSrc}
@@ -161,9 +161,9 @@ const JobDetailsView: Component<JobDetailsViewProps> = (props) => {
                 </div>
               </Show>
 
-              {/* Job Description */}
+              {/* 職缺描述 */}
               <section class={styles.section}>
-                <h2>Job Description</h2>
+                <h2>職缺描述</h2>
                 <Show
                   when={typeof jobInfo.description === "string"}
                   fallback={
@@ -177,28 +177,27 @@ const JobDetailsView: Component<JobDetailsViewProps> = (props) => {
                       <div>
                         {"details" in jobInfo.description && (
                           <p>
-                            <strong>Details:</strong> {jobInfo.description.details}
+                            <strong>詳細內容：</strong> {jobInfo.description.details}
                           </p>
                         )}
                         {"responsibilities" in jobInfo.description && (
                           <p>
-                            <strong>Responsibilities:</strong> {jobInfo.description.responsibilities}
+                            <strong>工作內容：</strong> {jobInfo.description.responsibilities}
                           </p>
                         )}
                       </div>
                     ) : (
-                      "No description provided"
+                      "未提供職缺描述"
                     )
                   }
                 >
                   {stripQuotes(jobInfo.description)}
                 </Show>
-
               </section>
 
-              {/* Requirements */}
+              {/* 任職條件 */}
               <section class={styles.section}>
-                <h2>Requirements</h2>
+                <h2>任職條件</h2>
                 <Show
                   when={typeof jobInfo.requirements === "string"}
                   fallback={
@@ -212,13 +211,13 @@ const JobDetailsView: Component<JobDetailsViewProps> = (props) => {
                       <div>
                         {"experience" in jobInfo.requirements && (
                           <p>
-                            <strong>Experience:</strong> {jobInfo.requirements.experience}
+                            <strong>經驗要求：</strong> {jobInfo.requirements.experience}
                           </p>
                         )}
                         {"skills" in jobInfo.requirements &&
                           Array.isArray(jobInfo.requirements.skills) && (
                             <>
-                              <strong>Skills:</strong>
+                              <strong>技能要求：</strong>
                               <ul>
                                 {jobInfo.requirements.skills.map((s: any) => (
                                   <li>{s}</li>
@@ -228,7 +227,7 @@ const JobDetailsView: Component<JobDetailsViewProps> = (props) => {
                           )}
                       </div>
                     ) : (
-                      "No requirements listed"
+                      "未提供任職條件"
                     )
                   }
                 >
@@ -236,18 +235,18 @@ const JobDetailsView: Component<JobDetailsViewProps> = (props) => {
                 </Show>
               </section>
 
-              {/* Environment Photos */}
+              {/* 工作環境照片 */}
               <section class={styles.section}>
                 <Show
                   when={jobInfo.environmentPhotos && jobInfo.environmentPhotos.length > 0}
                   fallback={
                     <>
-                      <h2>Environment Photos</h2>
-                      <div class={styles.noPhotos}>No environment photos available for this job.</div>
+                      <h2>工作環境照片</h2>
+                      <div class={styles.noPhotos}>目前沒有可顯示的工作環境照片。</div>
                     </>
                   }
                 >
-                  <h2>Environment Photos ({jobInfo.environmentPhotos?.length || 0})</h2>
+                  <h2>工作環境照片（{jobInfo.environmentPhotos?.length || 0}）</h2>
                   <div class={styles.photoGallery}>
                     <For each={jobInfo.environmentPhotos}>
                       {(photo, index) => {
@@ -260,11 +259,11 @@ const JobDetailsView: Component<JobDetailsViewProps> = (props) => {
                           <div class={styles.photoItem}>
                             <Show
                               when={!hasError()}
-                              fallback={<div class={styles.photoError}>Failed to load image</div>}
+                              fallback={<div class={styles.photoError}>圖片載入失敗</div>}
                             >
                               <img
                                 src={photoUrl}
-                                alt={`Environment photo ${index() + 1}`}
+                                alt={`工作環境照片 ${index() + 1}`}
                                 onClick={() => openPhotoModal(photoUrl)}
                                 onError={() => handleImageError(index())}
                                 loading="lazy"
@@ -278,34 +277,34 @@ const JobDetailsView: Component<JobDetailsViewProps> = (props) => {
                 </Show>
               </section>
 
-              {/* Contact Info */}
+              {/* 聯絡資訊 */}
               <section class={styles.section}>
-                <h2>Contact Information</h2>
+                <h2>聯絡資訊</h2>
                 <p>
-                  <span class={styles.label}>Contact Person:</span> {jobInfo.contactPerson || "-"}
+                  <span class={styles.label}>聯絡人：</span> {jobInfo.contactPerson || "-"}
                 </p>
                 <p>
-                  <span class={styles.label}>Phone:</span>{" "}
+                  <span class={styles.label}>電話：</span>{" "}
                   <Show when={jobInfo.contactPhone} fallback="-">
                     <a href={`tel:${jobInfo.contactPhone}`}>{jobInfo.contactPhone}</a>
                   </Show>
                 </p>
                 <p>
-                  <span class={styles.label}>Email:</span>{" "}
+                  <span class={styles.label}>電子郵件：</span>{" "}
                   <Show when={jobInfo.contactEmail} fallback="-">
                     <a href={`mailto:${jobInfo.contactEmail}`}>{jobInfo.contactEmail}</a>
                   </Show>
                 </p>
               </section>
 
-              {/* Photo modal */}
+              {/* 照片彈窗 */}
               <Show when={selectedPhoto()}>
                 <div class={styles.photoModal} onClick={closePhotoModal}>
                   <div class={styles.modalContent} onClick={(e) => e.stopPropagation()}>
                     <button class={styles.modalClose} onClick={closePhotoModal}>
                       ×
                     </button>
-                    <img src={selectedPhoto()!} alt="Full photo" />
+                    <img src={selectedPhoto()!} alt="完整圖片" />
                   </div>
                 </div>
               </Show>

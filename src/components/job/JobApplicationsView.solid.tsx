@@ -2,7 +2,7 @@
 import { createResource, createSignal, For, Show, onCleanup, createEffect } from "solid-js";
 import styles from "../../styles/JobApplications.module.css";
 
-// Shared Types & Helpers
+// 共享類型與輔助函數
 type JobExperience = {
   jobTitle?: string;
   company?: string;
@@ -26,9 +26,9 @@ type Application = {
   workerEducation?: string;
   workerSchool?: string;
   workerMajor?: string;
-  workerCertificates?: string | Certificate[] | null; // Should be JSON string from database
-  workerJobExperience?: string | JobExperience[] | null; // Should be JSON string from database
-  status: 'pending' | 'approved' | 'rejected' | 'cancelled';
+  workerCertificates?: string | Certificate[] | null; // 從資料庫來的應該是 JSON 字串
+  workerJobExperience?: string | JobExperience[] | null; // 從資料庫來的應該是 JSON 字串
+  status: 'pending_employer_review' | 'employer_rejected' | 'pending_worker_confirmation' | 'worker_confirmed' | 'worker_declined' | 'worker_cancelled' | 'system_cancelled';
   appliedAt: string;
 };
 
@@ -44,17 +44,33 @@ function formatDateToDDMMYYYY(dateStr: string | null): string {
 
 function getStatusClass(status: string): string {
   switch (status) {
-    case 'pending': return styles.statusPending;
-    case 'approved': return styles.statusAccepted;
-    case 'rejected':
-    case 'cancelled': return styles.statusRejected;
+    case 'pending_employer_review': return styles.statusPending;
+    case 'pending_worker_confirmation': return styles.statusPending;
+    case 'worker_confirmed': return styles.statusAccepted;
+    case 'employer_rejected':
+    case 'worker_declined':
+    case 'worker_cancelled':
+    case 'system_cancelled': return styles.statusRejected;
     default: return '';
   }
 }
 
-// Helper functions to parse JSON fields - handles multiple data formats
+function getStatusDisplayText(status: string): string {
+  switch (status) {
+    case 'pending_employer_review': return '待企業審核';
+    case 'employer_rejected': return '企業拒絕';
+    case 'pending_worker_confirmation': return '待打工者回覆';
+    case 'worker_confirmed': return '打工者確定來上班';
+    case 'worker_declined': return '打工者拒絕來上班';
+    case 'worker_cancelled': return '打工者主動取消';
+    case 'system_cancelled': return '系統取消';
+    default: return status;
+  }
+}
+
+// 解析 JSON 欄位的輔助函數 - 處理多種資料格式
 function parseJobExperience(experience: string | JobExperience[] | null | undefined): JobExperience[] {
-  console.log('🔍 Parsing job experience:', {
+  console.log('🔍 解析工作經驗:', {
     type: typeof experience,
     value: experience,
     isNull: experience === null,
@@ -63,42 +79,42 @@ function parseJobExperience(experience: string | JobExperience[] | null | undefi
     arrayLength: Array.isArray(experience) ? experience.length : 'N/A'
   });
 
-  // Handle null, undefined, or falsy values
+  // 處理 null、undefined 或假值
   if (experience === null || experience === undefined) {
-    console.log('❌ Job experience is null/undefined');
+    console.log('❌ 工作經驗為 null/undefined');
     return [];
   }
   
-  // If already an array, validate and return
+  // 如果已經是陣列，驗證並返回
   if (Array.isArray(experience)) {
-    console.log('✅ Job experience is already an array with length:', experience.length);
+    console.log('✅ 工作經驗已經是陣列，長度:', experience.length);
     
     if (experience.length === 0) {
-      console.log('❌ Job experience array is empty');
+      console.log('❌ 工作經驗陣列為空');
       return [];
     }
     
-    // Validate each experience object has expected structure
+    // 驗證每個經驗物件都有預期的結構
     const validExperiences = experience.filter(exp => 
       exp && typeof exp === 'object' && 
       (exp.jobTitle || exp.company || exp.startDate || exp.endDate || exp.description)
     );
-    console.log('✅ Valid experiences after filtering:', validExperiences);
+    console.log('✅ 過濾後的有效經驗:', validExperiences);
     return validExperiences;
   }
   
-  // Handle string cases (JSON strings from database)
+  // 處理字串情況（從資料庫來的 JSON 字串）
   if (typeof experience === 'string') {
     const trimmed = experience.trim();
     
     if (trimmed === '' || trimmed === '[]' || trimmed === 'null') {
-      console.log('❌ Job experience is empty or null string');
+      console.log('❌ 工作經驗是空字串或 null 字串');
       return [];
     }
     
     try {
       const parsed = JSON.parse(trimmed);
-      console.log('✅ Parsed job experience JSON:', parsed);
+      console.log('✅ 解析的工作經驗 JSON:', parsed);
       
       if (Array.isArray(parsed)) {
         const validExperiences = parsed.filter(exp => 
@@ -109,7 +125,7 @@ function parseJobExperience(experience: string | JobExperience[] | null | undefi
       }
       return [];
     } catch (error) {
-      console.warn('❌ Failed to parse job experience JSON:', error);
+      console.warn('❌ 解析工作經驗 JSON 失敗:', error);
       return [];
     }
   }
@@ -118,7 +134,7 @@ function parseJobExperience(experience: string | JobExperience[] | null | undefi
 }
 
 function parseCertificates(certificates: string | Certificate[] | string[] | null | undefined): Certificate[] {
-  console.log('🔍 Parsing certificates:', {
+  console.log('🔍 解析證書:', {
     type: typeof certificates,
     value: certificates,
     isNull: certificates === null,
@@ -127,46 +143,46 @@ function parseCertificates(certificates: string | Certificate[] | string[] | nul
     arrayLength: Array.isArray(certificates) ? certificates.length : 'N/A'
   });
 
-  // Handle null, undefined, or falsy values
+  // 處理 null、undefined 或假值
   if (certificates === null || certificates === undefined) {
-    console.log('❌ Certificates is null/undefined');
+    console.log('❌ 證書為 null/undefined');
     return [];
   }
   
-  // If already an array, handle both object and string arrays
+  // 如果已經是陣列，處理物件陣列和字串陣列
   if (Array.isArray(certificates)) {
-    console.log('✅ Certificates is already an array with length:', certificates.length);
+    console.log('✅ 證書已經是陣列，長度:', certificates.length);
     
     if (certificates.length === 0) {
-      console.log('❌ Certificates array is empty');
+      console.log('❌ 證書陣列為空');
       return [];
     }
     
-    // Check if it's array of strings (like ["Java SCJP", "AWS Solutions Architect"])
+    // 檢查是否為字串陣列（如 ["Java SCJP", "AWS Solutions Architect"]）
     if (certificates.every(cert => typeof cert === 'string')) {
-      console.log('✅ Converting string array to certificate objects');
+      console.log('✅ 將字串陣列轉換為證書物件');
       const convertedCerts = certificates.map(certName => ({
         name: certName,
         issuer: undefined,
         date: undefined
       }));
-      console.log('✅ Converted certificates:', convertedCerts);
+      console.log('✅ 轉換後的證書:', convertedCerts);
       return convertedCerts;
     }
     
-    // Check if it's array of objects
+    // 檢查是否為物件陣列
     if (certificates.every(cert => typeof cert === 'object' && cert !== null)) {
-      console.log('✅ Certificates is array of objects');
+      console.log('✅ 證書是物件陣列');
       const validCertificates = certificates.filter(cert => 
         cert && typeof cert === 'object' && 
         (cert.name || cert.issuer || cert.date)
       );
-      console.log('✅ Valid certificates after filtering:', validCertificates);
+      console.log('✅ 過濾後的有效證書:', validCertificates);
       return validCertificates;
     }
     
-    console.log('❌ Mixed array format, filtering valid items');
-    // Handle mixed array (some strings, some objects)
+    console.log('❌ 混合陣列格式，過濾有效項目');
+    // 處理混合陣列（有些是字串，有些是物件）
     return certificates
       .map(cert => {
         if (typeof cert === 'string') {
@@ -180,21 +196,21 @@ function parseCertificates(certificates: string | Certificate[] | string[] | nul
       .filter(cert => cert !== null);
   }
   
-  // Handle string cases (JSON strings from database)
+  // 處理字串情況（從資料庫來的 JSON 字串）
   if (typeof certificates === 'string') {
     const trimmed = certificates.trim();
     
     if (trimmed === '' || trimmed === '[]' || trimmed === 'null') {
-      console.log('❌ Certificates is empty or null string');
+      console.log('❌ 證書是空字串或 null 字串');
       return [];
     }
     
     try {
       const parsed = JSON.parse(trimmed);
-      console.log('✅ Parsed certificates JSON:', parsed);
+      console.log('✅ 解析的證書 JSON:', parsed);
       
       if (Array.isArray(parsed)) {
-        // Handle both string arrays and object arrays from JSON
+        // 處理來自 JSON 的字串陣列和物件陣列
         if (parsed.every(cert => typeof cert === 'string')) {
           return parsed.map(certName => ({
             name: certName,
@@ -211,7 +227,7 @@ function parseCertificates(certificates: string | Certificate[] | string[] | nul
       }
       return [];
     } catch (error) {
-      console.warn('❌ Failed to parse certificates JSON:', error);
+      console.warn('❌ 解析證書 JSON 失敗:', error);
       return [];
     }
   }
@@ -219,7 +235,7 @@ function parseCertificates(certificates: string | Certificate[] | string[] | nul
   return [];
 }
 
-async function updateApplicationStatus(applicationId: string, newStatus: 'approved' | 'rejected') {
+async function updateApplicationStatus(applicationId: string, newStatus: 'pending_worker_confirmation' | 'employer_rejected') {
   const response = await fetch(`/api/application/${applicationId}/review`, {
     method: 'PUT',
     headers: {
@@ -232,7 +248,7 @@ async function updateApplicationStatus(applicationId: string, newStatus: 'approv
 
   if (!response.ok) {
     const errorText = await response.text();
-    throw new Error(`Failed to update application status: ${errorText}`);
+    throw new Error(`更新申請狀態失敗: ${errorText}`);
   }
 }
 
@@ -253,17 +269,17 @@ async function fetchApplications(gigId: string): Promise<Application[]> {
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('API Error:', response.status, errorText);
-      throw new Error(`Failed to fetch applications: ${response.status} ${errorText}`);
+      console.error('API 錯誤:', response.status, errorText);
+      throw new Error(`取得申請失敗: ${response.status} ${errorText}`);
     }
 
     const result = await response.json();
-    console.log('🔍 Full API Response:', result);
-    console.log('🔍 Applications data:', result.data.applications);
+    console.log('🔍 完整 API 回應:', result);
+    console.log('🔍 申請資料:', result.data.applications);
     
-    // Debug each application's certificate and experience data
+    // 除錯每個申請的證書和經驗資料
     result.data.applications.forEach((app: Application, index: number) => {
-      console.log(`🔍 Application ${index + 1} (${app.workerName}):`, {
+      console.log(`🔍 申請 ${index + 1} (${app.workerName}):`, {
         certificatesRaw: app.workerCertificates,
         certificatesType: typeof app.workerCertificates,
         certificatesLength: typeof app.workerCertificates === 'string' ? app.workerCertificates.length : 'N/A',
@@ -273,66 +289,66 @@ async function fetchApplications(gigId: string): Promise<Application[]> {
       });
     });
     
-    console.log('Applications loaded successfully:', result.data.applications.length);
+    console.log('申請載入成功:', result.data.applications.length);
     
     return result.data.applications;
   } catch (fetchError: any) {
-    console.error('Fetch error:', fetchError);
-    throw new Error(`Network error: ${fetchError?.message || 'Unknown error'}`);
+    console.error('取得錯誤:', fetchError);
+    throw new Error(`網路錯誤: ${fetchError?.message || '未知錯誤'}`);
   }
 }
 
 export default function JobApplicationsView(props: JobApplicationsViewProps) {
-  // Get initial status from URL params (both 'status' and 'filter' for compatibility)
+  // 從 URL 參數取得初始狀態（同時支援 'status' 和 'filter' 以保持相容性）
   const getInitialStatusFilter = () => {
     const params = new URLSearchParams(window.location.search);
     const statusParam = params.get('status') || params.get('filter');
     
-    // Validate the status parameter
-    const validStatuses = ['all', 'pending', 'approved', 'rejected', 'cancelled'];
+    // 驗證狀態參數
+    const validStatuses = ['all', 'pending_employer_review', 'employer_rejected', 'pending_worker_confirmation', 'worker_confirmed', 'worker_declined', 'worker_cancelled', 'system_cancelled'];
     if (statusParam && validStatuses.includes(statusParam)) {
-      return statusParam as 'all' | 'pending' | 'approved' | 'rejected' | 'cancelled';
+      return statusParam as 'all' | 'pending_employer_review' | 'employer_rejected' | 'pending_worker_confirmation' | 'worker_confirmed' | 'worker_declined' | 'worker_cancelled' | 'system_cancelled';
     }
     return 'all';
   };
 
-  // Declare all signals first
+  // 首先宣告所有 signals
   const [applications, { refetch }] = createResource(() => props.gigId, fetchApplications);
   const [selectedApplication, setSelectedApplication] = createSignal<Application | null>(null);
-  const [statusFilter, setStatusFilter] = createSignal<'all' | 'pending' | 'approved' | 'rejected' | 'cancelled'>(
+  const [statusFilter, setStatusFilter] = createSignal<'all' | 'pending_employer_review' | 'employer_rejected' | 'pending_worker_confirmation' | 'worker_confirmed' | 'worker_declined' | 'worker_cancelled' | 'system_cancelled'>(
     getInitialStatusFilter()
   );
   const [updating, setUpdating] = createSignal<string | null>(null);
 
-  // Debug effect to log application data when it loads
+  // 除錯 effect，在應用程式資料載入時記錄
   createEffect(() => {
     const apps = applications();
     if (apps && apps.length > 0) {
-      console.log('🔍 DEBUG: Applications loaded, checking first application:');
+      console.log('🔍 除錯: 申請已載入，檢查第一個申請:');
       const firstApp = apps[0];
-      console.log('First application full data:', firstApp);
-      console.log('Certificate data detailed analysis:');
-      console.log('- Type:', typeof firstApp.workerCertificates);
-      console.log('- Value:', firstApp.workerCertificates);
-      console.log('- String length:', typeof firstApp.workerCertificates === 'string' ? firstApp.workerCertificates.length : 'N/A');
-      console.log('- Is empty string:', firstApp.workerCertificates === '');
+      console.log('第一個申請完整資料:', firstApp);
+      console.log('證書資料詳細分析:');
+      console.log('- 類型:', typeof firstApp.workerCertificates);
+      console.log('- 值:', firstApp.workerCertificates);
+      console.log('- 字串長度:', typeof firstApp.workerCertificates === 'string' ? firstApp.workerCertificates.length : 'N/A');
+      console.log('- 是否為空字串:', firstApp.workerCertificates === '');
       
-      console.log('Experience data detailed analysis:');
-      console.log('- Type:', typeof firstApp.workerJobExperience);
-      console.log('- Value:', firstApp.workerJobExperience);
-      console.log('- String length:', typeof firstApp.workerJobExperience === 'string' ? firstApp.workerJobExperience.length : 'N/A');
-      console.log('- Is empty string:', firstApp.workerJobExperience === '');
+      console.log('經驗資料詳細分析:');
+      console.log('- 類型:', typeof firstApp.workerJobExperience);
+      console.log('- 值:', firstApp.workerJobExperience);
+      console.log('- 字串長度:', typeof firstApp.workerJobExperience === 'string' ? firstApp.workerJobExperience.length : 'N/A');
+      console.log('- 是否為空字串:', firstApp.workerJobExperience === '');
       
-      // Test parsing functions
-      console.log('🧪 Testing parsing functions:');
+      // 測試解析函數
+      console.log('🧪 測試解析函數:');
       const parsedCerts = parseCertificates(firstApp.workerCertificates);
       const parsedExp = parseJobExperience(firstApp.workerJobExperience);
-      console.log('Final parsed certificates result:', parsedCerts);
-      console.log('Final parsed experience result:', parsedExp);
+      console.log('最終解析的證書結果:', parsedCerts);
+      console.log('最終解析的經驗結果:', parsedExp);
     }
   });
 
-  // Declare all functions
+  // 宣告所有函數
   const filteredApplications = () => {
     const apps = applications();
     if (!apps) return [];
@@ -342,9 +358,9 @@ export default function JobApplicationsView(props: JobApplicationsViewProps) {
   };
 
   const openApplicationModal = (application: Application) => {
-    console.log('🔍 Opening modal for application:', application);
-    console.log('🔍 Modal data - Certificates:', application.workerCertificates);
-    console.log('🔍 Modal data - Experience:', application.workerJobExperience);
+    console.log('🔍 開啟申請模態視窗:', application);
+    console.log('🔍 模態視窗資料 - 證書:', application.workerCertificates);
+    console.log('🔍 模態視窗資料 - 經驗:', application.workerJobExperience);
     setSelectedApplication(application);
     document.body.style.overflow = 'hidden';
   };
@@ -354,15 +370,15 @@ export default function JobApplicationsView(props: JobApplicationsViewProps) {
     document.body.style.overflow = 'auto';
   };
 
-  const handleUpdateStatus = async (applicationId: string, newStatus: 'approved' | 'rejected') => {
+  const handleUpdateStatus = async (applicationId: string, newStatus: 'pending_worker_confirmation' | 'employer_rejected') => {
     setUpdating(applicationId);
     try {
       await updateApplicationStatus(applicationId, newStatus);
       await refetch();
       closeApplicationModal();
     } catch (error) {
-      console.error('Error updating application status:', error);
-      alert('Failed to update application status. Please try again.');
+      console.error('更新申請狀態時發生錯誤:', error);
+      alert('更新申請狀態失敗，請重試。');
     } finally {
       setUpdating(null);
     }
@@ -374,13 +390,13 @@ export default function JobApplicationsView(props: JobApplicationsViewProps) {
     }
   };
 
-  // Listen for URL changes (back/forward browser buttons)
+  // 監聽 URL 變化（瀏覽器的上一頁/下一頁按鈕）
   const handlePopState = () => {
     setStatusFilter(getInitialStatusFilter());
   };
 
-  // Effects and event listeners
-  // Sync URL with filter changes
+  // Effects 和事件監聽器
+  // 將 URL 與篩選器變更同步
   createEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (statusFilter() === 'all') {
@@ -389,52 +405,55 @@ export default function JobApplicationsView(props: JobApplicationsViewProps) {
       params.set('status', statusFilter());
     }
     
-    // Update URL without reloading the page
+    // 更新 URL 而不重新載入頁面
     const newUrl = `${window.location.pathname}?${params.toString()}`;
     window.history.replaceState(null, '', newUrl);
   });
 
-  // Set up event listeners
+  // 設定事件監聽器
   window.addEventListener('popstate', handlePopState);
   document.addEventListener('keydown', handleKeyDown);
   
-  // Cleanup event listener
+  // 清理事件監聽器
   onCleanup(() => {
     document.removeEventListener('keydown', handleKeyDown);
-    document.body.style.overflow = 'auto'; // Reset overflow on cleanup
-    window.removeEventListener('popstate', handlePopState); // Clean up popstate listener
+    document.body.style.overflow = 'auto'; // 清理時重置 overflow
+    window.removeEventListener('popstate', handlePopState); // 清理 popstate 監聽器
   });
 
   return (
     <div class={styles.applicationsContainer}>
       <div class={styles.header}>
-        <h1 class={styles.pageTitle}>Job Applications</h1>
+        <h1 class={styles.pageTitle}>工作申請</h1>
         <div class={styles.filterContainer}>
-          <label for="status-filter">Filter by status:</label>
+          <label for="status-filter">依狀態篩選:</label>
           <select 
             id="status-filter" 
             class={styles.statusFilter}
             value={statusFilter()}
             onChange={(e) => setStatusFilter(e.target.value as any)}
           >
-            <option value="all">All Applications</option>
-            <option value="pending">Pending</option>
-            <option value="approved">Approved</option>
-            <option value="rejected">Rejected</option>
-            <option value="cancelled">Cancelled</option>
+            <option value="all">所有申請</option>
+            <option value="pending_employer_review">待企業審核</option>
+            <option value="employer_rejected">企業拒絕</option>
+            <option value="pending_worker_confirmation">待打工者回覆</option>
+            <option value="worker_confirmed">打工者確定來上班</option>
+            <option value="worker_declined">打工者拒絕來上班</option>
+            <option value="worker_cancelled">打工者主動取消</option>
+            <option value="system_cancelled">系統取消</option>
           </select>
         </div>
       </div>
 
       <Show when={applications.loading}>
-        <p class={styles.loading}>Loading applications...</p>
+        <p class={styles.loading}>載入申請中...</p>
       </Show>
 
       <Show when={applications.error}>
         {(err) => (
           <div class={styles.errorContainer}>
-            <h2>Error Loading Applications</h2>
-            <p class={styles.error}>Error: {(err() as Error).message}</p>
+            <h2>載入申請時發生錯誤</h2>
+            <p class={styles.error}>錯誤: {(err() as Error).message}</p>
           </div>
         )}
       </Show>
@@ -445,7 +464,7 @@ export default function JobApplicationsView(props: JobApplicationsViewProps) {
             when={filteredApplications().length > 0} 
             fallback={
               <div class={styles.noApplications}>
-                No {statusFilter() === 'all' ? '' : statusFilter()} applications found.
+                找不到{statusFilter() === 'all' ? '' : getStatusDisplayText(statusFilter())}的申請。
               </div>
             }
           >
@@ -455,70 +474,70 @@ export default function JobApplicationsView(props: JobApplicationsViewProps) {
                   <div class={styles.cardHeader}>
                     <h3 class={styles.applicantName}>{application.workerName}</h3>
                     <span class={`${styles.status} ${getStatusClass(application.status)}`}>
-                      {application.status.charAt(0).toUpperCase() + application.status.slice(1)}
+                      {getStatusDisplayText(application.status)}
                     </span>
                   </div>
                   <div class={styles.cardContent}>
-                    <p class={styles.applicantInfo}><strong>Email:</strong> {application.workerEmail}</p>
+                    <p class={styles.applicantInfo}><strong>電子郵件:</strong> {application.workerEmail}</p>
                     <Show when={application.workerPhone}>
-                      <p class={styles.applicantInfo}><strong>Phone:</strong> {application.workerPhone}</p>
+                      <p class={styles.applicantInfo}><strong>電話:</strong> {application.workerPhone}</p>
                     </Show>
                     <Show when={application.workerEducation}>
-                      <p class={styles.applicantInfo}><strong>Education:</strong> {application.workerEducation}</p>
+                      <p class={styles.applicantInfo}><strong>教育程度:</strong> {application.workerEducation}</p>
                     </Show>
                     <Show when={application.workerSchool}>
-                      <p class={styles.applicantInfo}><strong>School:</strong> {application.workerSchool}</p>
+                      <p class={styles.applicantInfo}><strong>學校:</strong> {application.workerSchool}</p>
                     </Show>
                     <Show when={application.workerMajor}>
-                      <p class={styles.applicantInfo}><strong>Major:</strong> {application.workerMajor}</p>
+                      <p class={styles.applicantInfo}><strong>學系:</strong> {application.workerMajor}</p>
                     </Show>
                     
-                    {/* Display certificates info in card preview */}
+                    {/* 在卡片預覽中顯示證書資訊 */}
                     <div class={styles.applicantInfo}>
-                      <strong>Certificates:</strong> 
+                      <strong>證書:</strong> 
                       <Show 
                         when={parseCertificates(application.workerCertificates).length > 0} 
-                        fallback={<span class={styles.noData}> None</span>}
+                        fallback={<span class={styles.noData}> 無</span>}
                       >
-                        <span> {parseCertificates(application.workerCertificates).length} certificate(s)</span>
+                        <span> {parseCertificates(application.workerCertificates).length} 張證書</span>
                       </Show>
                     </div>
 
-                    {/* Display experience info in card preview */}
+                    {/* 在卡片預覽中顯示經驗資訊 */}
                     <div class={styles.applicantInfo}>
-                      <strong>Experience:</strong> 
+                      <strong>工作經驗:</strong> 
                       <Show 
                         when={parseJobExperience(application.workerJobExperience).length > 0} 
-                        fallback={<span class={styles.noData}> None</span>}
+                        fallback={<span class={styles.noData}> 無</span>}
                       >
-                        <span> {parseJobExperience(application.workerJobExperience).length} job(s)</span>
+                        <span> {parseJobExperience(application.workerJobExperience).length} 份工作</span>
                       </Show>
                     </div>
                     
-                    <p class={styles.applicantInfo}><strong>Applied:</strong> {formatDateToDDMMYYYY(application.appliedAt)}</p>
+                    <p class={styles.applicantInfo}><strong>申請時間:</strong> {formatDateToDDMMYYYY(application.appliedAt)}</p>
                   </div>
                   <div class={styles.cardActions}>
                     <button 
                       class={styles.viewButton} 
                       onClick={() => openApplicationModal(application)}
                     >
-                      View Details
+                      查看詳情
                     </button>
-                    <Show when={application.status === 'pending'}>
+                    <Show when={application.status === 'pending_employer_review'}>
                       <div class={styles.actionButtons}>
                         <button 
                           class={styles.acceptButton} 
-                          onClick={() => handleUpdateStatus(application.applicationId, 'approved')}
+                          onClick={() => handleUpdateStatus(application.applicationId, 'pending_worker_confirmation')}
                           disabled={updating() === application.applicationId}
                         >
-                          {updating() === application.applicationId ? 'Accepting...' : 'Accept'}
+                          {updating() === application.applicationId ? '接受中...' : '接受'}
                         </button>
                         <button 
                           class={styles.rejectButton} 
-                          onClick={() => handleUpdateStatus(application.applicationId, 'rejected')}
+                          onClick={() => handleUpdateStatus(application.applicationId, 'employer_rejected')}
                           disabled={updating() === application.applicationId}
                         >
-                          {updating() === application.applicationId ? 'Rejecting...' : 'Reject'}
+                          {updating() === application.applicationId ? '拒絕中...' : '拒絕'}
                         </button>
                       </div>
                     </Show>
@@ -534,41 +553,41 @@ export default function JobApplicationsView(props: JobApplicationsViewProps) {
         <div class={styles.applicationModal} onClick={closeApplicationModal}>
           <div class={styles.modalContent} onClick={(e) => e.stopPropagation()}>
             <div class={styles.modalHeader}>
-              <h2>Application Details</h2>
+              <h2>申請詳情</h2>
               <button class={styles.modalClose} onClick={closeApplicationModal}>×</button>
             </div>
             <div class={styles.modalBody}>
               <div class={styles.applicantDetails}>
                 <h3>{selectedApplication()!.workerName}</h3>
-                <p><strong>Email:</strong> <a href={`mailto:${selectedApplication()!.workerEmail}`}>{selectedApplication()!.workerEmail}</a></p>
+                <p><strong>電子郵件:</strong> <a href={`mailto:${selectedApplication()!.workerEmail}`}>{selectedApplication()!.workerEmail}</a></p>
                 <Show when={selectedApplication()!.workerPhone}>
-                  <p><strong>Phone:</strong> <a href={`tel:${selectedApplication()!.workerPhone}`}>{selectedApplication()!.workerPhone}</a></p>
+                  <p><strong>電話:</strong> <a href={`tel:${selectedApplication()!.workerPhone}`}>{selectedApplication()!.workerPhone}</a></p>
                 </Show>
                 <Show when={selectedApplication()!.workerEducation}>
-                  <p><strong>Education:</strong> {selectedApplication()!.workerEducation}</p>
+                  <p><strong>教育程度:</strong> {selectedApplication()!.workerEducation}</p>
                 </Show>
                 <Show when={selectedApplication()!.workerSchool}>
-                  <p><strong>School:</strong> {selectedApplication()!.workerSchool}</p>
+                  <p><strong>學校:</strong> {selectedApplication()!.workerSchool}</p>
                 </Show>
                 <Show when={selectedApplication()!.workerMajor}>
-                  <p><strong>Major:</strong> {selectedApplication()!.workerMajor}</p>
+                  <p><strong>主修:</strong> {selectedApplication()!.workerMajor}</p>
                 </Show>
-                <p><strong>Applied on:</strong> {formatDateToDDMMYYYY(selectedApplication()!.appliedAt)}</p>
-                <p><strong>Status:</strong> <span class={`${styles.status} ${getStatusClass(selectedApplication()!.status)}`}>{selectedApplication()!.status.charAt(0).toUpperCase() + selectedApplication()!.status.slice(1)}</span></p>
+                <p><strong>申請日期:</strong> {formatDateToDDMMYYYY(selectedApplication()!.appliedAt)}</p>
+                <p><strong>狀態:</strong> <span class={`${styles.status} ${getStatusClass(selectedApplication()!.status)}`}>{getStatusDisplayText(selectedApplication()!.status)}</span></p>
                 
-                {/* Work Experience Section */}
+                {/* 工作經驗區段 */}
                 <div class={styles.section}>
-                  <h4>Work Experience</h4>
+                  <h4>工作經驗</h4>
                   <Show 
                     when={parseJobExperience(selectedApplication()!.workerJobExperience).length > 0}
-                    fallback={<p class={styles.noData}>No work experience provided</p>}
+                    fallback={<p class={styles.noData}>未提供工作經驗</p>}
                   >
                     <For each={parseJobExperience(selectedApplication()!.workerJobExperience)}>
                       {(exp) => (
                         <div class={styles.experienceItem}>
-                          <p><strong>{exp.jobTitle || 'N/A'}</strong> at {exp.company || 'N/A'}</p>
+                          <p><strong>{exp.jobTitle || 'N/A'}</strong> 在 {exp.company || 'N/A'}</p>
                           <p class={styles.dates}>
-                            {exp.startDate || 'N/A'} - {exp.endDate || 'Present'}
+                            {exp.startDate || 'N/A'} - {exp.endDate || '現在'}
                           </p>
                           <Show when={exp.description}>
                             <p class={styles.description}>{exp.description}</p>
@@ -579,22 +598,22 @@ export default function JobApplicationsView(props: JobApplicationsViewProps) {
                   </Show>
                 </div>
                 
-                {/* Certificates Section */}
+                {/* 證書區段 */}
                 <div class={styles.section}>
-                  <h4>Certificates</h4>
+                  <h4>證書</h4>
                   <Show 
                     when={parseCertificates(selectedApplication()!.workerCertificates).length > 0}
-                    fallback={<p class={styles.noData}>No certificates provided</p>}
+                    fallback={<p class={styles.noData}>未提供證書</p>}
                   >
                     <For each={parseCertificates(selectedApplication()!.workerCertificates)}>
                       {(cert) => (
                         <div class={styles.certificateItem}>
                           <p><strong>{cert.name || 'N/A'}</strong></p>
                           <Show when={cert.issuer}>
-                            <p class={styles.issuer}>Issued by: {cert.issuer}</p>
+                            <p class={styles.issuer}>發行機構: {cert.issuer}</p>
                           </Show>
                           <Show when={cert.date}>
-                            <p class={styles.certDate}>Date: {cert.date}</p>
+                            <p class={styles.certDate}>日期: {cert.date}</p>
                           </Show>
                         </div>
                       )}
@@ -603,21 +622,21 @@ export default function JobApplicationsView(props: JobApplicationsViewProps) {
                 </div>
               </div>
             </div>
-            <Show when={selectedApplication()!.status === 'pending'}>
+            <Show when={selectedApplication()!.status === 'pending_employer_review'}>
               <div class={styles.modalActions}>
                 <button 
                   class={styles.acceptButton} 
-                  onClick={() => handleUpdateStatus(selectedApplication()!.applicationId, 'approved')}
+                  onClick={() => handleUpdateStatus(selectedApplication()!.applicationId, 'pending_worker_confirmation')}
                   disabled={updating() === selectedApplication()!.applicationId}
                 >
-                  {updating() === selectedApplication()!.applicationId ? 'Accepting...' : 'Accept Application'}
+                  {updating() === selectedApplication()!.applicationId ? '接受中...' : '接受申請'}
                 </button>
                 <button 
                   class={styles.rejectButton} 
-                  onClick={() => handleUpdateStatus(selectedApplication()!.applicationId, 'rejected')}
+                  onClick={() => handleUpdateStatus(selectedApplication()!.applicationId, 'employer_rejected')}
                   disabled={updating() === selectedApplication()!.applicationId}
                 >
-                  {updating() === selectedApplication()!.applicationId ? 'Rejecting...' : 'Reject Application'}
+                  {updating() === selectedApplication()!.applicationId ? '拒絕中...' : '拒絕申請'}
                 </button>
               </div>
             </Show>
