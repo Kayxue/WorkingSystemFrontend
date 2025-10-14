@@ -230,9 +230,9 @@ html, body {
   top: 45px;
   right: 0px;
   border-color: #034774;
-  background-color: rgba(44, 157, 233, 0.39);
   border: 1px solid transparent;
-  color: #007acc;
+  background-color: #93c5fd;
+  color: #1e293b;
   border: none;
   padding: 0.75rem 1.5rem;
   font-size: 1rem;
@@ -244,6 +244,7 @@ html, body {
 
 .editButton:hover {
   background-color: #005fa3;
+  color: white;
   transform: translateY(-1px);
 }
 

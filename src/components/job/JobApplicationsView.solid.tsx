@@ -236,6 +236,9 @@ function parseCertificates(certificates: string | Certificate[] | string[] | nul
 }
 
 async function updateApplicationStatus(applicationId: string, newStatus: 'pending_worker_confirmation' | 'employer_rejected') {
+  // Translate frontend status to backend "action"
+  const action = newStatus === 'pending_worker_confirmation' ? 'approve' : 'reject';
+
   const response = await fetch(`/api/application/${applicationId}/review`, {
     method: 'PUT',
     headers: {
@@ -243,7 +246,7 @@ async function updateApplicationStatus(applicationId: string, newStatus: 'pendin
       platform: 'web-employer',
     },
     credentials: 'include',
-    body: JSON.stringify({ status: newStatus }),
+    body: JSON.stringify({ action }), // ✅ correct
   });
 
   if (!response.ok) {
@@ -251,6 +254,7 @@ async function updateApplicationStatus(applicationId: string, newStatus: 'pendin
     throw new Error(`更新申請狀態失敗: ${errorText}`);
   }
 }
+
 
 interface JobApplicationsViewProps {
   gigId: string;
