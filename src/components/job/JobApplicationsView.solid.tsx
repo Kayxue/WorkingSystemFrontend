@@ -362,17 +362,15 @@ export default function JobApplicationsView(props: JobApplicationsViewProps) {
   };
 
   const openApplicationModal = (application: Application) => {
-    console.log('🔍 開啟申請模態視窗:', application);
-    console.log('🔍 模態視窗資料 - 證書:', application.workerCertificates);
-    console.log('🔍 模態視窗資料 - 經驗:', application.workerJobExperience);
     setSelectedApplication(application);
-    document.body.style.overflow = 'hidden';
+    document.body.classList.add("modal-open");
   };
 
-  const closeApplicationModal = () => {
+const closeApplicationModal = () => {
     setSelectedApplication(null);
-    document.body.style.overflow = 'auto';
+    document.body.classList.remove("modal-open");
   };
+
 
   const handleUpdateStatus = async (applicationId: string, newStatus: 'pending_worker_confirmation' | 'employer_rejected') => {
     setUpdating(applicationId);

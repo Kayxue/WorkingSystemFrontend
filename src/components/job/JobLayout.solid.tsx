@@ -158,15 +158,57 @@ export default function JobLayout(props: JobLayoutProps) {
       contentWrapperRef.addEventListener("scroll", handleScroll);
     }
 
-    // 🔥 Forward wheel events to contentWrapper so it scrolls even if cursor is outside
-    const forwardWheel = (e: WheelEvent) => {
+   const forwardWheel = (e: WheelEvent) => {
+    try {
+      // 1) If body has modal-open (preferred signal), don't forward at all.
+      if (document.body.classList.contains("modal-open")) {
+        // Let the modal handle scroll (or nothing) — do not preventDefault.
+        return;
+      }
+
+      // 2) Inspect event target / composedPath for modal elements.
+      // This covers shadow DOM / composed paths and normal DOM cases.
+      const path = (e.composedPath && e.composedPath()) || (e as any).path || [e.target];
+
+      for (const node of path) {
+        if (!(node instanceof Element)) continue;
+        // If any element in the path is the modal container or modal content, bail out.
+        if (
+          (node as Element).closest &&
+          (
+            (node as Element).closest(".modalContent") ||
+            (node as Element).closest(".applicationModal") ||
+            (node as Element).closest(".modalOverlay")
+          )
+        ) {
+          return; // let modal receive the scroll
+        }
+      }
+
+      // 3) If the pointer is directly over the contentWrapper, allow normal scroll (no forwarding)
+      // (optional: if you want to only forward when cursor is outside, skip this)
+      const el = document.elementFromPoint((e as any).clientX, (e as any).clientY) as Element | null;
+      if (el && el.closest && el.closest(".contentWrapper")) {
+        return; // user is already over the scrollable area — let native scrolling happen
+      }
+
+      // 4) Otherwise forward the scroll into contentWrapper (the original behavior).
       if (!contentWrapperRef) return;
       contentWrapperRef.scrollBy({
         top: e.deltaY,
         behavior: "auto"
       });
+
+      // Only prevent default when we actually forwarded the event.
       e.preventDefault();
-    };
+    } catch (err) {
+      // defensive fallback: if something unexpected happens, do nothing so UI remains usable
+      console.error("forwardWheel error:", err);
+      return;
+    }
+  };
+
+    
     window.addEventListener("wheel", forwardWheel, { passive: false });
 
     const params = new URLSearchParams(window.location.search);
@@ -224,7 +266,7 @@ export default function JobLayout(props: JobLayoutProps) {
               onClick={openAttendanceCodeModal}
               disabled={!jobData()?.attendanceCodeInfo}
             >
-              打卡密碼
+              Attendance Code
             </button>
           </Show>
         </div>
@@ -268,6 +310,7 @@ export default function JobLayout(props: JobLayoutProps) {
             <button class={styles.modalCloseX} onClick={closeModal}>
               ×
             </button>
+            <h2>Attendance Code</h2>
             <Show when={jobData()?.attendanceCodeInfo}>
               {(info) => (
                 <>
