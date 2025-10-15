@@ -44,10 +44,12 @@ async function fetchJobData(gigId: string): Promise<JobData> {
   return await response.json();
 }
 
-function getJobStatusColor(status: string) {
+function getJobStatusColor(status: string | undefined) {
   if (status === "已刊登") return styles.green;
-  if (status === "待刊登") return styles.yellow;
+  if (status === "未開始") return styles.yellow;
   if (status === "已下架" || status === "已結束" || status === "已關閉") return styles.red;
+  if (status === "正在進行") return styles.blue;
+
   return styles.unknown;
 }
 
@@ -250,12 +252,29 @@ export default function JobLayout(props: JobLayoutProps) {
             {jobData.loading ? "Loading..." : jobData()?.title || "Job Details"}
           </h1>
 
-          <Show when={jobData()?.status}>
-            <p class={styles.jobStatus}>
-              <span class={`${styles.status} ${getJobStatusColor(jobData()!.status)}`}>
-                {jobData()!.status}
-              </span>
-            </p>
+          <Show when={jobData.loading === false} fallback={<div class={styles.jobStatusContainer}>狀態：Loading...</div>}>
+            {jobData()?.status.startsWith("已下架,") || jobData()?.status.startsWith("已刊登,") ? (
+              <div class={styles.jobStatusContainer}>
+                <p
+                  class={`${styles.status} ${getJobStatusColor(jobData()?.status.split(",")[0])}`}
+                >
+                  {jobData()?.status.split(",")[0]}
+                </p>
+                <p
+                  class={`${styles.status} ${getJobStatusColor(jobData()?.status.split(",")[1])}`}
+                >
+                  {jobData()?.status.split(",")[1]}
+                </p>
+              </div>
+            ): (
+              <div class={styles.jobStatusContainer}>
+                <p
+                  class={`${styles.status} ${getJobStatusColor(jobData()?.status)}`}
+                >
+                  {jobData()?.status}
+                </p>
+              </div>
+            )}
           </Show>
         </div>
 

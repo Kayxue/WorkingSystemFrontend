@@ -111,11 +111,14 @@ body {
   border: 1px solid transparent;
   white-space: nowrap;
   flex-shrink: 0;
+  margin-left: 0.25rem;
+  margin-right: 0.25rem;
 }
 
 .green { background: #a7f3d0; color: #065f46; border-color: #065f46; }
 .yellow { background: #fef3c7; color: #92400e; border-color: #92400e; }
 .red { background: #fecaca; color: #991b1b; border-color: #991b1b; }
+.blue { background-color: #93c5fd; color: #1e293b; border-color: #1e293b; }
 .unknown { background: #f0f2f5; color: #6c757d; border-color: #adb5bd; }
 
 /* ---------- Attendance Code Button ---------- */

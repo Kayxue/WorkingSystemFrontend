@@ -228,12 +228,13 @@ export default function DashboardPage() {
     }
   }
 
-  function getJobStatusColor(job: JobOffer) {
-    if (job.status === "已刊登") return styles.green;
-    if (job.status === "未開始") return styles.yellow;
-    if (job.status === "已下架") return styles.red;
-    if (job.status === "已結束") return styles.red;
-    if (job.status === "已關閉") return styles.red;
+  function getJobStatusColor(status: string) {
+    if (status === "已刊登") return styles.green;
+    if (status === "未開始") return styles.yellow;
+    if (status === "已下架") return styles.red;
+    if (status === "已結束") return styles.red;
+    if (status === "已關閉") return styles.red;
+    if (status === "正在進行") return styles.blue;
   }
 
   return (
@@ -434,14 +435,32 @@ export default function DashboardPage() {
                     <p class={styles.jobTime}>
                       時間：{job.timeStart} - {job.timeEnd}
                     </p>
-                    <div class={styles.jobStatusContainer}>
-                      狀態： 
-                      <p
-                        class={`${styles.jobStatus} ${getJobStatusColor(job)}`}
-                      >
-                        {job.status}
-                      </p>
-                    </div>
+                    
+                    {job.status.startsWith("已下架,") || job.status.startsWith("已刊登,") ? (
+                      <div class={styles.jobStatusContainer}>
+                        狀態：
+                        <p
+                          class={`${styles.jobStatus} ${getJobStatusColor(job.status.split(",")[0])}`}
+                        >
+                          {job.status.split(",")[0]}
+                        </p>
+                        <p
+                          class={`${styles.jobStatus} ${getJobStatusColor(job.status.split(",")[1])}`}
+                        >
+                          {job.status.split(",")[1]}
+                        </p>
+                      </div>
+                    ): (
+                      <div class={styles.jobStatusContainer}>
+                        狀態：
+                        <p
+                          class={`${styles.jobStatus} ${getJobStatusColor(job.status)}`}
+                        >
+                          {job.status}
+                        </p>
+                      </div>
+                    )}
+
                   </div>
 
                   <Show when={job.status!="已關閉" && job.status!="已結束"}>
