@@ -38,7 +38,7 @@ export default function DashboardPage() {
   const pageWindowSize = 10;
 
   const filterOptions = [
-    { label: "已刊登", value: "Ongoing" },
+    { label: "已開始", value: "Ongoing" },
     { label: "未開始", value: "Not Started" },
     { label: "已下架", value: "Unpublished" },
     { label: "已結束", value: "Completed" },
