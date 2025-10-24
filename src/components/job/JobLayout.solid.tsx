@@ -212,7 +212,6 @@ export default function JobLayout(props: JobLayoutProps) {
 
     
     window.addEventListener("wheel", forwardWheel, { passive: false });
-
     const params = new URLSearchParams(window.location.search);
     const section = params.get("section") || "details";
 
@@ -279,7 +278,7 @@ export default function JobLayout(props: JobLayoutProps) {
         </div>
 
         <div class={styles.headerButtons}>
-          <Show when={jobData()?.status === "已刊登"}>
+          <Show when={jobData()?.status?.includes("已刊登")}>
             <button
               class={`${styles.backButton} ${styles.generateCodeButton}`}
               onClick={openAttendanceCodeModal}
