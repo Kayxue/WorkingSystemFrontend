@@ -49,8 +49,9 @@ export default function JobAttendanceView(props: JobAttendanceProps) {
   const updateStatus = async (record: AttendanceRecord, newStatus: string) => {
     const id = record.recordId;
     const prev = optimisticStatuses()[id] ?? record.status;
-    setOptimisticStatuses({ ...optimisticStatuses(), [id]: newStatus });
-    setUpdatingStatuses({ ...updatingStatuses(), [id]: true });
+
+    setOptimisticStatuses(prevMap => ({ ...prevMap, [id]: newStatus }));
+    setUpdatingStatuses(prevMap => ({ ...prevMap, [id]: true }));
 
     const payload = {
       records: [
@@ -70,16 +71,21 @@ export default function JobAttendanceView(props: JobAttendanceProps) {
       });
       if (!response.ok) throw new Error("Failed to update status");
       await refetch();
-      setOptimisticStatuses(({ [id]: _, ...rest }) => rest as Record<string, string>);
+
+      // ✅ Proper SolidJS update to remove one key
+      setOptimisticStatuses(prevMap => {
+        const { [id]: _, ...rest } = prevMap;
+        return rest;
+      });
     } catch (err) {
       alert("Failed to update status. Reverting change.");
-      setOptimisticStatuses({ ...optimisticStatuses(), [id]: prev });
+      setOptimisticStatuses(prevMap => ({ ...prevMap, [id]: prev }));
     } finally {
-      setUpdatingStatuses({ ...updatingStatuses(), [id]: false });
+      setUpdatingStatuses(prevMap => ({ ...prevMap, [id]: false }));
     }
   };
 
-   const formatTime = (dateString: string) => {
+  const formatTime = (dateString: string) => {
     const date = new Date(dateString);
     const localTime = new Date(date.getTime() + 12 * 60 * 60 * 1000); // 手動加 +8 小時
     return localTime.toLocaleTimeString("zh-TW", {
@@ -112,7 +118,7 @@ export default function JobAttendanceView(props: JobAttendanceProps) {
 
   const updateRecord = async (record: AttendanceRecord, updates: { attendanceConfirmation: string }) => {
     const id = record.recordId;
-    setUpdatingConfirmations({ ...updatingConfirmations(), [id]: true });
+    setUpdatingConfirmations(prev => ({ ...prev, [id]: true }));
     const payload = {
       records: [
         {
@@ -133,7 +139,7 @@ export default function JobAttendanceView(props: JobAttendanceProps) {
     } catch (err) {
       alert("Failed to update confirmation.");
     } finally {
-      setUpdatingConfirmations({ ...updatingConfirmations(), [id]: false });
+      setUpdatingConfirmations(prev => ({ ...prev, [id]: false }));
     }
   };
 
@@ -174,10 +180,14 @@ export default function JobAttendanceView(props: JobAttendanceProps) {
 
               <For each={attendanceRecords()}>
                 {(record) => {
-                  const currentStatus = optimisticStatuses()[record.recordId] ?? record.status;
-                  const isUpdating = updatingStatuses()[record.recordId] ?? false;
-                  const currentConfirmation = confirmationStatuses()[record.recordId] ?? record.attendanceConfirmation ?? "pending";
-                  const isUpdatingConfirmation = updatingConfirmations()[record.recordId] ?? false;
+                  const id = record.recordId;
+
+                  // ✅ Make them reactive per-row
+                  const currentStatus = () => optimisticStatuses()[id] ?? record.status;
+                  const isUpdating = () => updatingStatuses()[id] ?? false;
+                  const currentConfirmation = () =>
+                    confirmationStatuses()[id] ?? record.attendanceConfirmation ?? "pending";
+                  const isUpdatingConfirmation = () => updatingConfirmations()[id] ?? false;
 
                   return (
                     <div class={styles.tableRow}>
@@ -200,11 +210,11 @@ export default function JobAttendanceView(props: JobAttendanceProps) {
 
                       <div class={styles.cell} data-label="狀態">
                         <select
-                          value={currentStatus}
-                          style={{ color: getStatusColor(currentStatus) }}
+                          value={currentStatus()}
+                          style={{ color: getStatusColor(currentStatus()) }}
                           onInput={(e) => updateStatus(record, e.currentTarget.value)}
                           class={styles.statusDropdown}
-                          disabled={isUpdating}
+                          disabled={isUpdating()}
                         >
                           <option value="on_time">準時</option>
                           <option value="late">遲到</option>
@@ -213,18 +223,24 @@ export default function JobAttendanceView(props: JobAttendanceProps) {
                       </div>
 
                       <div class={styles.cell} data-label="出勤確認">
-                        <Show when={currentConfirmation === "pending"} fallback={
-                          <span style={{ color: getConfirmationColor(currentConfirmation), fontWeight: "bold" }}>
-                            {currentConfirmation === "confirmed" ? "已確認" :
-                             currentConfirmation === "rejected" ? "已拒絕" : currentConfirmation}
-                          </span>
-                        }>
+                        <Show
+                          when={currentConfirmation() === "pending"}
+                          fallback={
+                            <span style={{ color: getConfirmationColor(currentConfirmation()), fontWeight: "bold" }}>
+                              {currentConfirmation() === "confirmed"
+                                ? "已確認"
+                                : currentConfirmation() === "rejected"
+                                ? "已拒絕"
+                                : currentConfirmation()}
+                            </span>
+                          }
+                        >
                           <button
                             onClick={() => updateRecord(record, { attendanceConfirmation: "confirmed" })}
-                            disabled={isUpdatingConfirmation}
+                            disabled={isUpdatingConfirmation()}
                             class={styles.confirmButton}
                             style={{
-                              background: "#ef4444", // 🔴 red button
+                              background: "#ef4444",
                               color: "white",
                               padding: "4px 10px",
                               border: "none",
@@ -240,16 +256,16 @@ export default function JobAttendanceView(props: JobAttendanceProps) {
                       <div class={styles.cell} data-label="備註">
                         <input
                           type="text"
-                          value={notesEdits()[record.recordId] ?? record.notes ?? ""}
+                          value={notesEdits()[id] ?? record.notes ?? ""}
                           onInput={(e) =>
-                            setNotesEdits({ ...notesEdits(), [record.recordId]: e.currentTarget.value })
+                            setNotesEdits(prev => ({ ...prev, [id]: e.currentTarget.value }))
                           }
                           onBlur={async (e) => {
                             const payload = {
                               records: [
                                 {
-                                  recordId: record.recordId,
-                                  status: optimisticStatuses()[record.recordId] ?? record.status,
+                                  recordId: id,
+                                  status: optimisticStatuses()[id] ?? record.status,
                                   notes: String(e.currentTarget.value ?? ""),
                                 },
                               ],
