@@ -1,5 +1,6 @@
 // File: JobAttendanceView.solid.tsx
 import { createSignal, createResource, Show, For, onMount } from "solid-js";
+import { Portal } from "solid-js/web";
 import styles from "../../styles/JobAttendance.module.css";
 
 interface AttendanceRecord {
@@ -24,6 +25,34 @@ interface JobAttendanceProps {
   gigId: string;
 }
 
+// ===== Custom Confirmation Modal =====
+function ConfirmationModal(props: {
+  show: boolean;
+  message: string;
+  onConfirm: () => void;
+  onCancel: () => void;
+}) {
+  return (
+    <Show when={props.show}>
+      <Portal>
+        <div class={styles.modalOverlay}>
+          <div class={styles.modalCard}>
+            <div class={styles.modalIcon}>⬇️</div>
+            <h3 class={styles.modalTitle}>確認操作</h3>
+            <p class={styles.modalMessage}>{props.message}</p>
+            <div class={styles.modalButtons}>
+              <button class={styles.btnConfirm} onClick={props.onConfirm}>確認</button>
+              <button class={styles.btnCancel} onClick={props.onCancel}>拒絕</button>
+            </div>
+          </div>
+        </div>
+      </Portal>
+    </Show>
+  );
+}
+
+
+// ===== Main Component =====
 export default function JobAttendanceView(props: JobAttendanceProps) {
   const [selectedDate, setSelectedDate] = createSignal("");
   const [filterStatus, setFilterStatus] = createSignal<string>("all");
@@ -32,6 +61,10 @@ export default function JobAttendanceView(props: JobAttendanceProps) {
   const [updatingStatuses, setUpdatingStatuses] = createSignal<Record<string, boolean>>({});
   const [confirmationStatuses, setConfirmationStatuses] = createSignal<Record<string, string>>({});
   const [updatingConfirmations, setUpdatingConfirmations] = createSignal<Record<string, boolean>>({});
+
+  // modal state
+  const [showModal, setShowModal] = createSignal(false);
+  const [currentRecord, setCurrentRecord] = createSignal<AttendanceRecord | null>(null);
 
   const [attendanceRecords, { refetch }] = createResource(
     () => ({ gigId: props.gigId, date: selectedDate(), status: filterStatus() }),
@@ -71,8 +104,6 @@ export default function JobAttendanceView(props: JobAttendanceProps) {
       });
       if (!response.ok) throw new Error("Failed to update status");
       await refetch();
-
-      // ✅ Proper SolidJS update to remove one key
       setOptimisticStatuses(prevMap => {
         const { [id]: _, ...rest } = prevMap;
         return rest;
@@ -181,8 +212,6 @@ export default function JobAttendanceView(props: JobAttendanceProps) {
               <For each={attendanceRecords()}>
                 {(record) => {
                   const id = record.recordId;
-
-                  // ✅ Make them reactive per-row
                   const currentStatus = () => optimisticStatuses()[id] ?? record.status;
                   const isUpdating = () => updatingStatuses()[id] ?? false;
                   const currentConfirmation = () =>
@@ -236,7 +265,10 @@ export default function JobAttendanceView(props: JobAttendanceProps) {
                           }
                         >
                           <button
-                            onClick={() => updateRecord(record, { attendanceConfirmation: "confirmed" })}
+                            onClick={() => {
+                              setCurrentRecord(record);
+                              setShowModal(true);
+                            }}
                             disabled={isUpdatingConfirmation()}
                             class={styles.confirmButton}
                             style={{
@@ -291,6 +323,20 @@ export default function JobAttendanceView(props: JobAttendanceProps) {
           </Show>
         </div>
       </div>
+
+      {/* Custom Confirmation Modal */}
+      <ConfirmationModal
+        show={showModal()}
+        message={`是否確認 ${currentRecord()?.worker?.firstName} ${currentRecord()?.worker?.lastName} 的 ${getCheckTypeText(currentRecord()?.checkType || "")} 出勤？`}
+        onConfirm={async () => {
+          if (currentRecord()) await updateRecord(currentRecord()!, { attendanceConfirmation: "confirmed" });
+          setShowModal(false);
+        }}
+        onCancel={async () => {
+          if (currentRecord()) await updateRecord(currentRecord()!, { attendanceConfirmation: "rejected" });
+          setShowModal(false);
+        }}
+      />
     </div>
   );
 }

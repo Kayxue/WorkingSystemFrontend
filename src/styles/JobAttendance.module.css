@@ -238,3 +238,81 @@
     margin-bottom: 0.25rem;
   }
 }
+
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5); /* darker gray overlay */
+  backdrop-filter: blur(3px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.modalCard {
+  background: #fff;
+  border-radius: 16px;
+  padding: 28px 24px;
+  width: 340px;
+  max-width: 90%;
+  text-align: center;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+  animation: popIn 0.2s ease-out;
+}
+
+.modalIcon {
+  font-size: 30px;
+  color: #ef4444;
+  margin-bottom: 10px;
+}
+
+.modalTitle {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 10px;
+  color: #111827;
+}
+
+.modalMessage {
+  font-size: 15px;
+  color: #444;
+  margin-bottom: 18px;
+}
+
+.modalButtons {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
+
+.btnConfirm {
+  background: #ef4444;
+  color: #fff;
+  border: none;
+  padding: 8px 18px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background 0.2s ease;
+}
+
+.btnConfirm:hover {
+  background: #dc2626;
+}
+
+.btnCancel {
+  background: #e5e7eb;
+  color: #111;
+  border: none;
+  padding: 8px 18px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background 0.2s ease;
+}
+
+.btnCancel:hover {
+  background: #d1d5db;
+}
