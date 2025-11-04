@@ -31,13 +31,15 @@ function ConfirmationModal(props: {
   message: string;
   onConfirm: () => void;
   onCancel: () => void;
+  onClose: () => void;
 }) {
   return (
     <Show when={props.show}>
       <Portal>
-        <div class={styles.modalOverlay}>
-          <div class={styles.modalCard}>
-            <div class={styles.modalIcon}>⬇️</div>
+        <div class={styles.modalOverlay} onClick={props.onClose}>
+          <div class={styles.modalCard} onClick={(e) => e.stopPropagation()}>
+            <button class={styles.modalClose} onClick={props.onClose}>×</button>
+            <div class={styles.modalIcon}>⚠️</div>
             <h3 class={styles.modalTitle}>確認操作</h3>
             <p class={styles.modalMessage}>{props.message}</p>
             <div class={styles.modalButtons}>
@@ -336,6 +338,7 @@ export default function JobAttendanceView(props: JobAttendanceProps) {
           if (currentRecord()) await updateRecord(currentRecord()!, { attendanceConfirmation: "rejected" });
           setShowModal(false);
         }}
+        onClose={() => setShowModal(false)}
       />
     </div>
   );

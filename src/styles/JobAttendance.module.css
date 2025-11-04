@@ -239,10 +239,13 @@
   }
 }
 
+/* ============================
+   Modal Styling
+============================ */
 .modalOverlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.5); /* darker gray overlay */
+  background: rgba(0, 0, 0, 0.5);
   backdrop-filter: blur(3px);
   display: flex;
   justify-content: center;
@@ -260,6 +263,33 @@
   text-align: center;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
   animation: popIn 0.2s ease-out;
+  position: relative; /* ✅ Important for absolute positioning of close button */
+}
+
+/* ✅ Close button (X) styling */
+.modalClose {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: transparent;
+  border: none;
+  font-size: 28px;
+  line-height: 1;
+  color: #9ca3af;
+  cursor: pointer;
+  padding: 4px;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.modalClose:hover {
+  background: #f3f4f6;
+  color: #374151;
 }
 
 .modalIcon {
@@ -315,4 +345,27 @@
 
 .btnCancel:hover {
   background: #d1d5db;
+}
+
+/* ============================
+   Animations
+============================ */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes popIn {
+  from {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
