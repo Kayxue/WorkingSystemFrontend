@@ -25,6 +25,13 @@ type WorkerRating = {
   };
 };
 
+type RatingDetail = {
+  ratingId: string;
+  ratingValue: number;
+  comment: string | null;
+  createdAt: string;
+};
+
 type Application = {
   applicationId: string;
   workerId: string;
@@ -121,7 +128,7 @@ function parseJobExperience(experience: string | JobExperience[] | null | undefi
   if (Array.isArray(experience)) {
     if (experience.length === 0) return [];
     
-    // 如果是字串陣列，轉換成物件格式
+    // 如果是字串陣列,轉換成物件格式
     if (experience.every(exp => typeof exp === 'string')) {
       return (experience as string[]).map(exp => ({
         jobTitle: exp,
@@ -177,7 +184,7 @@ function parseCertificates(certificates: string | Certificate[] | string[] | nul
   if (Array.isArray(certificates)) {
     if (certificates.length === 0) return [];
     
-    // 如果是字串陣列，轉換成物件格式
+    // 如果是字串陣列,轉換成物件格式
     if (certificates.every(cert => typeof cert === 'string')) {
       return (certificates as string[]).map(certName => ({
         name: certName,
@@ -281,6 +288,31 @@ async function fetchApplications(gigId: string): Promise<Application[]> {
   }
 }
 
+async function fetchWorkerRatingDetails(workerId: string): Promise<RatingDetail[]> {
+  try {
+    const response = await fetch(`/api/rating/detail/worker/${encodeURIComponent(workerId)}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        "platform": "web-employer",
+      },
+      credentials: "include",
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Failed to fetch worker rating details: ${response.status} ${errorText}`);
+    }
+
+    const result = await response.json();
+    return result.data?.receivedRatings || [];
+  } catch (error) {
+    console.error("❌ Failed to load worker rating details:", error);
+    return [];
+  }
+}
+
+
 export default function JobApplicationsView(props: JobApplicationsViewProps) {
   const getInitialStatusFilter = () => {
     const params = new URLSearchParams(window.location.search);
@@ -295,6 +327,8 @@ export default function JobApplicationsView(props: JobApplicationsViewProps) {
 
   const [applications, { refetch }] = createResource(() => props.gigId, fetchApplications);
   const [selectedApplication, setSelectedApplication] = createSignal<Application | null>(null);
+  const [ratingDetails, setRatingDetails] = createSignal<RatingDetail[]>([]);
+  const [loadingRatings, setLoadingRatings] = createSignal(false);
   const [statusFilter, setStatusFilter] = createSignal<'all' | 'pending_employer_review' | 'employer_rejected' | 'pending_worker_confirmation' | 'worker_confirmed' | 'worker_declined' | 'worker_cancelled' | 'system_cancelled'>(
     getInitialStatusFilter()
   );
@@ -303,7 +337,7 @@ export default function JobApplicationsView(props: JobApplicationsViewProps) {
   createEffect(() => {
     const apps = applications();
     if (apps && apps.length > 0) {
-      console.log('🔍 申請已載入，檢查評分資料:');
+      console.log('🔍 申請已載入,檢查評分資料:');
       apps.forEach((app, index) => {
         console.log(`申請 ${index + 1} (${app.workerName}):`, {
           評分: app.workerRating,
@@ -322,13 +356,20 @@ export default function JobApplicationsView(props: JobApplicationsViewProps) {
     return apps.filter(app => app.status === statusFilter());
   };
 
-  const openApplicationModal = (application: Application) => {
+  const openApplicationModal = async (application: Application) => {
     setSelectedApplication(application);
+    setLoadingRatings(true);
     document.body.classList.add("modal-open");
+    
+    // Fetch rating details for this worker
+    const details = await fetchWorkerRatingDetails(application.workerId);
+    setRatingDetails(details);
+    setLoadingRatings(false);
   };
 
   const closeApplicationModal = () => {
     setSelectedApplication(null);
+    setRatingDetails([]);
     document.body.classList.remove("modal-open");
   };
 
@@ -340,7 +381,7 @@ export default function JobApplicationsView(props: JobApplicationsViewProps) {
       closeApplicationModal();
     } catch (error) {
       console.error('更新申請狀態時發生錯誤:', error);
-      alert('更新申請狀態失敗，請重試。');
+      alert('更新申請狀態失敗,請重試。');
     } finally {
       setUpdating(null);
     }
@@ -618,6 +659,41 @@ export default function JobApplicationsView(props: JobApplicationsViewProps) {
                         )}
                       </For>
                     </div>
+                  </Show>
+                </div>
+
+                <div class={styles.section}>
+                  <h4>評價詳情</h4>
+                  <Show when={loadingRatings()}>
+                    <p class={styles.loading}>載入評價中...</p>
+                  </Show>
+                  <Show when={!loadingRatings() && ratingDetails().length > 0}>
+                    <div class={styles.ratingDetailsList}>
+                      <For each={ratingDetails()}>
+                        {(rating) => (
+                        <div class={styles.ratingDetailItem}>
+                          <div class={styles.ratingDetailHeader}>
+                            <div class={styles.ratingStars}>
+                              {renderStarRating(rating.ratingValue)}
+                            </div>
+                            <span class={styles.ratingDate}>
+                              {formatDateToDDMMYYYY(rating.createdAt)}
+                            </span>
+                          </div>
+
+                          <Show when={rating.comment}>
+                            <p class={styles.ratingComment}>{rating.comment}</p>
+                          </Show>
+
+                          <div class={styles.ratingDivider}></div>
+                        </div>
+                      )}
+
+                      </For>
+                    </div>
+                  </Show>
+                  <Show when={!loadingRatings() && ratingDetails().length === 0}>
+                    <p class={styles.noData}>此打工者尚未收到任何評價</p>
                   </Show>
                 </div>
               </div>
