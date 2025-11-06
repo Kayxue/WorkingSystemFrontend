@@ -73,8 +73,6 @@ const AccountSettingsPage = (props: AccountSettingsPageProps) => {
     { id: 'password', name: 'Password' },
     { id: 'verification', name: 'Verification' },
     { id: 'rating', name: 'Rating' },
-    { id: 'login', name: 'Login' },
-    { id: 'cookie-settings', name: 'Cookie settings' },
   ];
 
   return (
