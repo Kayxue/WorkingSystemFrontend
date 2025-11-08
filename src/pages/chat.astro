@@ -1,12 +1,25 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import ChatPage from '../components/ChatPage.solid.tsx';
+
+const userData = Astro.locals?.authData?.user;
+const isLoggedIn = Astro.locals?.authData?.loggedIn || false;
+
+if (!isLoggedIn || !userData) {
+  return Astro.redirect('/redirect-login');
+}
 ---
 
 <Layout title="Chats">
   <main class="chat-page">
     <div class="chat-container">
-      <ChatPage client:load />
+      <ChatPage 
+        client:only 
+        employerId={userData.employerId}
+        workerId={userData.workerId}
+        role={userData.role}
+        profilePhotoUrl={userData.employerPhoto?.url || null}
+      />
     </div>
   </main>
 </Layout>
@@ -22,7 +35,7 @@ import ChatPage from '../components/ChatPage.solid.tsx';
   }
 
   .chat-container {
-    background-color: #fff;
+    background-color: #e5e7eb;
     border-radius: 8px;
     width: 100%;
   }
