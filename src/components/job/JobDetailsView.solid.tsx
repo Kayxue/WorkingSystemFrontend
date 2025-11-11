@@ -82,9 +82,8 @@ const JobDetailsView: Component<JobDetailsViewProps> = (props) => {
     document.body.style.overflow = "auto";
   });
 
-  // 僅以下狀態顯示「編輯」按鈕："已刊登", "待刊登", "已下架"
-  const showEditButton = (status: string) =>
-    ["已刊登", "待刊登", "已下架"].includes(status);
+const showEditButton = (status: string) =>
+  status.includes("已刊登") || status.includes("待刊登") || status.includes("已下架");
 
   return (
     <div class={styles.jobDetailsContainer}>
