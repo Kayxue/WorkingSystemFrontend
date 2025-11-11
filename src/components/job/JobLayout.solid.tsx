@@ -284,7 +284,7 @@ export default function JobLayout(props: JobLayoutProps) {
               onClick={openAttendanceCodeModal}
               disabled={!jobData()?.attendanceCodeInfo}
             >
-              Attendance Code
+              簽到代碼
             </button>
           </Show>
         </div>
