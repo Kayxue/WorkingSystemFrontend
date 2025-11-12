@@ -855,3 +855,24 @@
     font-size: 11px;
   }
 }
+
+.raterInfo {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.raterAvatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid #e0e0e0;
+}
+
+.raterName {
+  font-weight: 600;
+  color: #333;
+  font-size: 1.1rem;
+}

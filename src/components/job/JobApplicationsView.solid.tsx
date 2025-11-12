@@ -26,6 +26,7 @@ type WorkerRating = {
 };
 
 type RatingDetail = {
+  name: string;
   ratingId: string;
   ratingValue: number;
   comment: string | null;
@@ -672,6 +673,14 @@ export default function JobApplicationsView(props: JobApplicationsViewProps) {
                       <For each={ratingDetails()}>
                         {(rating) => (
                         <div class={styles.ratingDetailItem}>
+                          <div class={styles.raterInfo}>
+                            <img 
+                              src={'/src/assets/anonymous-profile-photo.png'} 
+                              alt="Rater Profile" 
+                              class={styles.raterAvatar} 
+                            />
+                            <span class={styles.raterName}>{rating.name}</span>
+                          </div>
                           <div class={styles.ratingDetailHeader}>
                             <div class={styles.ratingStars}>
                               {renderStarRating(rating.ratingValue)}
