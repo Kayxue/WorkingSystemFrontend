@@ -93,10 +93,11 @@ function Navbar(props: NavBarProps) {
       }
 
       const data = await response.text();
-      if (data) {
+      if (data == 'true') {
         if (!onChatPage()) setHaveUnreadMessages(true);
         return;
       } else {
+        setHaveUnreadMessages(false);
         return;
       }
     } catch (error) {
@@ -318,7 +319,7 @@ function Navbar(props: NavBarProps) {
   return (
     <nav class="bg-white px-2 sm:px-4 md:px-6 h-16 sm:h-18 flex items-center justify-between shadow-md border-b border-gray-200 fixed z-50 w-full">
       <div class="text-xl sm:text-2xl font-bold text-gray-800 hover:text-blue-600 transition-colors">
-        <a href="/">WorkNow</a>
+        <a href="/">SlotGo</a>
       </div>
       <Show when={loggedIn} fallback={
         <div class="flex items-center gap-2 sm:gap-4">

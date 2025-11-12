@@ -275,7 +275,11 @@ function ChatPage(props: ChatPageProps) {
       if (data.conversations.length > 0 && offset === 0) {
         const currentSelected = selectedConversation();
         if (!currentSelected || !data.conversations.find(c => c.conversationId === currentSelected.conversationId)) {
-          if (window.innerWidth > 700) setSelectedConversation(data.conversations[0]);
+          if (window.innerWidth > 700) {
+            setSelectedConversation(data.conversations[0]);
+            setLastReadByOpponent(data.conversations[0].lastReadAtByWorker);
+            updateLastRead(data.conversations[0].conversationId);
+          };
         }
       }
     } catch (err) {
@@ -599,6 +603,22 @@ function ChatPage(props: ChatPageProps) {
     }
   };
 
+  // Update last read timestamp
+  const updateLastRead = async (conversationId: string) => {
+    try {
+      const response = await fetch(`/api/chat/conversations/${conversationId}/read`, {
+        method: "POST",
+      });
+      if (!response.ok) {
+        throw new Error(`Failed to update last read: ${response.statusText}`);
+      }
+
+    } catch (err) {
+      console.error("Error updating last read:", err);
+    }
+  }
+
+
   // Handle conversation selection
   const handleSelectConversation = (conversation: Conversation) => {
     if (selectedConversation()?.conversationId === conversation.conversationId) {
@@ -606,6 +626,7 @@ function ChatPage(props: ChatPageProps) {
     }
     setSelectedConversation(conversation);
     setLastReadByOpponent(conversation.lastReadAtByWorker);
+    updateLastRead(conversation.conversationId);
     
     // Reset unread count for selected conversation
     setConversations(prev =>
