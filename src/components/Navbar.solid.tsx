@@ -25,6 +25,8 @@ function Navbar(props: NavBarProps) {
   const [isLoading, setIsLoading] = createSignal(false);
   const [showActionsMenu, setShowActionsMenu] = createSignal<string | null>(null);
   const [onNotificationPage, setOnNotificationPage] = createSignal(false);
+  const [onChatPage, setOnChatPage] = createSignal(false);
+  const [haveUnreadMessages, setHaveUnreadMessages] = createSignal<boolean>(false);
   const { loggedIn, username, employerPhotoUrl } = props;
 
   let notificationPanelRef: HTMLDivElement | undefined;
@@ -60,18 +62,49 @@ function Navbar(props: NavBarProps) {
     });
   });
 
-onMount(async () => {
-  if (window.location.pathname === '/notification') {
-    setOnNotificationPage(true);
-  }
-  if (loggedIn) {
-    await checkHaveUnreadNotifications();
-    if (haveUnreadNotifations()) {
-      setUnreadNotifications(true);
+  onMount(async () => {
+    if (window.location.pathname === '/notification') {
+      setOnNotificationPage(true);
     }
-    fetchLatestNotifications();
-  }
-});
+    if (window.location.pathname === '/chat') {
+      setOnChatPage(true);
+    }
+    if (loggedIn) {
+      await checkHaveUnreadNotifications();
+      await checkHaveUnreadMessages();
+      // const hasUnreadMessages = await checkHaveUnreadMessages();
+      fetchLatestNotifications();
+    }
+  });
+
+  const checkHaveUnreadMessages = async () => {
+    try {
+      const response = await fetch('/api/chat/unread-status', {
+        method: 'GET',
+        headers: {
+          'platform': 'web-employer',
+        }
+      });
+
+      if (!response.ok) {
+        console.error("Failed to check unread messages:", response.statusText);
+        setHaveUnreadMessages(false);
+        return;
+      }
+
+      const data = await response.text();
+      if (data) {
+        if (!onChatPage()) setHaveUnreadMessages(true);
+        return;
+      } else {
+        return;
+      }
+    } catch (error) {
+      console.error("Error checking unread messages:", error);
+      setHaveUnreadMessages(false);
+      return;
+    }
+  };
 
   const checkHaveUnreadNotifications = async () => {
     try {
@@ -90,7 +123,7 @@ onMount(async () => {
 
       const data = await response.json();
       if (data.data.hasUnread) {
-        setHaveUnreadNotifications(true);
+        if (!onNotificationPage()) setHaveUnreadNotifications(true);
       } else {
         setHaveUnreadNotifications(false);
       }
@@ -296,13 +329,20 @@ onMount(async () => {
         <div class="relative flex items-center gap-2 sm:gap-3">
           <div class="relative w-8 h-8 sm:w-10 sm:h-10">
             <button 
-              class="p-2 rounded-full hover:bg-gray-100 transition-colors cursor-pointer"
+              class="p-2 rounded-full hover:bg-gray-100 transition-colors cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
               onClick={() => window.location.href = '/chat'}
               aria-label="訊息"
+              disabled={onChatPage()}
             >
               <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
               </svg>
+              <Show when={haveUnreadMessages()}>
+                <span class="absolute top-1 right-0 sm:right-1 flex h-3 w-3">
+                  <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                  <span class="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+                </span>
+              </Show>
             </button>
           </div>
           <div class="relative w-8 h-8 sm:w-10 sm:h-10">
@@ -317,7 +357,7 @@ onMount(async () => {
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
               </svg>
               <Show when={haveUnreadNotifations()}>
-                <span class="absolute top-1 right-1 flex h-3 w-3">
+                <span class="absolute top-1 right-0 sm:right-1 flex h-3 w-3">
                   <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
                   <span class="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
                 </span>
