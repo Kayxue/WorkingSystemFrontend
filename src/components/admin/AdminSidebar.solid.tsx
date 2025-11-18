@@ -86,7 +86,7 @@ const AdminSidebar: Component<SidebarProps> = (props) => {
         {/* Header */}
         <div class="p-6 mb-2 border-b border-gray-200 flex items-center justify-between">
           <div class="flex items-center gap-3 ">
-            <span class="text-2xl font-semibold text-gray-900">WorkNow</span>
+            <span class="text-2xl font-semibold text-gray-900">SlotGo</span>
           </div>
         </div>
 
