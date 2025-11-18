@@ -315,10 +315,10 @@ export default function JobLayout(props: JobLayoutProps) {
           <JobApplicationsView gigId={props.gigId} />
         </section>
         <section id="rating" class={styles.sectionBlock}>
-          <JobRatingView gigId={props.gigId} />
+          <JobRatingView gigId={props.gigId} status={jobData()?.status || "disabled"} />
         </section>
         <section id="attendance" class={styles.sectionBlock}>
-          <JobAttendanceView gigId={props.gigId} sharedJobData={jobData} />
+          <JobAttendanceView gigId={props.gigId}/>
         </section>
       </div>
 

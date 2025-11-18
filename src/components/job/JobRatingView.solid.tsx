@@ -25,6 +25,7 @@ interface RatingResponse {
 
 interface JobRatingViewProps {
   gigId: string;
+  status: string;
 }
 
 export default function JobRatingView(props: JobRatingViewProps) {
@@ -65,7 +66,7 @@ export default function JobRatingView(props: JobRatingViewProps) {
 
       // 修復：處理進行中工作（無完成工作）的 404 錯誤
       if (response.status === 404) {
-        console.log("未找到此工作的評分資料（可能是進行中/無完成工作）");
+        console.error("未找到此工作的評分資料（可能是進行中/無完成工作）");
         setIsJobCompleted(false);
         return {
           data: [],
@@ -79,7 +80,6 @@ export default function JobRatingView(props: JobRatingViewProps) {
       }
 
       const result = await response.json();
-      console.log("評分 API 回應:", result);
 
       setIsJobCompleted(true); // 工作有完成的工作
 
@@ -134,8 +134,8 @@ export default function JobRatingView(props: JobRatingViewProps) {
       }
 
       // --- 總是從「全部」狀態更新計數 ---
-      const allResponse = await fetchRatings(props.gigId, "all", limit(), 0);
-      const allData = allResponse.data;
+      // const allResponse = await fetchRatings(props.gigId, "all", limit(), 0);
+      const allData = response.data;
 
       setAllCount(allData.length);
       setRatedCount(allData.filter(r => r.status === "rated").length);
@@ -153,7 +153,9 @@ export default function JobRatingView(props: JobRatingViewProps) {
   const handleStatusChange = (newStatus: RatingStatus) => {
     setStatus(newStatus);
     setOffset(0);
-    loadRatings(true);
+    if(props.status == "已結束") {
+      loadRatings(true);
+    }
   };
 
   const openRatingModal = (employee: RatingItem) => {
@@ -202,20 +204,11 @@ export default function JobRatingView(props: JobRatingViewProps) {
     setSubmittingRating(true);
     setError('');
     
-    console.log('提交評分:', {
-      workerId: employee.workerId,
-      gigId: props.gigId,
-      rating: rating,
-      comment: newComment().trim()
-    });
-
     try {
       const ratingData = {
         ratingValue: rating,
         comment: newComment().trim() || undefined
       };
-
-      console.log('發送評分資料（使用正確的欄位名稱）:', ratingData);
 
       const response = await fetch(`/api/rating/worker/${employee.workerId}/gig/${props.gigId}`, {
         method: 'POST',
@@ -227,15 +220,12 @@ export default function JobRatingView(props: JobRatingViewProps) {
         body: JSON.stringify(ratingData)
       });
 
-      console.log('API 回應狀態:', response.status, response.statusText);
-
       if (response.ok) {
         let result;
         try {
           result = await response.json();
-          console.log('評分提交成功:', result);
         } catch (parseError) {
-          console.log('回應 OK 但解析 JSON 失敗，視為成功');
+          console.error('回應 OK 但解析 JSON 失敗，視為成功');
           result = { success: true };
         }
 
@@ -254,19 +244,16 @@ export default function JobRatingView(props: JobRatingViewProps) {
         closeRatingModal();
         alert('評分提交成功！');
         loadRatings(true)
-        //window.location.reload()
         
       } else {
         let errorMessage = `HTTP 錯誤 ${response.status}`;
         
         try {
           const errorData = await response.json();
-          console.log('錯誤回應資料:', errorData);
           errorMessage = errorData.message || errorData.error || errorData.details || JSON.stringify(errorData);
         } catch (jsonError) {
           try {
             const errorText = await response.text();
-            console.log('錯誤回應文字:', errorText);
             errorMessage = errorText || errorMessage;
           } catch (textError) {
             console.error('讀取錯誤回應失敗:', textError);
@@ -298,7 +285,6 @@ export default function JobRatingView(props: JobRatingViewProps) {
         onclick={interactive ? (e: Event) => {
           e.preventDefault();
           e.stopPropagation();
-          console.log('點擊星星:', i + 1);
           setNewRating(i + 1);
           setError('');
         } : undefined}
@@ -334,7 +320,11 @@ export default function JobRatingView(props: JobRatingViewProps) {
   };
 
   onMount(() => {
-    loadRatings(true);
+    if(props.status == "已結束") {
+      console.log("props status on mount:", props.status);
+      console.log("true on mount")
+      loadRatings(true);
+    }
   });
 
   return (

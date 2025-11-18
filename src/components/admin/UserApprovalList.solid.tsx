@@ -184,7 +184,7 @@ const UserApprovalList: Component<Props> = (props) => {
             <tbody class="bg-white divide-y divide-gray-200">
               <For each={users()}>
                 {(user) => (
-                  <tr class="hover:bg-gray-50 transition-colors">
+                  <tr class="hover:bg-gray-50 transition-colors cursor-pointer" onclick={() => {setSelectedUser(user); setIsModalOpen(true);}}>
                     <td class="px-6 py-4 whitespace-nowrap">
                       <div class="flex items-center">
                         <Show when={user.employerPhoto !== null} fallback={<div class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-500">{getInitialsName(user.employerName)}</div>}>

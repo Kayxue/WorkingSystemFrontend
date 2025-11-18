@@ -253,7 +253,7 @@ function ChatPage(props: ChatPageProps) {
     setIsLoadingConversations(true);
     setError("");
     try {
-      const response = await fetch(`/api/chat/conversations?limit=20&offset=${offset}`, {
+      const response = await fetch(`/api/chat/conversations?page=${offset}`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",

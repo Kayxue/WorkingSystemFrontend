@@ -7,6 +7,7 @@ interface Rating {
   ratingValue: number;
   comment: string;
   createdAt: string;
+  name: string;
 }
 
 // Interface for the API response
@@ -34,7 +35,7 @@ export default function RatingPage(props: RatingPageProps) {
   const [loading, setLoading] = createSignal<boolean>(false);
   const limit = 6; // Number of ratings to fetch per page
 
-  let sentinel: HTMLDivElement | undefined;
+  let sentinel: HTMLDivElement | undefined; 
 
   const fetchRatings = async () => {
     if (loading() || !hasMore()) {
@@ -62,9 +63,9 @@ export default function RatingPage(props: RatingPageProps) {
         console.log("Fetched ratings:", result.data.receivedRatings);
         setHasMore(result.data.pagination.hasMore);
         if (result.data.pagination.offset) {
-          setOffset(result.data.pagination.offset);
+          setOffset(result.data.pagination.offset + 1);
         } else {
-          // setOffset(prev => prev + result.data.receivedRatings.length);
+          setOffset(prev => prev + result.data.receivedRatings.length);
         }
       }
     } catch (error) {
@@ -78,7 +79,7 @@ export default function RatingPage(props: RatingPageProps) {
     fetchRatings(); // Fetch initial ratings
 
     const observer = new IntersectionObserver(entries => {
-      if (entries[0].isIntersecting) {
+      if (entries[0].isIntersecting && hasMore()) {
         fetchRatings();
       }
     }, { threshold: 1.0 });
@@ -124,6 +125,14 @@ export default function RatingPage(props: RatingPageProps) {
         <For each={ratings()} fallback={<p class="text-center text-gray-500">No ratings yet.</p>}>
           {rating => (
             <div class="bg-white border border-gray-200 rounded-lg p-5 shadow-sm">
+              <div class="flex items-center space-x-3 mb-3">
+                <img 
+                  src={'/src/assets/anonymous-profile-photo.png'} 
+                  alt="Rater Profile" 
+                  class="w-10 h-10 rounded-full object-cover border border-gray-200" 
+                />
+                <span class="font-semibold text-gray-800">{rating.name}</span>
+              </div>
               <div class="flex justify-between items-center mb-2">
                 {renderStars(rating.ratingValue)}
                 <span class="text-xs text-gray-400">{new Date(rating.createdAt).toLocaleDateString()}</span>
