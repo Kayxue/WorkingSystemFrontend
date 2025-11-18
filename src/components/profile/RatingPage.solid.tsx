@@ -127,7 +127,7 @@ export default function RatingPage(props: RatingPageProps) {
             <div class="bg-white border border-gray-200 rounded-lg p-5 shadow-sm">
               <div class="flex items-center space-x-3 mb-3">
                 <img 
-                  src={'/src/assets/anonymous-profile-photo.png'} 
+                  src={'anonymous-profile-photo.png'} 
                   alt="Rater Profile" 
                   class="w-10 h-10 rounded-full object-cover border border-gray-200" 
                 />

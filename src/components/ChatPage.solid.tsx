@@ -253,7 +253,7 @@ function ChatPage(props: ChatPageProps) {
     setIsLoadingConversations(true);
     setError("");
     try {
-      const response = await fetch(`/api/chat/conversations?page=${offset}`, {
+      const response = await fetch(`/api/chat/conversations?pages=${offset}`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -709,14 +709,14 @@ function ChatPage(props: ChatPageProps) {
 
   // Get opponent avatar
   const getOpponentAvatar = (conversation: Conversation): string => {
-    return conversation.opponent.profilePhoto?.url || "src/assets/anonymous-profile-photo.png";
+    return conversation.opponent.profilePhoto?.url || "anonymous-profile-photo.png";
   };
 
   // Get message sender avatar
   const getMessageAvatar = (msg: Message, conversation: Conversation): string => {
     if (isOwnMessage(msg)) {
       // Use current user's avatar (you might want to fetch this from user profile)
-      return props.profilePhotoUrl || "src/assets/anonymous-profile-photo.png";
+      return props.profilePhotoUrl || "anonymous-profile-photo.png";
     }
     return getOpponentAvatar(conversation);
   };
