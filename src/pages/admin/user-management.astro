@@ -1,0 +1,11 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import UserManagementPage from '../../components/admin/UserManagementPage.solid.tsx';
+
+const pageTitle = "User Management";
+const currentPath = "/admin/user-management";
+---
+
+<AdminLayout title={pageTitle} currentPath={currentPath}>
+  <UserManagementPage client:only="solid-js" />
+</AdminLayout>
