@@ -155,8 +155,14 @@ const ProfileSettingsForm = (props: ProfileSettingsFormProps) => {
     e.preventDefault();
 
     if (!haveChanges())return;
-
-    const {employerPhoto, ...newFormData} = formData();
+    let resultFormData = null;
+    if (formData().branchName == null) {
+      const {employerPhoto, branchName, ...newFormData} = formData();
+      resultFormData = newFormData;
+    } else {
+      const {employerPhoto, ...newFormData} = formData();
+      resultFormData = newFormData;
+    }
     try{
       const response = await fetch('/api/user/update/profile', {
         method: 'PUT',
@@ -164,7 +170,7 @@ const ProfileSettingsForm = (props: ProfileSettingsFormProps) => {
           'Content-Type': 'application/json',
           'platform': 'web-employer',
         },
-        body: JSON.stringify(newFormData),
+        body: JSON.stringify(resultFormData),
       });
       if (!response.ok) {
         throw new Error(`Error updating profile: ${response.statusText}`);

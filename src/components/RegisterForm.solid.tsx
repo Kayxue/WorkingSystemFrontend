@@ -1,13 +1,13 @@
-import { createSignal, Show, onCleanup, For } from "solid-js";
+import { createSignal, Show, onCleanup, For, createEffect } from "solid-js";
+import areaData from '../static/AreaData.json';
 
 // 假設的產業類別選項
 const industryTypes = [
   { value: "", label: "請選擇產業類別" },
-  { value: "餐飲業", label: "餐飲業" },
-  { value: "零售業", label: "零售業" },
-  { value: "服務業", label: "服務業" },
-  { value: "製造業", label: "製造業" },
-  { value: "資訊科技業", label: "資訊科技業" },
+  { value: "餐飲", label: "餐飲" },
+  { value: "批發/零售", label: "批發/零售" },
+  { value: "倉儲運輸", label: "倉儲運輸" },
+  { value: "展場活動", label: "展場活動" },
   { value: "其他", label: "其他" },
 ];
 
@@ -34,9 +34,64 @@ export default function RegisterForm() {
   const [identificationNumber, setIdentificationNumber] = createSignal(""); // 統一編號
   const [files, setFiles] = createSignal<FilePreview[]>([]); // 驗證文件
   
+  const [selectedCity, setSelectedCity] = createSignal<string>('');
+  const [selectedDistrict, setSelectedDistrict] = createSignal<string>('');
+  const [addressLine, setAddressLine] = createSignal<string>('');
+  const [districts, setDistricts] = createSignal<string[]>([]);
+
+  const [isCityDropdownOpen, setIsCityDropdownOpen] = createSignal(false);
+  const [isDistrictDropdownOpen, setIsDistrictDropdownOpen] = createSignal(false);
+  let cityDropdownRef: HTMLDivElement | undefined;
+  let districtDropdownRef: HTMLDivElement | undefined;
+  
   const [error, setError] = createSignal("");
   const [isLoading, setIsLoading] = createSignal(false);
 
+  const selectClass = `
+    w-full py-3 px-4 border border-gray-300 rounded-md text-base text-gray-800
+    placeholder-gray-400 transition-all duration-200 ease-in-out
+    focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50
+  `;
+
+  const inputClass = `
+    w-full py-3 px-4 border border-gray-300 rounded-md text-base text-gray-800
+    placeholder-gray-400 transition-all duration-200 ease-in-out
+    focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50
+  `;
+
+  const parseAddress = (fullAddress: string) => {
+    if (!fullAddress) return;
+
+    const cities = Object.keys(areaData);
+    let city = '';
+    let district = '';
+    let restOfAddress = fullAddress;
+
+    for (const c of cities) {
+      if (fullAddress.startsWith(c)) {
+        city = c;
+        const possibleDistricts = areaData[c as keyof typeof areaData];
+        let tempAddress = fullAddress.substring(c.length, 6);
+        
+        for (const d of possibleDistricts) {
+          if (tempAddress.startsWith(d)) {
+            district = d.trim();
+            restOfAddress = fullAddress.substring(c.length + d.length).trim();
+            break;
+          }
+        }
+        break;
+      }
+    }
+    
+    setSelectedCity(city);
+    if (city) {
+      setDistricts(areaData[city as keyof typeof areaData]);
+    }
+    setSelectedDistrict(district);
+    setAddressLine(restOfAddress);
+  };
+  
   const MAX_FILES = 2;
   const MAX_SIZE_MB = 2;
   const MAX_SIZE_BYTES = MAX_SIZE_MB * 1024 * 1024;
@@ -87,6 +142,44 @@ export default function RegisterForm() {
     files().forEach(file => URL.revokeObjectURL(file.url));
   });
 
+  createEffect(() => {
+    if (address()) { // Only parse if address has a value
+      parseAddress(address());
+    }
+  });
+
+  createEffect(() => {
+    const city = selectedCity();
+    if (city) {
+      setDistricts(areaData[city as keyof typeof areaData]);
+    } else {
+      setDistricts([]);
+      setSelectedDistrict('');
+    }
+  });
+
+  createEffect(() => {
+    const fullAddress = `${selectedCity()}${selectedDistrict()}${addressLine()}`;
+    if (fullAddress !== address()) {
+      setAddress(fullAddress);
+    }
+  });
+
+  createEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (isCityDropdownOpen() && cityDropdownRef && !cityDropdownRef.contains(e.target as Node)) {
+        setIsCityDropdownOpen(false);
+      }
+      if (isDistrictDropdownOpen() && districtDropdownRef && !districtDropdownRef.contains(e.target as Node)) {
+        setIsDistrictDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    onCleanup(() => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    });
+  });
 
   const handleSubmit = async (e: Event) => {
     e.preventDefault();
@@ -120,6 +213,12 @@ export default function RegisterForm() {
         setError("統一編號格式不正確，應為8位數字。");
         setIsLoading(false);
         return;
+    }
+
+    if (selectedCity() === "" || selectedDistrict() === "") {
+      setError("請完整選擇地址中的城市及區域。");
+      setIsLoading(false);
+      return;
     }
 
 
@@ -181,9 +280,79 @@ export default function RegisterForm() {
         </div>
       </div>
 
-      <div class="text-left">
-        <label for="address" class="block mb-2 text-gray-700 font-medium text-sm">主要營業地址 <span class="text-red-500">*</span></label>
-        <input type="text" id="address" value={address()} onInput={(e) => setAddress(e.currentTarget.value)} placeholder="請填寫完整地址" required class="w-full px-4 py-3 border border-gray-300 rounded-md text-base text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 placeholder-gray-400 transition" />
+      <div class="mb-6">
+        <label for="address" class="block text-left mb-2 text-gray-700 text-sm font-bold">地址 <span class="text-red-500">*</span></label>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
+          {/* City Dropdown */}
+          <div class="relative" ref={cityDropdownRef}>
+            <button
+              type="button"
+              class={`${selectClass} w-full flex justify-between items-center text-left`}
+              onClick={() => setIsCityDropdownOpen(!isCityDropdownOpen())}
+            >
+              <span class="truncate">{selectedCity() || '選擇城市'}</span>
+              <svg class="w-4 h-4 ml-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+            </button>
+            {isCityDropdownOpen() && (
+              <div class="absolute z-10 w-full mt-1 bg-white rounded-md shadow-lg max-h-60 overflow-auto border border-gray-300">
+                <ul class="py-1">
+                  <For each={Object.keys(areaData)}>{(city) =>
+                    <li
+                      class="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer"
+                      onClick={() => {
+                        setSelectedCity(city);
+                        setIsCityDropdownOpen(false);
+                        setSelectedDistrict('');
+                      }}
+                    >
+                      {city}
+                    </li>
+                  }</For>
+                </ul>
+              </div>
+            )}
+          </div>
+
+          {/* District Dropdown */}
+          <div class="relative" ref={districtDropdownRef}>
+            <button
+              type="button"
+              class={`${selectClass} w-full flex justify-between items-center text-left disabled:cursor-not-allowed disabled:bg-gray-200`}
+              onClick={() => selectedCity() && setIsDistrictDropdownOpen(!isDistrictDropdownOpen())}
+              disabled={!selectedCity()}
+            >
+              <span class="truncate">{selectedDistrict() || '選擇區域'}</span>
+              <svg class="w-4 h-4 ml-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+            </button>
+            {isDistrictDropdownOpen() && (
+              <div class="absolute z-10 w-full mt-1 bg-white rounded-md shadow-lg max-h-60 overflow-auto border border-gray-300">
+                <ul class="py-1">
+                  <For each={districts()}>{(district) =>
+                    <li
+                      class="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer"
+                      onClick={() => {
+                        setSelectedDistrict(district);
+                        setIsDistrictDropdownOpen(false);
+                      }}
+                    >
+                      {district}
+                    </li>
+                  }</For>
+                </ul>
+              </div>
+            )}
+          </div>
+
+          <input
+            type="text"
+            id="addressLine"
+            name="addressLine"
+            value={addressLine()}
+            onInput={(e) => setAddressLine(e.currentTarget.value)}
+            class={inputClass}
+            placeholder="街道巷弄門牌號碼"
+          />
+        </div>
       </div>
 
       <div class="text-left">
