@@ -134,8 +134,8 @@ export default function JobRatingView(props: JobRatingViewProps) {
       }
 
       // --- 總是從「全部」狀態更新計數 ---
-      // const allResponse = await fetchRatings(props.gigId, "all", limit(), 0);
-      const allData = response.data;
+      const allResponse = await fetchRatings(props.gigId, "all", limit(), 0);
+      const allData = allResponse.data;
 
       setAllCount(allData.length);
       setRatedCount(allData.filter(r => r.status === "rated").length);
@@ -153,9 +153,7 @@ export default function JobRatingView(props: JobRatingViewProps) {
   const handleStatusChange = (newStatus: RatingStatus) => {
     setStatus(newStatus);
     setOffset(0);
-    if(props.status == "已結束") {
-      loadRatings(true);
-    }
+    loadRatings(true);
   };
 
   const openRatingModal = (employee: RatingItem) => {
@@ -320,11 +318,7 @@ export default function JobRatingView(props: JobRatingViewProps) {
   };
 
   onMount(() => {
-    if(props.status == "已結束") {
-      console.log("props status on mount:", props.status);
-      console.log("true on mount")
-      loadRatings(true);
-    }
+    loadRatings(true);
   });
 
   return (
