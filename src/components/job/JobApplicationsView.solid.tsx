@@ -675,7 +675,7 @@ export default function JobApplicationsView(props: JobApplicationsViewProps) {
                         <div class={styles.ratingDetailItem}>
                           <div class={styles.raterInfo}>
                             <img 
-                              src={'/src/assets/anonymous-profile-photo.png'} 
+                              src={'anonymous-profile-photo.png'} 
                               alt="Rater Profile" 
                               class={styles.raterAvatar} 
                             />
