@@ -36,13 +36,13 @@ const checkAuth = defineMiddleware(async (context, next) => {
     context.locals.authData = loginData;
 
     const protectedRoutes = ['/edit-job', '/post-job', '/dashboard', '/calendar','/profile','/account-settings']
-    const adminRoutes = ['/admin/admin-dashboard','/admin/user-approval','/admin/jobs'];
+    const adminRoutes = ['/admin/user-management','/admin/user-approval','/admin/jobs'];
     if (loginData.user?.role !== 'admin' && adminRoutes.includes(context.url.pathname)) {
         return new Response(null, { status: 404 }); 
     }
     // admin try to access employer route
     if (loginData.user?.role == 'admin' && !adminRoutes.includes(context.url.pathname)) {
-        return Response.redirect(new URL('/admin/admin-dashboard', context.url));
+        return Response.redirect(new URL('/admin/user-approval', context.url));
     }
     if (!loginData.loggedIn && protectedRoutes.includes(context.url.pathname)) {
         return Response.redirect(new URL('/redirect-login', context.url));

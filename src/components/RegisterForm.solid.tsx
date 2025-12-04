@@ -142,11 +142,11 @@ export default function RegisterForm() {
     files().forEach(file => URL.revokeObjectURL(file.url));
   });
 
-  createEffect(() => {
-    if (address()) { // Only parse if address has a value
-      parseAddress(address());
-    }
-  });
+    // createEffect(() => {
+    //   if (address()) { // Only parse if address has a value
+    //     parseAddress(address());
+    //   }
+    // });
 
   createEffect(() => {
     const city = selectedCity();
@@ -228,7 +228,7 @@ export default function RegisterForm() {
     formData.append('employerName', employerName());
     if (branchName()) formData.append('branchName', branchName()); // 可選欄位
     formData.append('industryType', industryType());
-    formData.append('address', address());
+    formData.append('address', selectedCity()+selectedDistrict()+addressLine());
     formData.append('phoneNumber', phoneNumber());
     formData.append('identificationType', identificationType());
     formData.append('identificationNumber', identificationNumber());

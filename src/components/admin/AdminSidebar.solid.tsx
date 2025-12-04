@@ -12,7 +12,7 @@ interface MenuItem {
 
 function getMenuItems(pendingUsersCount: number ){
   return [
-    { id: 'dashboard', label: '儀表板', icon: '📊', path: '/dashboard' },
+    // { id: 'dashboard', label: '儀表板', icon: '📊', path: '/dashboard' },
     // { 
     //   id: 'customers', 
     //   label: 'Customers', 
